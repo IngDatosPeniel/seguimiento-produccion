@@ -1,0 +1,1511 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Seguimiento Producción — Inversiones Peniel</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://accounts.google.com/gsi/client" async defer></script>
+<style>
+:root {
+  --bg: #F7F6F2;
+  --surface: #FFFFFF;
+  --surface2: #F0EEE8;
+  --border: #E2DED6;
+  --border2: #CCC8BF;
+  --text: #1A1814;
+  --text2: #6B6760;
+  --text3: #9E9B96;
+  --accent: #1B4332;
+  --accent-light: #D8F3DC;
+  --accent-mid: #40916C;
+  --danger: #9B2335;
+  --danger-light: #FDECEA;
+  --warn: #7D4F00;
+  --warn-light: #FFF3CD;
+  --info: #1B3A6B;
+  --info-light: #E8F0FE;
+  --radius: 8px;
+  --radius-lg: 12px;
+  --shadow: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
+  --shadow-md: 0 4px 12px rgba(0,0,0,.08), 0 2px 4px rgba(0,0,0,.04);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.5;
+  min-height: 100vh;
+}
+
+/* ── Layout ── */
+.app { display: flex; height: 100vh; overflow: hidden; }
+
+.sidebar {
+  width: 240px; min-width: 240px;
+  background: var(--accent);
+  display: flex; flex-direction: column;
+  padding: 0;
+  overflow: hidden;
+}
+
+.sidebar-logo {
+  padding: 20px 20px 16px;
+  border-bottom: 1px solid rgba(255,255,255,.1);
+}
+.sidebar-logo-title {
+  font-size: 13px; font-weight: 600;
+  color: #fff; letter-spacing: .02em;
+  line-height: 1.3;
+}
+.sidebar-logo-sub {
+  font-size: 11px; color: rgba(255,255,255,.5);
+  margin-top: 2px;
+}
+
+.sidebar-section { padding: 16px 12px 8px; }
+.sidebar-section-label {
+  font-size: 10px; font-weight: 600;
+  color: rgba(255,255,255,.4);
+  letter-spacing: .1em; text-transform: uppercase;
+  padding: 0 8px; margin-bottom: 4px;
+}
+
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 9px 12px; border-radius: var(--radius);
+  cursor: pointer; color: rgba(255,255,255,.65);
+  font-size: 13px; font-weight: 400;
+  transition: all .15s; border: none; background: none;
+  width: 100%; text-align: left; font-family: 'DM Sans', sans-serif;
+}
+.nav-item:hover { background: rgba(255,255,255,.08); color: #fff; }
+.nav-item.active { background: rgba(255,255,255,.15); color: #fff; font-weight: 500; }
+.nav-icon { font-size: 15px; width: 18px; text-align: center; flex-shrink: 0; }
+
+.sidebar-bottom {
+  margin-top: auto;
+  padding: 16px;
+  border-top: 1px solid rgba(255,255,255,.1);
+}
+.user-chip {
+  display: flex; align-items: center; gap: 10px;
+  padding: 8px 10px; border-radius: var(--radius);
+  background: rgba(255,255,255,.08);
+}
+.user-avatar {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: rgba(255,255,255,.2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 600; color: #fff; flex-shrink: 0;
+}
+.user-name { font-size: 12px; color: rgba(255,255,255,.7); }
+
+/* ── Main ── */
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+.topbar {
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  padding: 0 24px;
+  height: 56px;
+  display: flex; align-items: center; justify-content: space-between;
+  flex-shrink: 0;
+}
+.topbar-left { display: flex; align-items: center; gap: 12px; }
+.topbar-title { font-size: 15px; font-weight: 600; color: var(--text); }
+.topbar-date { font-size: 12px; color: var(--text3); }
+.topbar-right { display: flex; align-items: center; gap: 8px; }
+
+/* ── Buttons ── */
+.btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 7px 14px; border-radius: var(--radius);
+  border: 1px solid var(--border2);
+  background: var(--surface); cursor: pointer;
+  font-size: 13px; color: var(--text);
+  font-family: 'DM Sans', sans-serif; font-weight: 500;
+  transition: all .15s; white-space: nowrap;
+}
+.btn:hover { background: var(--surface2); border-color: var(--border2); }
+.btn:active { transform: scale(.98); }
+
+.btn-primary {
+  background: var(--accent); color: #fff;
+  border-color: var(--accent);
+}
+.btn-primary:hover { background: #143327; border-color: #143327; }
+
+.btn-danger { background: var(--danger-light); color: var(--danger); border-color: #f5c6cb; }
+.btn-danger:hover { background: #f9d2d6; }
+
+.btn-sm { padding: 5px 10px; font-size: 12px; }
+.btn-xs { padding: 3px 8px; font-size: 11px; }
+
+.btn-icon {
+  width: 30px; height: 30px; padding: 0;
+  display: inline-flex; align-items: center; justify-content: center;
+  border-radius: var(--radius); border: 1px solid var(--border);
+  background: var(--surface); cursor: pointer; font-size: 15px;
+  transition: all .15s;
+}
+.btn-icon:hover { background: var(--surface2); }
+
+/* ── Views ── */
+.view { flex: 1; overflow-y: auto; display: none; padding: 24px; }
+.view.active { display: block; }
+
+/* ── Cards ── */
+.card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  margin-bottom: 16px;
+}
+.card-header {
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+}
+.card-title { font-size: 13px; font-weight: 600; color: var(--text); }
+.card-sub { font-size: 12px; color: var(--text3); }
+.card-body { padding: 20px; }
+
+/* ── Forms ── */
+.form-grid { display: grid; gap: 14px; }
+.form-grid-2 { grid-template-columns: 1fr 1fr; }
+.form-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
+.form-grid-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+
+.field { display: flex; flex-direction: column; gap: 5px; }
+.field label {
+  font-size: 11px; font-weight: 600;
+  color: var(--text2); letter-spacing: .03em; text-transform: uppercase;
+}
+.field input, .field select, .field textarea {
+  padding: 8px 11px;
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 13px;
+  transition: border-color .15s, box-shadow .15s;
+}
+.field input:focus, .field select:focus, .field textarea:focus {
+  outline: none;
+  border-color: var(--accent-mid);
+  box-shadow: 0 0 0 3px rgba(64,145,108,.12);
+}
+.field input::placeholder { color: var(--text3); }
+.field select { cursor: pointer; }
+
+/* ── Cinta rows ── */
+.cintas-list { display: flex; flex-direction: column; gap: 8px; }
+
+.cinta-item {
+  display: grid;
+  grid-template-columns: 28px 1fr 1fr 1fr 32px;
+  gap: 10px; align-items: end;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  position: relative;
+}
+.cinta-num {
+  font-size: 11px; font-weight: 600;
+  color: var(--text3);
+  display: flex; align-items: center; justify-content: center;
+  width: 28px; height: 28px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 50%;
+  flex-shrink: 0;
+  align-self: flex-end;
+  margin-bottom: 1px;
+}
+
+.add-cinta {
+  display: flex; align-items: center; justify-content: center;
+  gap: 8px; padding: 10px;
+  border: 1px dashed var(--border2);
+  border-radius: var(--radius);
+  cursor: pointer; color: var(--text2);
+  font-size: 12px; font-weight: 500;
+  background: none; font-family: 'DM Sans', sans-serif;
+  width: 100%; transition: all .15s;
+}
+.add-cinta:hover { border-color: var(--accent-mid); color: var(--accent); background: var(--accent-light); }
+
+/* ── Table ── */
+.table-wrap { overflow-x: auto; }
+table.data-table {
+  width: 100%; border-collapse: collapse;
+  font-size: 13px;
+}
+.data-table th {
+  background: var(--surface2);
+  font-size: 10px; font-weight: 600;
+  color: var(--text2); text-transform: uppercase; letter-spacing: .07em;
+  padding: 9px 14px; text-align: left;
+  border-bottom: 1px solid var(--border);
+  white-space: nowrap;
+}
+.data-table td {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--border);
+  color: var(--text); vertical-align: middle;
+}
+.data-table tbody tr:last-child td { border-bottom: none; }
+.data-table tbody tr:hover td { background: var(--bg); }
+
+.row-pedido td { background: var(--surface); }
+.row-cinta td {
+  background: #FAFAF8;
+  font-size: 12px; color: var(--text2);
+  border-bottom: 1px solid var(--border);
+}
+.row-cinta td:first-child { padding-left: 36px; }
+.row-cinta-last td { border-bottom: 2px solid var(--border2); }
+
+/* ── Badges ── */
+.badge {
+  display: inline-block; padding: 2px 8px;
+  border-radius: 4px; font-size: 11px; font-weight: 600;
+  letter-spacing: .03em;
+}
+.badge-green { background: var(--accent-light); color: var(--accent); }
+.badge-blue { background: var(--info-light); color: var(--info); }
+.badge-amber { background: var(--warn-light); color: var(--warn); }
+.badge-red { background: var(--danger-light); color: var(--danger); }
+.badge-gray { background: var(--surface2); color: var(--text2); }
+
+.estado-badge {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 600;
+}
+.estado-abierto { background: #FFF9E6; color: #8B6000; border: 1px solid #FFE08A; }
+.estado-cerrado { background: var(--accent-light); color: var(--accent); border: 1px solid #B7E4C7; }
+.dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.dot-abierto { background: #F59F00; }
+.dot-cerrado { background: var(--accent-mid); }
+
+/* ── Metrics ── */
+.metrics-grid {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 12px; margin-bottom: 20px;
+}
+.metric-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 16px 18px;
+}
+.metric-label { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
+.metric-value { font-size: 22px; font-weight: 600; color: var(--text); line-height: 1; }
+.metric-sub { font-size: 11px; color: var(--text3); margin-top: 4px; }
+
+/* ── Filters ── */
+.filter-bar {
+  display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; align-items: center;
+}
+.filter-bar input, .filter-bar select {
+  padding: 7px 11px;
+  border: 1px solid var(--border2);
+  border-radius: var(--radius);
+  background: var(--surface);
+  color: var(--text); font-family: 'DM Sans', sans-serif; font-size: 13px;
+}
+.filter-bar input { min-width: 200px; }
+.filter-bar input:focus, .filter-bar select:focus { outline: none; border-color: var(--accent-mid); }
+
+/* ── Modal ── */
+.modal-bg {
+  position: fixed; inset: 0;
+  background: rgba(0,0,0,.35);
+  display: none; align-items: center; justify-content: center;
+  z-index: 100; padding: 20px;
+}
+.modal-bg.open { display: flex; }
+.modal {
+  background: var(--surface);
+  border-radius: var(--radius-lg);
+  width: 100%; max-width: 760px;
+  max-height: 90vh; overflow-y: auto;
+  box-shadow: var(--shadow-md);
+}
+.modal-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  position: sticky; top: 0; background: var(--surface); z-index: 1;
+}
+.modal-title { font-size: 14px; font-weight: 600; }
+.modal-body { padding: 20px; }
+.modal-footer {
+  padding: 14px 20px;
+  border-top: 1px solid var(--border);
+  display: flex; justify-content: flex-end; gap: 8px;
+  position: sticky; bottom: 0; background: var(--surface);
+}
+
+/* ── Toast ── */
+.toast {
+  position: fixed; bottom: 24px; right: 24px;
+  padding: 12px 18px; border-radius: var(--radius-lg);
+  font-size: 13px; font-weight: 500;
+  box-shadow: var(--shadow-md);
+  transform: translateY(80px); opacity: 0;
+  transition: all .25s ease;
+  z-index: 200; max-width: 320px;
+}
+.toast.show { transform: translateY(0); opacity: 1; }
+.toast-success { background: var(--accent); color: #fff; }
+.toast-error { background: var(--danger); color: #fff; }
+.toast-info { background: var(--info); color: #fff; }
+
+/* ── Loading ── */
+.loading-overlay {
+  position: fixed; inset: 0;
+  background: var(--bg);
+  display: flex; align-items: center; justify-content: center;
+  flex-direction: column; gap: 12px;
+  z-index: 300;
+}
+.spinner {
+  width: 32px; height: 32px;
+  border: 2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin .7s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.loading-text { font-size: 13px; color: var(--text3); }
+
+/* ── Auth screen ── */
+.auth-screen {
+  min-height: 100vh;
+  display: flex; align-items: center; justify-content: center;
+  background: var(--bg);
+}
+.auth-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 48px 40px; text-align: center;
+  max-width: 380px; width: 100%;
+  box-shadow: var(--shadow-md);
+}
+.auth-logo {
+  width: 56px; height: 56px; border-radius: 14px;
+  background: var(--accent); display: flex; align-items: center;
+  justify-content: center; margin: 0 auto 20px;
+  font-size: 24px;
+}
+.auth-title { font-size: 20px; font-weight: 600; margin-bottom: 6px; }
+.auth-sub { font-size: 13px; color: var(--text2); margin-bottom: 28px; line-height: 1.6; }
+
+/* ── Utils ── */
+.mono { font-family: 'DM Mono', monospace; font-size: 12px; }
+.text-muted { color: var(--text3); }
+.text-danger { color: var(--danger); }
+.text-success { color: var(--accent-mid); }
+.divider { height: 1px; background: var(--border); margin: 16px 0; }
+.empty-state { padding: 60px 20px; text-align: center; color: var(--text3); }
+.empty-state-icon { font-size: 32px; margin-bottom: 12px; }
+.empty-state-text { font-size: 13px; }
+.section-gap { margin-bottom: 20px; }
+
+.toggle-cintas-btn {
+  background: none; border: none; cursor: pointer;
+  color: var(--accent-mid); font-size: 12px; font-weight: 500;
+  font-family: 'DM Sans', sans-serif; padding: 0;
+  text-decoration: underline; text-underline-offset: 2px;
+}
+
+.inline-tag {
+  display: inline-block; background: var(--surface2);
+  border: 1px solid var(--border); border-radius: 4px;
+  padding: 1px 6px; font-size: 11px; color: var(--text2);
+  font-family: 'DM Mono', monospace;
+}
+</style>
+</head>
+<body>
+
+<!-- Loading -->
+<div class="loading-overlay" id="loading">
+  <div class="spinner"></div>
+  <div class="loading-text">Cargando...</div>
+</div>
+
+<!-- Auth -->
+<div class="auth-screen" id="auth-screen" style="display:none">
+  <div class="auth-card">
+    <div class="auth-logo">🧀</div>
+    <div class="auth-title">Seguimiento Producción</div>
+    <div class="auth-sub">Inversiones Peniel — Planta Mosquera<br>Inicia sesión con tu cuenta de Google para continuar.</div>
+    <div id="g_id_onload"
+      data-client_id="472930002147-of08gfnkeuu57gsbpgl48g5b20bvk3sp.apps.googleusercontent.com"
+      data-callback="handleCredential"
+      data-auto_prompt="false">
+    </div>
+    <div class="g_id_signin"
+      data-type="standard"
+      data-size="large"
+      data-theme="outline"
+      data-text="signin_with"
+      data-shape="rectangular"
+      data-logo_alignment="left"
+      data-width="300">
+    </div>
+  </div>
+</div>
+
+<!-- App -->
+<div class="app" id="app-root" style="display:none">
+
+  <!-- Sidebar -->
+  <div class="sidebar">
+    <div class="sidebar-logo">
+      <div class="sidebar-logo-title">🧀 Seguimiento Producción</div>
+      <div class="sidebar-logo-sub">Planta Mosquera · 2026</div>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Producción</div>
+      <button class="nav-item active" onclick="showView('nuevo')" id="nav-nuevo">
+        <span class="nav-icon">＋</span> Nuevo pedido
+      </button>
+      <button class="nav-item" onclick="showView('historial')" id="nav-historial">
+        <span class="nav-icon">☰</span> Historial diario
+      </button>
+    </div>
+
+    <div class="sidebar-section">
+      <div class="sidebar-section-label">Reportes</div>
+      <button class="nav-item" onclick="showView('resumen')" id="nav-resumen">
+        <span class="nav-icon">◎</span> Por cliente
+      </button>
+      <button class="nav-item" onclick="showView('cintas')" id="nav-cintas">
+        <span class="nav-icon">⊟</span> Búsqueda de cintas
+      </button>
+    </div>
+
+    <div class="sidebar-bottom">
+      <div class="user-chip">
+        <div class="user-avatar" id="user-avatar">?</div>
+        <div class="user-name" id="user-name">...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-left">
+        <div class="topbar-title" id="topbar-title">Nuevo pedido</div>
+        <div class="topbar-date" id="topbar-date"></div>
+      </div>
+      <div class="topbar-right">
+        <div id="sync-status" class="text-muted" style="font-size:11px"></div>
+        <button class="btn btn-sm" onclick="loadData()">↻ Actualizar</button>
+      </div>
+    </div>
+
+    <!-- ═══ VIEW: NUEVO PEDIDO ═══ -->
+    <div class="view active" id="view-nuevo">
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Información del pedido</span>
+          <span class="card-sub">Campos obligatorios: Cliente, Producto, Fecha entrega</span>
+        </div>
+        <div class="card-body">
+          <div class="form-grid form-grid-3 section-gap">
+            <div class="field">
+              <label>Cliente *</label>
+              <input id="f-cliente" placeholder="Ej: DON MAIZ" list="list-clientes" autocomplete="off">
+              <datalist id="list-clientes"></datalist>
+            </div>
+            <div class="field">
+              <label>Producto *</label>
+              <input id="f-producto" placeholder="Ej: Queso Mozarella" list="list-productos" autocomplete="off">
+              <datalist id="list-productos"></datalist>
+            </div>
+            <div class="field">
+              <label>Fecha de entrega *</label>
+              <input id="f-fecha" type="date">
+            </div>
+          </div>
+          <div class="form-grid form-grid-4 section-gap">
+            <div class="field">
+              <label>Presentación</label>
+              <select id="f-pres">
+                <option value="">Seleccionar...</option>
+                <option>BLOQUE</option><option>TAJADO</option>
+                <option>DEDOS</option><option>PORCIÓN</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Peso (g)</label>
+              <input id="f-peso" type="number" placeholder="Ej: 2500">
+            </div>
+            <div class="field">
+              <label>Menú / Referencia</label>
+              <input id="f-menu" placeholder="Ej: PE-11/SE-1">
+            </div>
+            <div class="field">
+              <label>Operador</label>
+              <input id="f-operador" placeholder="Nombre">
+            </div>
+          </div>
+          <div class="form-grid form-grid-4">
+            <div class="field">
+              <label>Cantidad solicitada</label>
+              <input id="f-cantidad" type="number" placeholder="Unidades">
+            </div>
+            <div class="field">
+              <label>Fecha fabricación</label>
+              <input id="f-fab" type="date">
+            </div>
+            <div class="field">
+              <label>L / F. Vto.</label>
+              <input id="f-vto" type="date">
+            </div>
+            <div class="field">
+              <label>Marca</label>
+              <input id="f-marca" placeholder="Ej: GUALI">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Datos de producción</span>
+          <span class="card-sub">Del seguimiento de corte y empaque</span>
+        </div>
+        <div class="card-body">
+          <div class="form-grid form-grid-4 section-gap">
+            <div class="field">
+              <label>Operación realizada</label>
+              <select id="f-operacion">
+                <option value="">Seleccionar...</option>
+                <option>CORTE Y EMPAQUE</option>
+                <option>EMPAQUE</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Tipo de sellado</label>
+              <select id="f-sellado">
+                <option value="">Seleccionar...</option>
+                <option>SELLADO MANUAL</option>
+                <option>TERMOFORMADORA</option>
+                <option>EMPACADORA AL VACIO</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Gramaje (g)</label>
+              <input id="f-gramaje" type="number" placeholder="Ej: 43">
+            </div>
+            <div class="field">
+              <label>Gramaje bloque (g)</label>
+              <input id="f-gram-bloque" type="number" placeholder="Ej: 3300">
+            </div>
+          </div>
+          <div class="form-grid form-grid-4 section-gap">
+            <div class="field">
+              <label>Bloques gastados</label>
+              <input id="f-bloques" type="number" placeholder="Cantidad">
+            </div>
+            <div class="field">
+              <label>Unidades obtenidas</label>
+              <input id="f-unidades" type="number" placeholder="Cantidad">
+            </div>
+            <div class="field">
+              <label>Retal (libras)</label>
+              <input id="f-retal" type="number" step="0.01" placeholder="0.00">
+            </div>
+            <div class="field">
+              <label>Tipo de queso</label>
+              <input id="f-tipo-queso" placeholder="Ej: Doble Crema">
+            </div>
+          </div>
+          <div class="form-grid form-grid-4">
+            <div class="field">
+              <label>Lote bloque empleado</label>
+              <input id="f-lote" type="date">
+            </div>
+            <div class="field">
+              <label>F/Vto. 2</label>
+              <input id="f-vto2" type="date">
+            </div>
+            <div class="field">
+              <label>F/Vto. 3</label>
+              <input id="f-vto3" type="date">
+            </div>
+            <div class="field">
+              <label>Observaciones</label>
+              <input id="f-obs" placeholder="Notas adicionales">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Cintas de producción</span>
+          <span class="card-sub">Se agregan conforme se trabaja cada día — el pedido queda abierto para editar</span>
+        </div>
+        <div class="card-body">
+          <div class="cintas-list" id="cintas-container"></div>
+          <button class="add-cinta" onclick="addCintaRow()" style="margin-top:10px">
+            <span style="font-size:16px;font-weight:300">+</span> Agregar día de corte / cinta
+          </button>
+        </div>
+      </div>
+
+      <div style="display:flex; justify-content:flex-end; gap:10px; padding-bottom:32px">
+        <button class="btn" onclick="limpiarForm()">Limpiar</button>
+        <button class="btn btn-primary" onclick="guardarPedido()" id="btn-guardar">
+          ✓ Guardar pedido
+        </button>
+      </div>
+    </div>
+
+    <!-- ═══ VIEW: HISTORIAL ═══ -->
+    <div class="view" id="view-historial">
+      <div class="metrics-grid" id="metrics-grid"></div>
+
+      <div class="filter-bar">
+        <input id="h-buscar" placeholder="🔍  Buscar cliente, producto..." oninput="renderHistorial()">
+        <select id="h-cliente" onchange="renderHistorial()">
+          <option value="">Todos los clientes</option>
+        </select>
+        <select id="h-mes" onchange="renderHistorial()">
+          <option value="">Todos los meses</option>
+        </select>
+        <select id="h-estado" onchange="renderHistorial()">
+          <option value="">Todos los estados</option>
+          <option value="ABIERTO">Abiertos</option>
+          <option value="CERRADO">Cerrados</option>
+        </select>
+      </div>
+
+      <div class="card" style="padding:0;overflow:hidden">
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Cliente</th>
+                <th>Producto</th>
+                <th>Pres.</th>
+                <th>F. Entrega</th>
+                <th style="text-align:right">Cant. Sol.</th>
+                <th style="text-align:right">Unidades</th>
+                <th style="text-align:right">Retal (lb)</th>
+                <th>Estado</th>
+                <th>Cintas</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="hist-body">
+              <tr><td colspan="10" class="empty-state"><div class="empty-state-icon">⟳</div><div class="empty-state-text">Cargando datos...</div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- ═══ VIEW: RESUMEN CLIENTE ═══ -->
+    <div class="view" id="view-resumen">
+      <div id="resumen-content">
+        <div class="empty-state"><div class="empty-state-icon">◎</div><div class="empty-state-text">Cargando resumen...</div></div>
+      </div>
+    </div>
+
+    <!-- ═══ VIEW: BÚSQUEDA CINTAS ═══ -->
+    <div class="view" id="view-cintas">
+      <div class="filter-bar">
+        <input id="c-buscar" placeholder="🔍  Buscar por código de cinta..." oninput="renderCintas()" style="flex:1">
+      </div>
+      <div class="card" style="padding:0;overflow:hidden">
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Código / Cinta / Cantidad</th>
+                <th>Cliente</th>
+                <th>Producto</th>
+                <th>Día de corte</th>
+                <th>Producto empleado</th>
+                <th>F. Entrega</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="cintas-body">
+              <tr><td colspan="7" class="empty-state"><div class="empty-state-text">Ingresa un código para buscar</div></td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<!-- Modal editar pedido -->
+<div class="modal-bg" id="modal-editar">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-titulo">Editar pedido</div>
+      <button class="btn-icon" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+    <div class="modal-footer">
+      <button class="btn" onclick="closeModal()">Cancelar</button>
+      <button class="btn btn-danger btn-sm" onclick="cambiarEstado()">
+        <span id="btn-estado-label">Marcar como cerrado</span>
+      </button>
+      <button class="btn btn-primary" onclick="guardarEdicion()">Guardar cambios</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast -->
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════════════════
+// CONFIG
+// ═══════════════════════════════════════════════════════════
+const SHEET_ID = '1iEtI6zBBNMMDMpt4f2l73UKe4tUmKRgBBbp8N7UHvhQ';
+const CLIENT_ID = '472930002147-of08gfnkeuu57gsbpgl48g5b20bvk3sp.apps.googleusercontent.com';
+const SCOPES = 'https://www.googleapis.com/auth/spreadsheets';
+const API_KEY = ''; // no se usa con OAuth
+
+let accessToken = null;
+let userInfo = null;
+let pedidos = [];
+let cintas = [];
+let cintaCount = 0;
+let editingId = null;
+let editCintaCount = 0;
+
+// ═══════════════════════════════════════════════════════════
+// AUTH
+// ═══════════════════════════════════════════════════════════
+function handleCredential(response) {
+  const payload = JSON.parse(atob(response.credential.split('.')[1]));
+  userInfo = payload;
+  document.getElementById('user-name').textContent = payload.name?.split(' ')[0] || payload.email;
+  document.getElementById('user-avatar').textContent = (payload.name || payload.email)[0].toUpperCase();
+
+  // Get access token via implicit flow
+  const params = new URLSearchParams({
+    client_id: CLIENT_ID,
+    redirect_uri: location.origin + location.pathname,
+    response_type: 'token',
+    scope: SCOPES,
+    prompt: 'none',
+    login_hint: payload.email,
+  });
+  window.location.href = 'https://accounts.google.com/o/oauth2/auth?' + params;
+}
+
+function checkTokenInHash() {
+  const hash = new URLSearchParams(window.location.hash.slice(1));
+  if (hash.get('access_token')) {
+    accessToken = hash.get('access_token');
+    history.replaceState(null, '', window.location.pathname);
+    showApp();
+    return true;
+  }
+  return false;
+}
+
+function showApp() {
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('auth-screen').style.display = 'none';
+  document.getElementById('app-root').style.display = 'flex';
+  const today = new Date();
+  document.getElementById('topbar-date').textContent = today.toLocaleDateString('es-CO', {
+    weekday: 'long', day: 'numeric', month: 'long'
+  });
+  document.getElementById('f-fecha').value = today.toISOString().split('T')[0];
+  loadData();
+}
+
+function showAuth() {
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('auth-screen').style.display = 'flex';
+}
+
+// ═══════════════════════════════════════════════════════════
+// SHEETS API
+// ═══════════════════════════════════════════════════════════
+async function sheetsGet(range) {
+  const r = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(range)}`,
+    { headers: { Authorization: 'Bearer ' + accessToken } }
+  );
+  if (!r.ok) throw new Error('Error leyendo Sheets: ' + r.status);
+  return r.json();
+}
+
+async function sheetsAppend(range, values) {
+  const r = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(range)}:append?valueInputOption=USER_ENTERED&insertDataOption=INSERT_ROWS`,
+    {
+      method: 'POST',
+      headers: { Authorization: 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ values })
+    }
+  );
+  if (!r.ok) throw new Error('Error escribiendo Sheets: ' + r.status);
+  return r.json();
+}
+
+async function sheetsUpdate(range, values) {
+  const r = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${encodeURIComponent(range)}?valueInputOption=USER_ENTERED`,
+    {
+      method: 'PUT',
+      headers: { Authorization: 'Bearer ' + accessToken, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ values })
+    }
+  );
+  if (!r.ok) throw new Error('Error actualizando Sheets: ' + r.status);
+  return r.json();
+}
+
+async function sheetsFindRow(sheet, colIdx, value) {
+  const data = await sheetsGet(`${sheet}!A:A`);
+  const rows = data.values || [];
+  for (let i = 1; i < rows.length; i++) {
+    if (String(rows[i][colIdx] || '').trim() === String(value).trim()) return i + 1;
+  }
+  return -1;
+}
+
+// ═══════════════════════════════════════════════════════════
+// LOAD DATA
+// ═══════════════════════════════════════════════════════════
+async function loadData() {
+  setSyncStatus('Sincronizando...');
+  try {
+    const [pData, cData] = await Promise.all([
+      sheetsGet('PEDIDOS!A2:AJ5000'),
+      sheetsGet('CINTAS!A2:F5000'),
+    ]);
+
+    const pRows = pData.values || [];
+    pedidos = pRows.filter(r => r[0]).map(r => ({
+      id: r[0], cliente: r[1], menu: r[2], fecha_entrega: r[3],
+      producto: r[4], presentacion: r[5], peso: r[6], operador: r[7],
+      cantidad: r[8], fecha_fab: r[9], fecha_vto: r[10], marca: r[11],
+      mes: r[12], fecha_corte: r[13], operacion: r[14], sellado: r[15],
+      gramaje: r[16], gram_bloque: r[17], bloques: r[18], unidades: r[19],
+      libras_ent: r[20], kilos_ent: r[21], libras_taj: r[22], retal: r[23],
+      pct_retal: r[24], diferencia: r[25], pct_dif: r[26], tipo_queso: r[27],
+      lote: r[28], vto2: r[29], vto3: r[30], observaciones: r[31],
+      estado: r[32] || 'ABIERTO', fecha_creacion: r[33], ultima_edicion: r[34],
+    }));
+
+    const cRows = cData.values || [];
+    cintas = cRows.filter(r => r[0]).map(r => ({
+      id_cinta: r[0], id_pedido: r[1], dia_corte: r[2],
+      prod_empleado: r[3], codigo: r[4], fecha_reg: r[5],
+    }));
+
+    // Populate datalists
+    const clientes = [...new Set(pedidos.map(p => p.cliente).filter(Boolean))].sort();
+    const prods = [...new Set(pedidos.map(p => p.producto).filter(Boolean))].sort();
+    document.getElementById('list-clientes').innerHTML = clientes.map(c => `<option value="${c}">`).join('');
+    document.getElementById('list-productos').innerHTML = prods.map(p => `<option value="${p}">`).join('');
+
+    setSyncStatus('Actualizado ' + new Date().toLocaleTimeString('es-CO', {hour:'2-digit',minute:'2-digit'}));
+
+    if (document.getElementById('view-historial').classList.contains('active')) renderHistorial();
+    if (document.getElementById('view-resumen').classList.contains('active')) renderResumen();
+
+  } catch(e) {
+    setSyncStatus('Error al sincronizar');
+    toast('Error al leer datos: ' + e.message, 'error');
+  }
+}
+
+function setSyncStatus(msg) {
+  document.getElementById('sync-status').textContent = msg;
+}
+
+// ═══════════════════════════════════════════════════════════
+// NAVIGATION
+// ═══════════════════════════════════════════════════════════
+function showView(v) {
+  document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
+  document.getElementById('view-' + v).classList.add('active');
+  document.getElementById('nav-' + v).classList.add('active');
+  const titles = {
+    nuevo: 'Nuevo pedido', historial: 'Historial diario',
+    resumen: 'Resumen por cliente', cintas: 'Búsqueda de cintas'
+  };
+  document.getElementById('topbar-title').textContent = titles[v] || v;
+  if (v === 'historial') renderHistorial();
+  if (v === 'resumen') renderResumen();
+  if (v === 'cintas') renderCintas();
+}
+
+// ═══════════════════════════════════════════════════════════
+// CINTA ROWS (formulario)
+// ═══════════════════════════════════════════════════════════
+function addCintaRow(data, containerId, counterRef) {
+  const container = document.getElementById(containerId || 'cintas-container');
+  const n = ++cintaCount;
+  const div = document.createElement('div');
+  div.className = 'cinta-item';
+  div.id = 'cinta-' + n;
+  div.innerHTML = `
+    <div class="cinta-num">${n}</div>
+    <div class="field">
+      <label>Día de corte/empaque</label>
+      <input id="c-dia-${n}" placeholder="Ej: Lunes 23" value="${data?.dia_corte||''}">
+    </div>
+    <div class="field">
+      <label>Producto empleado (bloque)</label>
+      <input id="c-prod-${n}" placeholder="Ej: Bloque 23-03-2026" value="${data?.prod_empleado||''}">
+    </div>
+    <div class="field">
+      <label>Código / Cinta / Cantidad</label>
+      <input id="c-cod-${n}" placeholder="Ej: 18442A. 1 Azul = 4,200 Uds" value="${data?.codigo||''}" class="mono">
+    </div>
+    <button class="btn-icon" onclick="this.closest('.cinta-item').remove()" title="Quitar" style="align-self:flex-end;margin-bottom:1px;color:var(--danger)">✕</button>`;
+  container.appendChild(div);
+}
+
+function getCintas() {
+  return Array.from(document.querySelectorAll('#cintas-container .cinta-item')).map(item => {
+    const n = item.id.split('-')[1];
+    return {
+      dia_corte: document.getElementById('c-dia-' + n)?.value?.trim() || '',
+      prod_empleado: document.getElementById('c-prod-' + n)?.value?.trim() || '',
+      codigo: document.getElementById('c-cod-' + n)?.value?.trim() || '',
+    };
+  }).filter(c => c.dia_corte || c.codigo);
+}
+
+// ═══════════════════════════════════════════════════════════
+// GUARDAR PEDIDO
+// ═══════════════════════════════════════════════════════════
+async function guardarPedido() {
+  const cliente = document.getElementById('f-cliente').value.trim();
+  const producto = document.getElementById('f-producto').value.trim();
+  const fecha = document.getElementById('f-fecha').value;
+  if (!cliente || !producto || !fecha) {
+    toast('Completa los campos obligatorios: Cliente, Producto y Fecha de entrega', 'error');
+    return;
+  }
+
+  const btn = document.getElementById('btn-guardar');
+  btn.disabled = true; btn.textContent = 'Guardando...';
+
+  try {
+    const now = new Date().toISOString();
+    const id = 'P' + Date.now();
+    const mes = fecha ? new Date(fecha + 'T12:00:00').toLocaleString('es-CO', {month:'short'}).toUpperCase() : '';
+
+    const rowPedido = [
+      id, cliente,
+      document.getElementById('f-menu').value,
+      fecha, producto,
+      document.getElementById('f-pres').value,
+      document.getElementById('f-peso').value,
+      document.getElementById('f-operador').value,
+      document.getElementById('f-cantidad').value,
+      document.getElementById('f-fab').value,
+      document.getElementById('f-vto').value,
+      document.getElementById('f-marca').value,
+      mes, '', // fecha_corte (se llena desde cintas)
+      document.getElementById('f-operacion').value,
+      document.getElementById('f-sellado').value,
+      document.getElementById('f-gramaje').value,
+      document.getElementById('f-gram-bloque').value,
+      document.getElementById('f-bloques').value,
+      document.getElementById('f-unidades').value,
+      '', '', // libras_ent, kilos_ent (calculados)
+      '', // libras_taj
+      document.getElementById('f-retal').value,
+      '', '', // pct_retal, diferencia, pct_dif
+      '',
+      document.getElementById('f-tipo-queso').value,
+      document.getElementById('f-lote').value,
+      document.getElementById('f-vto2').value,
+      document.getElementById('f-vto3').value,
+      document.getElementById('f-obs').value,
+      'ABIERTO', now, now,
+    ];
+
+    await sheetsAppend('PEDIDOS!A:AJ', [rowPedido]);
+
+    const cintasNuevas = getCintas();
+    if (cintasNuevas.length > 0) {
+      const cRows = cintasNuevas.map((c, i) => [
+        id + '_C' + (i + 1), id, c.dia_corte, c.prod_empleado, c.codigo, now
+      ]);
+      await sheetsAppend('CINTAS!A:F', cRows);
+    }
+
+    toast('Pedido guardado correctamente ✓', 'success');
+    limpiarForm();
+    await loadData();
+  } catch(e) {
+    toast('Error al guardar: ' + e.message, 'error');
+  }
+
+  btn.disabled = false; btn.textContent = '✓ Guardar pedido';
+}
+
+function limpiarForm() {
+  ['f-cliente','f-producto','f-menu','f-peso','f-cantidad','f-fab',
+   'f-vto','f-marca','f-operador','f-gramaje','f-gram-bloque',
+   'f-bloques','f-unidades','f-retal','f-tipo-queso','f-lote',
+   'f-vto2','f-vto3','f-obs'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  document.getElementById('f-fecha').value = new Date().toISOString().split('T')[0];
+  document.getElementById('f-pres').value = '';
+  document.getElementById('f-operacion').value = '';
+  document.getElementById('f-sellado').value = '';
+  document.getElementById('cintas-container').innerHTML = '';
+  cintaCount = 0;
+}
+
+// ═══════════════════════════════════════════════════════════
+// HISTORIAL
+// ═══════════════════════════════════════════════════════════
+function renderHistorial() {
+  const buscar = (document.getElementById('h-buscar').value || '').toLowerCase();
+  const filtCliente = document.getElementById('h-cliente').value;
+  const filtMes = document.getElementById('h-mes').value;
+  const filtEstado = document.getElementById('h-estado').value;
+
+  // Update filter dropdowns
+  const clientes = [...new Set(pedidos.map(p => p.cliente).filter(Boolean))].sort();
+  const selC = document.getElementById('h-cliente');
+  const curC = selC.value;
+  selC.innerHTML = '<option value="">Todos los clientes</option>' +
+    clientes.map(c => `<option${c === curC ? ' selected' : ''}>${c}</option>`).join('');
+
+  const meses = [...new Set(pedidos.map(p => p.fecha_entrega?.slice(0,7)).filter(Boolean))].sort().reverse();
+  const selM = document.getElementById('h-mes');
+  const curM = selM.value;
+  selM.innerHTML = '<option value="">Todos los meses</option>' +
+    meses.map(m => `<option value="${m}"${m === curM ? ' selected' : ''}>${m}</option>`).join('');
+
+  const fil = pedidos.filter(p => {
+    if (filtCliente && p.cliente !== filtCliente) return false;
+    if (filtMes && !p.fecha_entrega?.startsWith(filtMes)) return false;
+    if (filtEstado && p.estado !== filtEstado) return false;
+    if (buscar && !`${p.cliente} ${p.producto} ${p.id}`.toLowerCase().includes(buscar)) return false;
+    return true;
+  }).sort((a,b) => (b.fecha_entrega||'').localeCompare(a.fecha_entrega||''));
+
+  // Metrics
+  const totCintas = fil.reduce((a,p) => a + cintas.filter(c => c.id_pedido === p.id).length, 0);
+  const totUnid = fil.reduce((a,p) => a + (parseFloat(p.unidades)||0), 0);
+  const totRetal = fil.reduce((a,p) => a + (parseFloat(p.retal)||0), 0);
+  const abiertos = fil.filter(p => p.estado === 'ABIERTO').length;
+
+  document.getElementById('metrics-grid').innerHTML = `
+    <div class="metric-card">
+      <div class="metric-label">Pedidos</div>
+      <div class="metric-value">${fil.length}</div>
+      <div class="metric-sub">${abiertos} abiertos</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Cintas totales</div>
+      <div class="metric-value">${totCintas}</div>
+      <div class="metric-sub">días de corte</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Unidades obtenidas</div>
+      <div class="metric-value">${totUnid.toLocaleString('es-CO')}</div>
+      <div class="metric-sub">unidades</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Retal total</div>
+      <div class="metric-value" style="${totRetal>0?'color:var(--danger)':''}">${totRetal.toFixed(1)} lb</div>
+      <div class="metric-sub">libras de retal</div>
+    </div>`;
+
+  const pBadge = { BLOQUE:'badge-blue', TAJADO:'badge-green', DEDOS:'badge-amber', 'PORCIÓN':'badge-red' };
+
+  const tbody = document.getElementById('hist-body');
+  if (!fil.length) {
+    tbody.innerHTML = `<tr><td colspan="10" class="empty-state"><div class="empty-state-icon">○</div><div class="empty-state-text">No hay registros con estos filtros</div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = fil.map(p => {
+    const pCintas = cintas.filter(c => c.id_pedido === p.id);
+    const bcls = pBadge[p.presentacion] || 'badge-gray';
+    const esAbierto = p.estado !== 'CERRADO';
+    const estadoHtml = esAbierto
+      ? `<span class="estado-badge estado-abierto"><span class="dot dot-abierto"></span>Abierto</span>`
+      : `<span class="estado-badge estado-cerrado"><span class="dot dot-cerrado"></span>Cerrado</span>`;
+    const retal = parseFloat(p.retal)||0;
+
+    const cintasRows = pCintas.map((c,i) => {
+      const isLast = i === pCintas.length - 1;
+      return `<tr class="row-cinta${isLast?' row-cinta-last':''}" data-pedido="${p.id}" style="display:none">
+        <td style="color:var(--text3);font-size:11px">↳ Día ${i+1}</td>
+        <td colspan="2" style="color:var(--text2)">${c.dia_corte}</td>
+        <td colspan="2" style="color:var(--text2)">${c.prod_empleado}</td>
+        <td colspan="3" class="mono" style="color:var(--text)">${c.codigo}</td>
+        <td></td>
+        <td></td>
+      </tr>`;
+    }).join('');
+
+    return `
+      <tr class="row-pedido">
+        <td><strong>${p.cliente}</strong></td>
+        <td>${p.producto}</td>
+        <td><span class="badge ${bcls}">${p.presentacion||'—'}</span></td>
+        <td style="color:var(--text2);font-size:12px">${fmtFecha(p.fecha_entrega)}</td>
+        <td style="text-align:right">${(parseFloat(p.cantidad)||0).toLocaleString('es-CO')}</td>
+        <td style="text-align:right">${(parseFloat(p.unidades)||0).toLocaleString('es-CO')}</td>
+        <td style="text-align:right;${retal>0?'color:var(--danger);font-weight:600':'color:var(--text3)'}">
+          ${retal>0 ? retal.toFixed(1) : '—'}
+        </td>
+        <td>${estadoHtml}</td>
+        <td>
+          ${pCintas.length > 0
+            ? `<button class="toggle-cintas-btn" onclick="toggleCintas('${p.id}')">${pCintas.length} cinta${pCintas.length!==1?'s':''}</button>`
+            : '<span class="text-muted" style="font-size:11px">Sin cintas</span>'}
+        </td>
+        <td>
+          <button class="btn btn-xs" onclick="abrirEditar('${p.id}')">Editar</button>
+        </td>
+      </tr>
+      ${cintasRows}`;
+  }).join('');
+}
+
+function toggleCintas(id) {
+  document.querySelectorAll(`.row-cinta[data-pedido="${id}"]`).forEach(r => {
+    r.style.display = r.style.display === 'none' ? '' : 'none';
+  });
+}
+
+// ═══════════════════════════════════════════════════════════
+// EDITAR PEDIDO (modal)
+// ═══════════════════════════════════════════════════════════
+function abrirEditar(id) {
+  editingId = id;
+  editCintaCount = 0;
+  const p = pedidos.find(x => x.id === id);
+  if (!p) return;
+
+  const pCintas = cintas.filter(c => c.id_pedido === id);
+  const esAbierto = p.estado !== 'CERRADO';
+
+  document.getElementById('modal-titulo').textContent = `${p.cliente} — ${p.producto}`;
+  document.getElementById('btn-estado-label').textContent = esAbierto ? 'Marcar como cerrado' : 'Reabrir pedido';
+
+  document.getElementById('modal-body').innerHTML = `
+    <div class="form-grid form-grid-3 section-gap">
+      <div class="field"><label>Cliente</label><input id="e-cliente" value="${p.cliente||''}"></div>
+      <div class="field"><label>Producto</label><input id="e-producto" value="${p.producto||''}"></div>
+      <div class="field"><label>Fecha entrega</label><input id="e-fecha" type="date" value="${p.fecha_entrega||''}"></div>
+    </div>
+    <div class="form-grid form-grid-4 section-gap">
+      <div class="field"><label>Presentación</label>
+        <select id="e-pres">
+          <option value="">—</option>
+          ${['BLOQUE','TAJADO','DEDOS','PORCIÓN'].map(o=>`<option${o===p.presentacion?' selected':''}>${o}</option>`).join('')}
+        </select>
+      </div>
+      <div class="field"><label>Peso (g)</label><input id="e-peso" type="number" value="${p.peso||''}"></div>
+      <div class="field"><label>Cantidad solicitada</label><input id="e-cantidad" type="number" value="${p.cantidad||''}"></div>
+      <div class="field"><label>Unidades obtenidas</label><input id="e-unidades" type="number" value="${p.unidades||''}"></div>
+    </div>
+    <div class="form-grid form-grid-4 section-gap">
+      <div class="field"><label>Gramaje (g)</label><input id="e-gramaje" type="number" value="${p.gramaje||''}"></div>
+      <div class="field"><label>Gramaje bloque</label><input id="e-gram-bloque" type="number" value="${p.gram_bloque||''}"></div>
+      <div class="field"><label>Bloques gastados</label><input id="e-bloques" type="number" value="${p.bloques||''}"></div>
+      <div class="field"><label>Retal (lb)</label><input id="e-retal" type="number" step="0.01" value="${p.retal||''}"></div>
+    </div>
+    <div class="form-grid form-grid-3 section-gap">
+      <div class="field"><label>Fecha fabricación</label><input id="e-fab" type="date" value="${p.fecha_fab||''}"></div>
+      <div class="field"><label>L / F. Vto.</label><input id="e-vto" type="date" value="${p.fecha_vto||''}"></div>
+      <div class="field"><label>Lote bloque</label><input id="e-lote" type="date" value="${p.lote||''}"></div>
+    </div>
+    <div class="field section-gap"><label>Observaciones</label><input id="e-obs" value="${p.observaciones||''}"></div>
+
+    <div class="divider"></div>
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div style="font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.05em">Cintas de producción</div>
+      <span style="font-size:11px;color:var(--text3)">Agrega días conforme se trabajan</span>
+    </div>
+    <div class="cintas-list" id="edit-cintas-container"></div>
+    <button class="add-cinta" onclick="addEditCinta()" style="margin-top:10px">
+      <span style="font-size:16px;font-weight:300">+</span> Agregar día de corte / cinta
+    </button>`;
+
+  // Render existing cintas
+  pCintas.forEach(c => addEditCinta(c));
+
+  document.getElementById('modal-editar').classList.add('open');
+}
+
+function addEditCinta(data) {
+  editCintaCount++;
+  const n = editCintaCount;
+  const container = document.getElementById('edit-cintas-container');
+  const div = document.createElement('div');
+  div.className = 'cinta-item';
+  div.id = 'ecinta-' + n;
+  div.dataset.cintaId = data?.id_cinta || '';
+  div.innerHTML = `
+    <div class="cinta-num">${n}</div>
+    <div class="field">
+      <label>Día de corte</label>
+      <input id="ec-dia-${n}" placeholder="Ej: Lunes 23" value="${data?.dia_corte||''}">
+    </div>
+    <div class="field">
+      <label>Producto empleado</label>
+      <input id="ec-prod-${n}" placeholder="Ej: Bloque 23-03-2026" value="${data?.prod_empleado||''}">
+    </div>
+    <div class="field">
+      <label>Código / Cinta / Cantidad</label>
+      <input id="ec-cod-${n}" placeholder="Ej: 18442A. 1 Azul = 4,200 Uds" value="${data?.codigo||''}" class="mono">
+    </div>
+    <button class="btn-icon" onclick="this.closest('.cinta-item').remove()" style="align-self:flex-end;margin-bottom:1px;color:var(--danger)">✕</button>`;
+  container.appendChild(div);
+}
+
+function closeModal() {
+  document.getElementById('modal-editar').classList.remove('open');
+  editingId = null;
+}
+
+async function guardarEdicion() {
+  if (!editingId) return;
+  const p = pedidos.find(x => x.id === editingId);
+  if (!p) return;
+
+  try {
+    // Find row in sheet
+    const data = await sheetsGet('PEDIDOS!A:A');
+    const rows = data.values || [];
+    let rowNum = -1;
+    for (let i = 1; i < rows.length; i++) {
+      if (rows[i][0] === editingId) { rowNum = i + 1; break; }
+    }
+    if (rowNum < 0) { toast('No se encontró el pedido en el Sheet', 'error'); return; }
+
+    const now = new Date().toISOString();
+    const fecha = document.getElementById('e-fecha').value;
+    const mes = fecha ? new Date(fecha+'T12:00:00').toLocaleString('es-CO',{month:'short'}).toUpperCase() : p.mes;
+
+    const updatedRow = [
+      editingId,
+      document.getElementById('e-cliente').value,
+      p.menu, fecha,
+      document.getElementById('e-producto').value,
+      document.getElementById('e-pres').value,
+      document.getElementById('e-peso').value,
+      p.operador,
+      document.getElementById('e-cantidad').value,
+      document.getElementById('e-fab').value,
+      document.getElementById('e-vto').value,
+      p.marca, mes, p.fecha_corte, p.operacion, p.sellado,
+      document.getElementById('e-gramaje').value,
+      document.getElementById('e-gram-bloque').value,
+      document.getElementById('e-bloques').value,
+      document.getElementById('e-unidades').value,
+      p.libras_ent, p.kilos_ent, p.libras_taj,
+      document.getElementById('e-retal').value,
+      p.pct_retal, p.diferencia, p.pct_dif, p.tipo_queso,
+      document.getElementById('e-lote').value,
+      p.vto2, p.vto3,
+      document.getElementById('e-obs').value,
+      p.estado, p.fecha_creacion, now,
+    ];
+
+    await sheetsUpdate(`PEDIDOS!A${rowNum}:AJ${rowNum}`, [updatedRow]);
+
+    // Handle cintas: append new ones (existing ones stay)
+    const editItems = document.querySelectorAll('#edit-cintas-container .cinta-item');
+    const existingIds = cintas.filter(c => c.id_pedido === editingId).map(c => c.id_cinta);
+    const newCintas = [];
+    editItems.forEach((item, i) => {
+      const n = item.id.split('-')[1];
+      const cintaId = item.dataset.cintaId;
+      if (!cintaId) {
+        newCintas.push([
+          editingId + '_C' + (existingIds.length + newCintas.length + 1),
+          editingId,
+          document.getElementById('ec-dia-' + n)?.value || '',
+          document.getElementById('ec-prod-' + n)?.value || '',
+          document.getElementById('ec-cod-' + n)?.value || '',
+          now,
+        ]);
+      }
+    });
+
+    if (newCintas.length > 0) {
+      await sheetsAppend('CINTAS!A:F', newCintas);
+    }
+
+    toast('Cambios guardados ✓', 'success');
+    closeModal();
+    await loadData();
+  } catch(e) {
+    toast('Error al guardar: ' + e.message, 'error');
+  }
+}
+
+async function cambiarEstado() {
+  if (!editingId) return;
+  const p = pedidos.find(x => x.id === editingId);
+  if (!p) return;
+  const nuevoEstado = p.estado === 'CERRADO' ? 'ABIERTO' : 'CERRADO';
+  try {
+    const data = await sheetsGet('PEDIDOS!A:A');
+    const rows = data.values || [];
+    let rowNum = -1;
+    for (let i = 1; i < rows.length; i++) {
+      if (rows[i][0] === editingId) { rowNum = i + 1; break; }
+    }
+    if (rowNum < 0) return;
+    await sheetsUpdate(`PEDIDOS!AG${rowNum}:AJ${rowNum}`, [[nuevoEstado, p.fecha_creacion, new Date().toISOString(), '']]);
+    toast(`Pedido marcado como ${nuevoEstado} ✓`, 'success');
+    closeModal();
+    await loadData();
+  } catch(e) {
+    toast('Error: ' + e.message, 'error');
+  }
+}
+
+// ═══════════════════════════════════════════════════════════
+// RESUMEN
+// ═══════════════════════════════════════════════════════════
+function renderResumen() {
+  const mapa = {};
+  pedidos.forEach(p => {
+    const k = p.cliente;
+    if (!mapa[k]) mapa[k] = { cliente: k, pedidos: 0, unidades: 0, retal: 0, cintas: 0, productos: new Set() };
+    mapa[k].pedidos++;
+    mapa[k].unidades += parseFloat(p.unidades)||0;
+    mapa[k].retal += parseFloat(p.retal)||0;
+    mapa[k].cintas += cintas.filter(c => c.id_pedido === p.id).length;
+    if (p.producto) mapa[k].productos.add(p.producto);
+  });
+  const rows = Object.values(mapa).sort((a,b) => b.unidades - a.unidades);
+
+  document.getElementById('resumen-content').innerHTML = `
+    <div class="card" style="padding:0;overflow:hidden">
+      <div class="card-header"><span class="card-title">Resumen por cliente</span></div>
+      <div class="table-wrap">
+        <table class="data-table">
+          <thead><tr>
+            <th>Cliente</th><th>Productos</th>
+            <th style="text-align:right">Pedidos</th>
+            <th style="text-align:right">Cintas</th>
+            <th style="text-align:right">Unidades</th>
+            <th style="text-align:right">Retal (lb)</th>
+          </tr></thead>
+          <tbody>${rows.map(r => `<tr>
+            <td><strong>${r.cliente}</strong></td>
+            <td style="font-size:12px;color:var(--text2)">${[...r.productos].join(', ')}</td>
+            <td style="text-align:right">${r.pedidos}</td>
+            <td style="text-align:right">${r.cintas}</td>
+            <td style="text-align:right">${r.unidades.toLocaleString('es-CO')}</td>
+            <td style="text-align:right;${r.retal>0?'color:var(--danger);font-weight:600':''}">${r.retal.toFixed(1)}</td>
+          </tr>`).join('')}</tbody>
+        </table>
+      </div>
+    </div>`;
+}
+
+// ═══════════════════════════════════════════════════════════
+// BÚSQUEDA CINTAS
+// ═══════════════════════════════════════════════════════════
+function renderCintas() {
+  const buscar = (document.getElementById('c-buscar').value || '').toLowerCase().trim();
+  const tbody = document.getElementById('cintas-body');
+
+  if (!buscar) {
+    tbody.innerHTML = `<tr><td colspan="7" class="empty-state"><div class="empty-state-text">Ingresa un código o texto para buscar</div></td></tr>`;
+    return;
+  }
+
+  const fil = cintas.filter(c => c.codigo?.toLowerCase().includes(buscar) || c.dia_corte?.toLowerCase().includes(buscar));
+
+  if (!fil.length) {
+    tbody.innerHTML = `<tr><td colspan="7" class="empty-state"><div class="empty-state-text">Sin resultados para "${buscar}"</div></td></tr>`;
+    return;
+  }
+
+  tbody.innerHTML = fil.map(c => {
+    const p = pedidos.find(x => x.id === c.id_pedido);
+    return `<tr>
+      <td class="mono" style="font-size:12px">${c.codigo}</td>
+      <td>${p?.cliente||c.id_pedido}</td>
+      <td>${p?.producto||'—'}</td>
+      <td>${c.dia_corte}</td>
+      <td>${c.prod_empleado}</td>
+      <td style="color:var(--text2);font-size:12px">${fmtFecha(p?.fecha_entrega)}</td>
+      <td>${p ? `<button class="btn btn-xs" onclick="abrirEditar('${p.id}')">Ver pedido</button>` : ''}</td>
+    </tr>`;
+  }).join('');
+}
+
+// ═══════════════════════════════════════════════════════════
+// UTILS
+// ═══════════════════════════════════════════════════════════
+function fmtFecha(d) {
+  if (!d) return '—';
+  try {
+    return new Date(d + 'T12:00:00').toLocaleDateString('es-CO', { day:'2-digit', month:'short', year:'2-digit' });
+  } catch { return d; }
+}
+
+function toast(msg, type = 'success') {
+  const el = document.getElementById('toast');
+  el.textContent = msg;
+  el.className = `toast toast-${type} show`;
+  setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+// Close modal on bg click
+document.getElementById('modal-editar').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+
+// ═══════════════════════════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════════════════════════
+window.addEventListener('load', () => {
+  if (!checkTokenInHash()) {
+    setTimeout(() => {
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('auth-screen').style.display = 'flex';
+    }, 1500);
+  }
+});
+</script>
+</body>
+</html>
