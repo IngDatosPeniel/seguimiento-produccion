@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
-<script src="https://accounts.google.com/gsi/client" async defer></script>
+<script src="https://accounts.google.com/gsi/client"></script>
 <style>
 :root {
   --bg: #F7F6F2;
@@ -452,20 +452,10 @@ table.data-table {
     <div class="auth-logo">🧀</div>
     <div class="auth-title">Seguimiento Producción</div>
     <div class="auth-sub">Inversiones Peniel — Planta Mosquera<br>Inicia sesión con tu cuenta de Google para continuar.</div>
-    <div id="g_id_onload"
-      data-client_id="472930002147-of08gfnkeuu57gsbpgl48g5b20bvk3sp.apps.googleusercontent.com"
-      data-callback="handleCredential"
-      data-auto_prompt="false">
-    </div>
-    <div class="g_id_signin"
-      data-type="standard"
-      data-size="large"
-      data-theme="outline"
-      data-text="signin_with"
-      data-shape="rectangular"
-      data-logo_alignment="left"
-      data-width="300">
-    </div>
+    <button class="btn btn-primary" id="btn-login" onclick="iniciarLogin()" style="width:100%;justify-content:center;padding:12px;font-size:14px;margin-top:8px">
+      Iniciar sesión con Google
+    </button>
+    <div id="auth-error" style="margin-top:12px;font-size:12px;color:var(--danger);display:none"></div>
   </div>
 </div>
 
@@ -789,7 +779,7 @@ table.data-table {
 // ═══════════════════════════════════════════════════════════
 const SHEET_ID = '1iEtI6zBBNMMDMpt4f2l73UKe4tUmKRgBBbp8N7UHvhQ';
 const CLIENT_ID = '472930002147-of08gfnkeuu57gsbpgl48g5b20bvk3sp.apps.googleusercontent.com';
-const SCOPES = 'https://www.googleapis.com/auth/spreadsheets';
+const SCOPES = 'https://www.googleapis.com/auth/spreadsheets https://www.googleapis.com/auth/userinfo.profile';
 const API_KEY = ''; // no se usa con OAuth
 
 let accessToken = null;
@@ -801,35 +791,47 @@ let editingId = null;
 let editCintaCount = 0;
 
 // ═══════════════════════════════════════════════════════════
-// AUTH
+// AUTH — Google Identity Services Token Client
 // ═══════════════════════════════════════════════════════════
-function handleCredential(response) {
-  const payload = JSON.parse(atob(response.credential.split('.')[1]));
-  userInfo = payload;
-  document.getElementById('user-name').textContent = payload.name?.split(' ')[0] || payload.email;
-  document.getElementById('user-avatar').textContent = (payload.name || payload.email)[0].toUpperCase();
+let tokenClient = null;
 
-  // Get access token via implicit flow
-  const params = new URLSearchParams({
-    client_id: CLIENT_ID,
-    redirect_uri: location.origin + location.pathname,
-    response_type: 'token',
-    scope: SCOPES,
-    prompt: 'none',
-    login_hint: payload.email,
-  });
-  window.location.href = 'https://accounts.google.com/o/oauth2/auth?' + params;
+function iniciarLogin() {
+  const errEl = document.getElementById('auth-error');
+  errEl.style.display = 'none';
+  if (!tokenClient) {
+    errEl.textContent = 'Error: Google no cargó. Recarga la página.';
+    errEl.style.display = 'block';
+    return;
+  }
+  tokenClient.requestAccessToken({ prompt: 'consent' });
 }
 
-function checkTokenInHash() {
-  const hash = new URLSearchParams(window.location.hash.slice(1));
-  if (hash.get('access_token')) {
-    accessToken = hash.get('access_token');
-    history.replaceState(null, '', window.location.pathname);
-    showApp();
-    return true;
-  }
-  return false;
+function initTokenClient() {
+  tokenClient = google.accounts.oauth2.initTokenClient({
+    client_id: CLIENT_ID,
+    scope: SCOPES,
+    callback: (tokenResponse) => {
+      if (tokenResponse.error) {
+        document.getElementById('auth-error').textContent = 'Error: ' + tokenResponse.error;
+        document.getElementById('auth-error').style.display = 'block';
+        return;
+      }
+      accessToken = tokenResponse.access_token;
+      // Get user info
+      fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+        headers: { Authorization: 'Bearer ' + accessToken }
+      }).then(r => r.json()).then(info => {
+        userInfo = info;
+        const name = info.name || info.email || 'Usuario';
+        document.getElementById('user-name').textContent = name.split(' ')[0];
+        document.getElementById('user-avatar').textContent = name[0].toUpperCase();
+      }).catch(() => {
+        document.getElementById('user-name').textContent = 'Usuario';
+        document.getElementById('user-avatar').textContent = 'U';
+      });
+      showApp();
+    },
+  });
 }
 
 function showApp() {
@@ -1498,14 +1500,29 @@ document.getElementById('modal-editar').addEventListener('click', function(e) {
 // ═══════════════════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════════════════
-window.addEventListener('load', () => {
-  if (!checkTokenInHash()) {
-    setTimeout(() => {
+window.onload = () => {
+  // Wait for GIS library
+  const waitForGoogle = setInterval(() => {
+    if (window.google && google.accounts && google.accounts.oauth2) {
+      clearInterval(waitForGoogle);
+      initTokenClient();
       document.getElementById('loading').style.display = 'none';
       document.getElementById('auth-screen').style.display = 'flex';
-    }, 1500);
-  }
-});
+    }
+  }, 100);
+  // Timeout fallback
+  setTimeout(() => {
+    clearInterval(waitForGoogle);
+    if (!accessToken) {
+      document.getElementById('loading').style.display = 'none';
+      document.getElementById('auth-screen').style.display = 'flex';
+      if (!tokenClient) {
+        document.getElementById('auth-error').textContent = 'No se pudo cargar Google. Verifica tu conexión y recarga.';
+        document.getElementById('auth-error').style.display = 'block';
+      }
+    }
+  }, 5000);
+};
 </script>
 </body>
 </html>
