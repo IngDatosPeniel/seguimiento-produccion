@@ -18,9 +18,9 @@
   --text: #1A1814;
   --text2: #6B6760;
   --text3: #9E9B96;
-  --accent: #1B4332;
-  --accent-light: #D8F3DC;
-  --accent-mid: #40916C;
+  --accent: #1b354a;
+  --accent-light: #e8eef3;
+  --accent-mid: #2d5a7b;
   --danger: #9B2335;
   --danger-light: #FDECEA;
   --warn: #7D4F00;
@@ -140,7 +140,7 @@ body {
   background: var(--accent); color: #fff;
   border-color: var(--accent);
 }
-.btn-primary:hover { background: #143327; border-color: #143327; }
+.btn-primary:hover { background: #122438; border-color: #122438; }
 
 .btn-danger { background: var(--danger-light); color: var(--danger); border-color: #f5c6cb; }
 .btn-danger:hover { background: #f9d2d6; }
@@ -522,17 +522,17 @@ table.data-table {
           <div class="form-grid form-grid-3 section-gap">
             <div class="field">
               <label>Cliente *</label>
-              <input id="f-cliente" placeholder="Ej: DON MAIZ" list="list-clientes" autocomplete="off">
-              <datalist id="list-clientes">
-                <option value="DON MAIZ">
-                <option value="D1">
-                <option value="JENNOS">
-                <option value="PUNTO DE VENTA">
-                <option value="SED">
-                <option value="NUTRIMOS">
-                <option value="BIMBO">
-                <option value="THEARION">
-              </datalist>
+              <select id="f-cliente">
+                <option value="">Seleccionar cliente...</option>
+                <option>DON MAIZ</option>
+                <option>D1</option>
+                <option>JENNOS</option>
+                <option>PUNTO DE VENTA</option>
+                <option>SED</option>
+                <option>NUTRIMOS</option>
+                <option>BIMBO</option>
+                <option>THEARION</option>
+              </select>
             </div>
             <div class="field">
               <label>Producto *</label>
@@ -709,13 +709,13 @@ table.data-table {
 
       <div class="card">
         <div class="card-header">
-          <span class="card-title">Cintas de producción</span>
+          <span class="card-title">Día de corte y/o empaque</span>
           <span class="card-sub">Se agregan conforme se trabaja cada día — el pedido queda abierto para editar</span>
         </div>
         <div class="card-body">
           <div class="cintas-list" id="cintas-container"></div>
           <button class="add-cinta" onclick="addCintaRow()" style="margin-top:10px">
-            <span style="font-size:16px;font-weight:300">+</span> Agregar día de corte / cinta
+            <span style="font-size:16px;font-weight:300">+</span> Agregar día de corte
           </button>
         </div>
       </div>
@@ -989,7 +989,7 @@ async function loadData() {
     // Populate datalists
     const clientes = [...new Set(pedidos.map(p => p.cliente).filter(Boolean))].sort();
     const prods = [...new Set(pedidos.map(p => p.producto).filter(Boolean))].sort();
-    document.getElementById('list-clientes').innerHTML = clientes.map(c => `<option value="${c}">`).join('');
+    // list-clientes no longer used (now a select)
     document.getElementById('list-productos').innerHTML = prods.map(p => `<option value="${p}">`).join('');
 
     setSyncStatus('Actualizado ' + new Date().toLocaleTimeString('es-CO', {hour:'2-digit',minute:'2-digit'}));
@@ -1039,7 +1039,7 @@ function addCintaRow(data, containerId, counterRef) {
     <div class="cinta-num">${n}</div>
     <div class="field">
       <label>Día de corte/empaque</label>
-      <input id="c-dia-${n}" placeholder="Ej: Lunes 23" value="${data?.dia_corte||''}">
+      <input id="c-dia-${n}" type="date" value="${data?.dia_corte||''}">
     </div>
     <div class="field">
       <label>Producto empleado (bloque)</label>
@@ -1184,17 +1184,22 @@ function calcularCampos() {
 }
 
 function limpiarForm() {
-  ['f-cliente','f-producto','f-menu','f-peso','f-cantidad','f-fab',
-   'f-vto','f-marca','f-operador','f-gramaje','f-gram-bloque',
+  ['f-producto','f-menu','f-peso','f-cantidad','f-fab',
+   'f-vto','f-operador','f-gramaje','f-gram-bloque',
    'f-bloques','f-unidades','f-retal','f-tipo-queso','f-lote',
-   'f-vto2','f-vto3','f-obs'].forEach(id => {
+   'f-vto2','f-vto3','f-obs',
+   'f-libras-ent','f-kilos-ent','f-libras-taj','f-pct-retal','f-diferencia','f-pct-dif'
+  ].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
   document.getElementById('f-fecha').value = new Date().toISOString().split('T')[0];
+  document.getElementById('f-cliente').value = '';
   document.getElementById('f-pres').value = '';
+  document.getElementById('f-marca').value = '';
   document.getElementById('f-operacion').value = '';
   document.getElementById('f-sellado').value = '';
+  document.getElementById('f-unidad-tipo').value = 'Unidades';
   document.getElementById('cintas-container').innerHTML = '';
   cintaCount = 0;
 }
@@ -1329,8 +1334,8 @@ function abrirEditar(id) {
   const pCintas = cintas.filter(c => c.id_pedido === id);
   const esAbierto = p.estado !== 'CERRADO';
 
-  document.getElementById('modal-titulo').textContent = `${p.cliente} — ${p.producto}`;
-  document.getElementById('btn-estado-label').textContent = esAbierto ? 'Marcar como cerrado' : 'Reabrir pedido';
+  document.getElementById('modal-titulo').textContent = `${p.cliente} — ${p.producto}` + (!esAbierto ? '  🔒 CERRADO' : '');
+  document.getElementById('btn-estado-label').textContent = esAbierto ? 'Cerrar pedido' : 'Reabrir pedido';
 
   document.getElementById('modal-body').innerHTML = `
     <div class="form-grid form-grid-3 section-gap">
@@ -1369,13 +1374,37 @@ function abrirEditar(id) {
     </div>
     <div class="cintas-list" id="edit-cintas-container"></div>
     <button class="add-cinta" onclick="addEditCinta()" style="margin-top:10px">
-      <span style="font-size:16px;font-weight:300">+</span> Agregar día de corte / cinta
+      <span style="font-size:16px;font-weight:300">+</span> Agregar día de corte
     </button>`;
 
   // Render existing cintas
   pCintas.forEach(c => addEditCinta(c));
 
   document.getElementById('modal-editar').classList.add('open');
+
+  // If closed, disable all inputs and hide save button
+  setTimeout(() => {
+    const isClosed = p.estado === 'CERRADO';
+    const modalBody = document.getElementById('modal-body');
+    const saveBtn = document.querySelector('.modal-footer .btn-primary');
+    const addCintaBtn = modalBody.querySelector('.add-cinta');
+    if (isClosed) {
+      modalBody.querySelectorAll('input, select, textarea, button.btn-icon').forEach(el => {
+        el.disabled = true;
+        el.style.opacity = '0.5';
+        el.style.cursor = 'not-allowed';
+      });
+      if (addCintaBtn) { addCintaBtn.disabled = true; addCintaBtn.style.opacity='0.5'; addCintaBtn.style.cursor='not-allowed'; }
+      if (saveBtn) saveBtn.style.display = 'none';
+      // Show notice
+      const notice = document.createElement('div');
+      notice.style.cssText = 'background:var(--warn-light);border:1px solid #ffe08a;border-radius:8px;padding:10px 14px;font-size:12px;color:var(--warn);margin-bottom:16px;display:flex;align-items:center;gap:8px';
+      notice.innerHTML = '<span style="font-size:16px">🔒</span> Este pedido está cerrado. Para editarlo, primero usa el botón <strong>Reabrir pedido</strong>.';
+      modalBody.insertBefore(notice, modalBody.firstChild);
+    } else {
+      if (saveBtn) saveBtn.style.display = '';
+    }
+  }, 50);
 }
 
 function addEditCinta(data) {
@@ -1391,7 +1420,7 @@ function addEditCinta(data) {
     <div class="cinta-num">${n}</div>
     <div class="field">
       <label>Día de corte</label>
-      <input id="ec-dia-${n}" placeholder="Ej: Lunes 23" value="${data?.dia_corte||''}">
+      <input id="ec-dia-${n}" type="date" value="${data?.dia_corte||''}">
     </div>
     <div class="field">
       <label>Producto empleado</label>
@@ -1426,6 +1455,10 @@ async function guardarEdicion() {
   if (!editingId) return;
   const p = pedidos.find(x => x.id === editingId);
   if (!p) return;
+  if (p.estado === 'CERRADO') {
+    toast('Este pedido está cerrado. Reabre el pedido para editarlo.', 'error');
+    return;
+  }
 
   try {
     // Find row in sheet
