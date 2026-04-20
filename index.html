@@ -661,8 +661,12 @@ table.data-table {
               <input id="f-unidades" type="number" oninput="calcularCampos()" placeholder="Cantidad">
             </div>
             <div class="field">
-              <label>Retal (libras)</label>
+              <label>Retal queso (libras)</label>
               <input id="f-retal" type="number" oninput="calcularCampos()" step="0.01" placeholder="0.00">
+            </div>
+            <div class="field" id="field-retal-bocadillo" style="display:none">
+              <label>Retal bocadillo (libras)</label>
+              <input id="f-retal-bocadillo" type="number" oninput="calcularCampos()" step="0.01" placeholder="0.00">
             </div>
             <div class="field">
               <label>Tipo de queso</label>
@@ -1006,7 +1010,7 @@ async function loadData() {
     const clientes = [...new Set(pedidos.map(p => p.cliente).filter(Boolean))].sort();
     const prods = [...new Set(pedidos.map(p => p.producto).filter(Boolean))].sort();
     // list-clientes no longer used (now a select)
-    document.getElementById('list-productos').innerHTML = prods.map(p => `<option value="${p}">`).join('');
+    // list-productos not used (now a select)
 
     setSyncStatus('Actualizado ' + new Date().toLocaleTimeString('es-CO', {hour:'2-digit',minute:'2-digit'}));
 
@@ -1050,7 +1054,7 @@ function addCintaRow(data, containerId, counterRef) {
   const div = document.createElement('div');
   div.className = 'cinta-item';
   div.id = 'cinta-' + n;
-  div.style.gridTemplateColumns = '28px 130px 150px 80px 70px 90px 1fr 32px';
+  div.style.gridTemplateColumns = '28px 110px 1fr 90px 90px 65px 75px 130px 32px';
   div.innerHTML = `
     <div class="cinta-num">${n}</div>
     <div class="field">
@@ -1456,7 +1460,7 @@ function addEditCinta(data) {
   div.className = 'cinta-item';
   div.id = 'ecinta-' + n;
   div.dataset.cintaId = data?.id_cinta || '';
-  div.style.gridTemplateColumns = '28px 130px 150px 80px 70px 90px 1fr 32px';
+  div.style.gridTemplateColumns = '28px 110px 1fr 90px 90px 65px 75px 130px 32px';
   div.innerHTML = `
     <div class="cinta-num">${n}</div>
     <div class="field">
