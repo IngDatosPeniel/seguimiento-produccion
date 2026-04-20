@@ -197,6 +197,15 @@ body {
   font-family: 'DM Sans', sans-serif;
   font-size: 13px;
   transition: border-color .15s, box-shadow .15s;
+  text-transform: uppercase;
+}
+.field input[type="date"],
+.field input[type="number"],
+.field input[readonly] {
+  text-transform: none;
+}
+.field select option {
+  text-transform: uppercase;
 }
 .field input:focus, .field select:focus, .field textarea:focus {
   outline: none;
@@ -536,8 +545,15 @@ table.data-table {
             </div>
             <div class="field">
               <label>Producto *</label>
-              <input id="f-producto" placeholder="Ej: Queso Mozarella" list="list-productos" autocomplete="off">
-              <datalist id="list-productos"></datalist>
+              <select id="f-producto" onchange="onProductoChange()">
+                <option value="">Seleccionar producto...</option>
+                <option>MOZARELLA</option>
+                <option>DOBLE CREMA</option>
+                <option>QUESO DOBLE CREMA (BOCADILLO)</option>
+                <option>QUESO CON BOCADILLO</option>
+                <option>CAMPESINO</option>
+                <option>PERA</option>
+              </select>
             </div>
             <div class="field">
               <label>Fecha de entrega *</label>
@@ -635,7 +651,7 @@ table.data-table {
               <input id="f-gram-bloque" type="number" oninput="calcularCampos()" placeholder="Ej: 3300">
             </div>
           </div>
-          <div class="form-grid form-grid-4 section-gap">
+          <div class="form-grid form-grid-3 section-gap">
             <div class="field">
               <label>Bloques gastados</label>
               <input id="f-bloques" type="number" oninput="calcularCampos()" placeholder="Cantidad">
@@ -983,7 +999,7 @@ async function loadData() {
     cintas = cRows.filter(r => r[0]).map(r => ({
       id_cinta: r[0], id_pedido: r[1], dia_corte: r[2],
       prod_empleado: r[3], codigo: r[4], cinta: r[5]||'',
-      cantidad_cinta: r[6]||'', obs_cinta: r[7]||'', fecha_reg: r[8]||'',
+      cantidad_cinta: r[6]||'', unidad_cinta: r[7]||'Unidades', obs_cinta: r[8]||'', fecha_reg: r[9]||'',
     }));
 
     // Populate datalists
@@ -1034,7 +1050,7 @@ function addCintaRow(data, containerId, counterRef) {
   const div = document.createElement('div');
   div.className = 'cinta-item';
   div.id = 'cinta-' + n;
-  div.style.gridTemplateColumns = '28px 140px 160px 90px 80px 110px 1fr 32px';
+  div.style.gridTemplateColumns = '28px 130px 150px 80px 70px 90px 1fr 32px';
   div.innerHTML = `
     <div class="cinta-num">${n}</div>
     <div class="field">
@@ -1055,10 +1071,18 @@ function addCintaRow(data, containerId, counterRef) {
     </div>
     <div class="field">
       <label>Cantidad</label>
-      <input id="c-cant-${n}" placeholder="Ej: 4,200 Uds" value="${data?.cantidad_cinta||''}">
+      <input id="c-cant-${n}" type="number" placeholder="0" value="${data?.cantidad_cinta||''}" style="text-transform:none">
     </div>
     <div class="field">
-      <label>Observación cinta</label>
+      <label>Unidad</label>
+      <select id="c-unidad-${n}">
+        <option value="Unidades"${(data?.unidad_cinta||'Unidades')==='Unidades'?' selected':''}>UNIDADES</option>
+        <option value="Kilos"${(data?.unidad_cinta||'')==='Kilos'?' selected':''}>KILOS</option>
+        <option value="Bloques"${(data?.unidad_cinta||'')==='Bloques'?' selected':''}>BLOQUES</option>
+      </select>
+    </div>
+    <div class="field">
+      <label>Observación</label>
       <input id="c-obs-${n}" placeholder="Notas..." value="${data?.obs_cinta||''}">
     </div>
     <button class="btn-icon" onclick="this.closest('.cinta-item').remove()" title="Quitar" style="align-self:flex-end;margin-bottom:1px;color:var(--danger)">✕</button>`;
@@ -1070,11 +1094,12 @@ function getCintas() {
     const n = item.id.split('-')[1];
     return {
       dia_corte: document.getElementById('c-dia-' + n)?.value?.trim() || '',
-      prod_empleado: document.getElementById('c-prod-' + n)?.value?.trim() || '',
-      codigo: document.getElementById('c-cod-' + n)?.value?.trim() || '',
-      cinta: document.getElementById('c-cinta-' + n)?.value?.trim() || '',
+      prod_empleado: (document.getElementById('c-prod-' + n)?.value?.trim() || '').toUpperCase(),
+      codigo: (document.getElementById('c-cod-' + n)?.value?.trim() || '').toUpperCase(),
+      cinta: (document.getElementById('c-cinta-' + n)?.value?.trim() || '').toUpperCase(),
       cantidad_cinta: document.getElementById('c-cant-' + n)?.value?.trim() || '',
-      obs_cinta: document.getElementById('c-obs-' + n)?.value?.trim() || '',
+      unidad_cinta: document.getElementById('c-unidad-' + n)?.value || 'Unidades',
+      obs_cinta: (document.getElementById('c-obs-' + n)?.value?.trim() || '').toUpperCase(),
     };
   }).filter(c => c.dia_corte || c.codigo);
 }
@@ -1121,6 +1146,7 @@ async function guardarPedido() {
       document.getElementById('f-kilos-ent').value,
       document.getElementById('f-libras-taj').value,
       document.getElementById('f-retal').value,
+      document.getElementById('f-retal-bocadillo')?.value || '',
       document.getElementById('f-pct-retal').value,
       document.getElementById('f-diferencia').value,
       document.getElementById('f-pct-dif').value,
@@ -1137,9 +1163,9 @@ async function guardarPedido() {
     const cintasNuevas = getCintas();
     if (cintasNuevas.length > 0) {
       const cRows = cintasNuevas.map((c, i) => [
-        id + '_C' + (i + 1), id, c.dia_corte, c.prod_empleado, c.codigo, c.cinta, c.cantidad_cinta, c.obs_cinta, now
+        id + '_C' + (i + 1), id, c.dia_corte, c.prod_empleado, c.codigo, c.cinta, c.cantidad_cinta, c.unidad_cinta, c.obs_cinta, now
       ]);
-      await sheetsAppend('CINTAS!A:I', cRows);
+      await sheetsAppend('CINTAS!A:J', cRows);
     }
 
     toast('Pedido guardado correctamente ✓', 'success');
@@ -1152,6 +1178,18 @@ async function guardarPedido() {
   btn.disabled = false; btn.textContent = '✓ Guardar pedido';
 }
 
+
+// ═══════════════════════════════════════════════════════════
+// PRODUCTO CHANGE
+// ═══════════════════════════════════════════════════════════
+function onProductoChange() {
+  const prod = document.getElementById('f-producto').value;
+  const bocadilloField = document.getElementById('field-retal-bocadillo');
+  const isBocadillo = prod === 'QUESO CON BOCADILLO' || prod === 'QUESO DOBLE CREMA (BOCADILLO)';
+  bocadilloField.style.display = isBocadillo ? '' : 'none';
+  if (!isBocadillo) document.getElementById('f-retal-bocadillo').value = '';
+  calcularCampos();
+}
 
 // ═══════════════════════════════════════════════════════════
 // CÁLCULOS AUTOMÁTICOS
@@ -1195,6 +1233,9 @@ function limpiarForm() {
   });
   document.getElementById('f-fecha').value = new Date().toISOString().split('T')[0];
   document.getElementById('f-cliente').value = '';
+  document.getElementById('f-producto').value = '';
+  document.getElementById('f-retal-bocadillo').value = '';
+  document.getElementById('field-retal-bocadillo').style.display = 'none';
   document.getElementById('f-pres').value = '';
   document.getElementById('f-marca').value = '';
   document.getElementById('f-operacion').value = '';
@@ -1415,7 +1456,7 @@ function addEditCinta(data) {
   div.className = 'cinta-item';
   div.id = 'ecinta-' + n;
   div.dataset.cintaId = data?.id_cinta || '';
-  div.style.gridTemplateColumns = '28px 140px 160px 90px 80px 110px 1fr 32px';
+  div.style.gridTemplateColumns = '28px 130px 150px 80px 70px 90px 1fr 32px';
   div.innerHTML = `
     <div class="cinta-num">${n}</div>
     <div class="field">
@@ -1658,6 +1699,16 @@ document.getElementById('modal-editar').addEventListener('click', function(e) {
 // ═══════════════════════════════════════════════════════════
 // INIT
 // ═══════════════════════════════════════════════════════════
+// Force uppercase on all text inputs
+document.addEventListener('input', function(e) {
+  const el = e.target;
+  if (el.tagName === 'INPUT' && el.type !== 'date' && el.type !== 'number' && !el.readOnly) {
+    const pos = el.selectionStart;
+    el.value = el.value.toUpperCase();
+    el.setSelectionRange(pos, pos);
+  }
+});
+
 window.onload = () => {
   // Wait for GIS library
   const waitForGoogle = setInterval(() => {
