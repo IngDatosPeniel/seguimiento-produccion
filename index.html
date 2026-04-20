@@ -523,7 +523,16 @@ table.data-table {
             <div class="field">
               <label>Cliente *</label>
               <input id="f-cliente" placeholder="Ej: DON MAIZ" list="list-clientes" autocomplete="off">
-              <datalist id="list-clientes"></datalist>
+              <datalist id="list-clientes">
+                <option value="DON MAIZ">
+                <option value="D1">
+                <option value="JENNOS">
+                <option value="PUNTO DE VENTA">
+                <option value="SED">
+                <option value="NUTRIMOS">
+                <option value="BIMBO">
+                <option value="THEARION">
+              </datalist>
             </div>
             <div class="field">
               <label>Producto *</label>
@@ -546,7 +555,7 @@ table.data-table {
             </div>
             <div class="field">
               <label>Peso (g)</label>
-              <input id="f-peso" type="number" placeholder="Ej: 2500">
+              <input id="f-peso" type="number" placeholder="Ej: 25">
             </div>
             <div class="field">
               <label>Menú / Referencia</label>
@@ -559,8 +568,15 @@ table.data-table {
           </div>
           <div class="form-grid form-grid-4">
             <div class="field">
+              <label>Unidad de cantidad</label>
+              <select id="f-unidad-tipo" onchange="actualizarPlaceholderCantidad()">
+                <option value="Unidades">Unidades</option>
+                <option value="Kilos">Kilos</option>
+              </select>
+            </div>
+            <div class="field">
               <label>Cantidad solicitada</label>
-              <input id="f-cantidad" type="number" placeholder="Unidades">
+              <input id="f-cantidad" type="number" placeholder="# Unidades">
             </div>
             <div class="field">
               <label>Fecha fabricación</label>
@@ -572,7 +588,13 @@ table.data-table {
             </div>
             <div class="field">
               <label>Marca</label>
-              <input id="f-marca" placeholder="Ej: GUALI">
+              <select id="f-marca">
+                <option value="">Seleccionar...</option>
+                <option>GUALI</option>
+                <option>LATTI</option>
+                <option>LATTERIA</option>
+                <option>QUESARTE</option>
+              </select>
             </div>
           </div>
         </div>
@@ -600,36 +622,71 @@ table.data-table {
                 <option>SELLADO MANUAL</option>
                 <option>TERMOFORMADORA</option>
                 <option>EMPACADORA AL VACIO</option>
+                <option>FLOW PACK</option>
+                <option>SELLADORA DE PEDAL</option>
               </select>
             </div>
             <div class="field">
               <label>Gramaje (g)</label>
-              <input id="f-gramaje" type="number" placeholder="Ej: 43">
+              <input id="f-gramaje" type="number" oninput="calcularCampos()" placeholder="Ej: 43">
             </div>
             <div class="field">
               <label>Gramaje bloque (g)</label>
-              <input id="f-gram-bloque" type="number" placeholder="Ej: 3300">
+              <input id="f-gram-bloque" type="number" oninput="calcularCampos()" placeholder="Ej: 3300">
             </div>
           </div>
           <div class="form-grid form-grid-4 section-gap">
             <div class="field">
               <label>Bloques gastados</label>
-              <input id="f-bloques" type="number" placeholder="Cantidad">
+              <input id="f-bloques" type="number" oninput="calcularCampos()" placeholder="Cantidad">
             </div>
             <div class="field">
               <label>Unidades obtenidas</label>
-              <input id="f-unidades" type="number" placeholder="Cantidad">
+              <input id="f-unidades" type="number" oninput="calcularCampos()" placeholder="Cantidad">
             </div>
             <div class="field">
               <label>Retal (libras)</label>
-              <input id="f-retal" type="number" step="0.01" placeholder="0.00">
+              <input id="f-retal" type="number" oninput="calcularCampos()" step="0.01" placeholder="0.00">
             </div>
             <div class="field">
               <label>Tipo de queso</label>
               <input id="f-tipo-queso" placeholder="Ej: Doble Crema">
             </div>
           </div>
-          <div class="form-grid form-grid-4">
+          <div style="display:flex;align-items:center;gap:8px;margin:16px 0 10px">
+            <div style="flex:1;height:1px;background:var(--border)"></div>
+            <span style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;white-space:nowrap">Calculado automáticamente</span>
+            <div style="flex:1;height:1px;background:var(--border)"></div>
+          </div>
+          <div class="form-grid form-grid-3" style="margin-top:0">
+            <div class="field">
+              <label>Libras entregadas <span style="color:var(--accent-mid);font-size:10px">AUTO</span></label>
+              <input id="f-libras-ent" readonly style="background:var(--surface2);color:var(--accent);font-weight:600;font-family:var(--font-mono,monospace);font-size:13px" placeholder="Calculado">
+            </div>
+            <div class="field">
+              <label>Kilos entregados <span style="color:var(--accent-mid);font-size:10px">AUTO</span></label>
+              <input id="f-kilos-ent" readonly style="background:var(--surface2);color:var(--accent);font-weight:600;font-family:var(--font-mono,monospace);font-size:13px" placeholder="Calculado">
+            </div>
+            <div class="field">
+              <label>Libras tajadas <span style="color:var(--accent-mid);font-size:10px">AUTO</span></label>
+              <input id="f-libras-taj" readonly style="background:var(--surface2);color:var(--accent);font-weight:600;font-family:var(--font-mono,monospace);font-size:13px" placeholder="Calculado">
+            </div>
+          </div>
+          <div class="form-grid form-grid-3" style="margin-top:10px">
+            <div class="field">
+              <label>% Retal <span style="color:var(--accent-mid);font-size:10px">AUTO</span></label>
+              <input id="f-pct-retal" readonly style="background:var(--danger-light);color:var(--danger);font-weight:600;font-family:var(--font-mono,monospace);font-size:13px" placeholder="Calculado">
+            </div>
+            <div class="field">
+              <label>Diferencia <span style="color:var(--accent-mid);font-size:10px">AUTO</span></label>
+              <input id="f-diferencia" readonly style="background:var(--surface2);color:var(--text2);font-weight:600;font-family:var(--font-mono,monospace);font-size:13px" placeholder="Calculado">
+            </div>
+            <div class="field">
+              <label>% Diferencia <span style="color:var(--accent-mid);font-size:10px">AUTO</span></label>
+              <input id="f-pct-dif" readonly style="background:var(--surface2);color:var(--text2);font-weight:600;font-family:var(--font-mono,monospace);font-size:13px" placeholder="Calculado">
+            </div>
+          </div>
+          <div class="form-grid form-grid-4" style="margin-top:14px">
             <div class="field">
               <label>Lote bloque empleado</label>
               <input id="f-lote" type="date">
@@ -925,7 +982,8 @@ async function loadData() {
     const cRows = cData.values || [];
     cintas = cRows.filter(r => r[0]).map(r => ({
       id_cinta: r[0], id_pedido: r[1], dia_corte: r[2],
-      prod_empleado: r[3], codigo: r[4], fecha_reg: r[5],
+      prod_empleado: r[3], codigo: r[4], cinta: r[5]||'',
+      cantidad_cinta: r[6]||'', obs_cinta: r[7]||'', fecha_reg: r[8]||'',
     }));
 
     // Populate datalists
@@ -976,6 +1034,7 @@ function addCintaRow(data, containerId, counterRef) {
   const div = document.createElement('div');
   div.className = 'cinta-item';
   div.id = 'cinta-' + n;
+  div.style.gridTemplateColumns = '28px 140px 160px 90px 80px 110px 1fr 32px';
   div.innerHTML = `
     <div class="cinta-num">${n}</div>
     <div class="field">
@@ -987,8 +1046,20 @@ function addCintaRow(data, containerId, counterRef) {
       <input id="c-prod-${n}" placeholder="Ej: Bloque 23-03-2026" value="${data?.prod_empleado||''}">
     </div>
     <div class="field">
-      <label>Código / Cinta / Cantidad</label>
-      <input id="c-cod-${n}" placeholder="Ej: 18442A. 1 Azul = 4,200 Uds" value="${data?.codigo||''}" class="mono">
+      <label>Código</label>
+      <input id="c-cod-${n}" placeholder="Ej: 18442A" value="${data?.codigo||''}" class="mono">
+    </div>
+    <div class="field">
+      <label>Cinta</label>
+      <input id="c-cinta-${n}" placeholder="Ej: 1 Azul" value="${data?.cinta||''}">
+    </div>
+    <div class="field">
+      <label>Cantidad</label>
+      <input id="c-cant-${n}" placeholder="Ej: 4,200 Uds" value="${data?.cantidad_cinta||''}">
+    </div>
+    <div class="field">
+      <label>Observación cinta</label>
+      <input id="c-obs-${n}" placeholder="Notas..." value="${data?.obs_cinta||''}">
     </div>
     <button class="btn-icon" onclick="this.closest('.cinta-item').remove()" title="Quitar" style="align-self:flex-end;margin-bottom:1px;color:var(--danger)">✕</button>`;
   container.appendChild(div);
@@ -1001,6 +1072,9 @@ function getCintas() {
       dia_corte: document.getElementById('c-dia-' + n)?.value?.trim() || '',
       prod_empleado: document.getElementById('c-prod-' + n)?.value?.trim() || '',
       codigo: document.getElementById('c-cod-' + n)?.value?.trim() || '',
+      cinta: document.getElementById('c-cinta-' + n)?.value?.trim() || '',
+      cantidad_cinta: document.getElementById('c-cant-' + n)?.value?.trim() || '',
+      obs_cinta: document.getElementById('c-obs-' + n)?.value?.trim() || '',
     };
   }).filter(c => c.dia_corte || c.codigo);
 }
@@ -1032,7 +1106,7 @@ async function guardarPedido() {
       document.getElementById('f-pres').value,
       document.getElementById('f-peso').value,
       document.getElementById('f-operador').value,
-      document.getElementById('f-cantidad').value,
+      document.getElementById('f-cantidad').value + ' ' + (document.getElementById('f-unidad-tipo').value||'Unidades'),
       document.getElementById('f-fab').value,
       document.getElementById('f-vto').value,
       document.getElementById('f-marca').value,
@@ -1043,11 +1117,13 @@ async function guardarPedido() {
       document.getElementById('f-gram-bloque').value,
       document.getElementById('f-bloques').value,
       document.getElementById('f-unidades').value,
-      '', '', // libras_ent, kilos_ent (calculados)
-      '', // libras_taj
+      document.getElementById('f-libras-ent').value,
+      document.getElementById('f-kilos-ent').value,
+      document.getElementById('f-libras-taj').value,
       document.getElementById('f-retal').value,
-      '', '', // pct_retal, diferencia, pct_dif
-      '',
+      document.getElementById('f-pct-retal').value,
+      document.getElementById('f-diferencia').value,
+      document.getElementById('f-pct-dif').value,
       document.getElementById('f-tipo-queso').value,
       document.getElementById('f-lote').value,
       document.getElementById('f-vto2').value,
@@ -1061,9 +1137,9 @@ async function guardarPedido() {
     const cintasNuevas = getCintas();
     if (cintasNuevas.length > 0) {
       const cRows = cintasNuevas.map((c, i) => [
-        id + '_C' + (i + 1), id, c.dia_corte, c.prod_empleado, c.codigo, now
+        id + '_C' + (i + 1), id, c.dia_corte, c.prod_empleado, c.codigo, c.cinta, c.cantidad_cinta, c.obs_cinta, now
       ]);
-      await sheetsAppend('CINTAS!A:F', cRows);
+      await sheetsAppend('CINTAS!A:I', cRows);
     }
 
     toast('Pedido guardado correctamente ✓', 'success');
@@ -1074,6 +1150,37 @@ async function guardarPedido() {
   }
 
   btn.disabled = false; btn.textContent = '✓ Guardar pedido';
+}
+
+
+// ═══════════════════════════════════════════════════════════
+// CÁLCULOS AUTOMÁTICOS
+// ═══════════════════════════════════════════════════════════
+function actualizarPlaceholderCantidad() {
+  const tipo = document.getElementById('f-unidad-tipo').value;
+  document.getElementById('f-cantidad').placeholder = tipo === 'Kilos' ? '# Kilos' : '# Unidades';
+}
+
+function calcularCampos() {
+  const gramaje = parseFloat(document.getElementById('f-gramaje').value) || 0;
+  const gramBloque = parseFloat(document.getElementById('f-gram-bloque').value) || 0;
+  const bloques = parseFloat(document.getElementById('f-bloques').value) || 0;
+  const unidades = parseFloat(document.getElementById('f-unidades').value) || 0;
+  const retal = parseFloat(document.getElementById('f-retal').value) || 0;
+
+  const librasEnt = gramaje > 0 ? (unidades * gramaje) / 500 : 0;
+  const kilosEnt = librasEnt / 2;
+  const librasTaj = gramBloque > 0 ? (gramBloque / 500) * bloques : 0;
+  const pctRetal = librasTaj > 0 ? (retal / librasTaj) * 100 : 0;
+  const diferencia = librasTaj - librasEnt - retal;
+  const pctDif = librasTaj > 0 ? (diferencia / librasTaj) * 100 : 0;
+
+  document.getElementById('f-libras-ent').value = librasEnt > 0 ? librasEnt.toFixed(3) : '';
+  document.getElementById('f-kilos-ent').value = kilosEnt > 0 ? kilosEnt.toFixed(3) : '';
+  document.getElementById('f-libras-taj').value = librasTaj > 0 ? librasTaj.toFixed(3) : '';
+  document.getElementById('f-pct-retal').value = pctRetal !== 0 ? pctRetal.toFixed(2) + '%' : '';
+  document.getElementById('f-diferencia').value = diferencia !== 0 ? diferencia.toFixed(3) : '';
+  document.getElementById('f-pct-dif').value = pctDif !== 0 ? pctDif.toFixed(2) + '%' : '';
 }
 
 function limpiarForm() {
@@ -1279,6 +1386,7 @@ function addEditCinta(data) {
   div.className = 'cinta-item';
   div.id = 'ecinta-' + n;
   div.dataset.cintaId = data?.id_cinta || '';
+  div.style.gridTemplateColumns = '28px 140px 160px 90px 80px 110px 1fr 32px';
   div.innerHTML = `
     <div class="cinta-num">${n}</div>
     <div class="field">
@@ -1290,8 +1398,20 @@ function addEditCinta(data) {
       <input id="ec-prod-${n}" placeholder="Ej: Bloque 23-03-2026" value="${data?.prod_empleado||''}">
     </div>
     <div class="field">
-      <label>Código / Cinta / Cantidad</label>
-      <input id="ec-cod-${n}" placeholder="Ej: 18442A. 1 Azul = 4,200 Uds" value="${data?.codigo||''}" class="mono">
+      <label>Código</label>
+      <input id="ec-cod-${n}" placeholder="Ej: 18442A" value="${data?.codigo||''}" class="mono">
+    </div>
+    <div class="field">
+      <label>Cinta</label>
+      <input id="ec-cinta-${n}" placeholder="Ej: 1 Azul" value="${data?.cinta||''}">
+    </div>
+    <div class="field">
+      <label>Cantidad</label>
+      <input id="ec-cant-${n}" placeholder="Ej: 4,200 Uds" value="${data?.cantidad_cinta||''}">
+    </div>
+    <div class="field">
+      <label>Observación cinta</label>
+      <input id="ec-obs-cinta-${n}" placeholder="Notas..." value="${data?.obs_cinta||''}">
     </div>
     <button class="btn-icon" onclick="this.closest('.cinta-item').remove()" style="align-self:flex-end;margin-bottom:1px;color:var(--danger)">✕</button>`;
   container.appendChild(div);
@@ -1362,13 +1482,16 @@ async function guardarEdicion() {
           document.getElementById('ec-dia-' + n)?.value || '',
           document.getElementById('ec-prod-' + n)?.value || '',
           document.getElementById('ec-cod-' + n)?.value || '',
+          document.getElementById('ec-cinta-' + n)?.value || '',
+          document.getElementById('ec-cant-' + n)?.value || '',
+          document.getElementById('ec-obs-cinta-' + n)?.value || '',
           now,
         ]);
       }
     });
 
     if (newCintas.length > 0) {
-      await sheetsAppend('CINTAS!A:F', newCintas);
+      await sheetsAppend('CINTAS!A:I', newCintas);
     }
 
     toast('Cambios guardados ✓', 'success');
@@ -1450,14 +1573,14 @@ function renderCintas() {
   const tbody = document.getElementById('cintas-body');
 
   if (!buscar) {
-    tbody.innerHTML = `<tr><td colspan="7" class="empty-state"><div class="empty-state-text">Ingresa un código o texto para buscar</div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="9" class="empty-state"><div class="empty-state-text">Ingresa un código o texto para buscar</div></td></tr>`;
     return;
   }
 
   const fil = cintas.filter(c => c.codigo?.toLowerCase().includes(buscar) || c.dia_corte?.toLowerCase().includes(buscar));
 
   if (!fil.length) {
-    tbody.innerHTML = `<tr><td colspan="7" class="empty-state"><div class="empty-state-text">Sin resultados para "${buscar}"</div></td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="9" class="empty-state"><div class="empty-state-text">Sin resultados para "${buscar}"</div></td></tr>`;
     return;
   }
 
@@ -1465,6 +1588,8 @@ function renderCintas() {
     const p = pedidos.find(x => x.id === c.id_pedido);
     return `<tr>
       <td class="mono" style="font-size:12px">${c.codigo}</td>
+      <td>${c.cinta}</td>
+      <td>${c.cantidad_cinta}</td>
       <td>${p?.cliente||c.id_pedido}</td>
       <td>${p?.producto||'—'}</td>
       <td>${c.dia_corte}</td>
