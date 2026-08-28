@@ -178,6 +178,21 @@ body {
   display: flex; align-items: center; justify-content: space-between;
 }
 .card-title { font-size: 13px; font-weight: 600; color: var(--text); }
+.card-header-right { display: flex; align-items: center; gap: 10px; }
+.card-header.collapsible { cursor: pointer; user-select: none; }
+.card-header.collapsible:hover { background: var(--surface2); }
+.card-chevron { font-size: 11px; color: var(--text3); transition: transform .2s; }
+.card.collapsed .card-chevron { transform: rotate(-90deg); }
+.card.collapsed .card-body { display: none; }
+.card.collapsed .card-header { border-bottom: none; }
+.subsection {
+  border: 1px dashed var(--border2); border-radius: var(--radius);
+  padding: 14px; margin-top: 4px; background: var(--bg);
+}
+.subsection-title {
+  font-size: 11px; font-weight: 600; color: var(--text2);
+  text-transform: uppercase; letter-spacing: .05em; margin-bottom: 10px;
+}
 .card-sub { font-size: 12px; color: var(--text3); }
 .card-body { padding: 20px; }
 
@@ -691,152 +706,200 @@ table.data-table {
     <!-- ═══ VIEW: NUEVO PEDIDO ═══ -->
     <div class="view active" id="view-nuevo">
 
-      <div class="card">
-        <div class="card-header">
-          <span class="card-title">Información Operativa</span>
-          <span class="card-sub">Trazabilidad de la información</span>
-        </div>
-        <div class="card-body">
-          <div class="form-grid form-grid-2">
-            <div class="field">
-              <label>Fecha de corte *</label>
-              <input id="f-fecha-corte" type="date">
-            </div>
-            <div class="field">
-              <label>Nombre del responsable *</label>
-              <input id="f-responsable" placeholder="1 Nombre y 1 Apellido">
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-header">
-          <span class="card-title">Información del pedido</span>
-          <span class="card-sub">Campos obligatorios: Cliente, Producto, Fecha entrega</span>
+      <!-- ── SECCIÓN 1: INFORMACIÓN GENERAL ── -->
+      <div class="card" id="card-general">
+        <div class="card-header collapsible" onclick="toggleSection(this)">
+          <span class="card-title">Información general</span>
+          <span class="card-header-right">
+            <span class="card-sub">Trazabilidad de la información · todos los campos obligatorios</span>
+            <span class="card-chevron">▾</span>
+          </span>
         </div>
         <div class="card-body">
           <div class="form-grid form-grid-3 section-gap">
+            <div class="field">
+              <label>Fecha de corte y/o empaque *</label>
+              <input id="f-fecha-corte" type="date" min="2025-01-01" max="2027-12-31">
+            </div>
+            <div class="field">
+              <label>Fecha de entrega del producto a clientes *</label>
+              <input id="f-fecha-entrega" type="date" min="2025-01-01" max="2027-12-31">
+            </div>
             <div class="field">
               <label>Cliente *</label>
               <select id="f-cliente">
                 <option value="">Seleccionar cliente...</option>
-                <option>DON MAIZ</option>
-                <option>D1</option>
-                <option>JENNOS</option>
-                <option>PUNTO DE VENTA</option>
-                <option>SED</option>
-                <option>NUTRIMOS</option>
-                <option>BIMBO</option>
-                <option>THEARION</option>
+                <option>BIMBO DE COLOMBIA S.A.</option>
+                <option>COMERCIALIZADORA NUTRIMOS S.A.</option>
+                <option>D1 SAS</option>
+                <option>DON MAIZ S.A.S.</option>
+                <option>INVERJENOS S.A.S.</option>
+                <option>PUNTO DE VENTA INTERNO</option>
+                <option>SECRETARIA DE EDUCACIÓN DEL DISTRITO</option>
               </select>
-            </div>
-            <div class="field">
-              <label>Producto *</label>
-              <select id="f-producto" onchange="onProductoChange()">
-                <option value="">Seleccionar producto...</option>
-                <option>MOZARELLA</option>
-                <option>DOBLE CREMA</option>
-                <option>QUESO DOBLE CREMA (BOCADILLO)</option>
-                <option>QUESO CON BOCADILLO</option>
-                <option>CAMPESINO</option>
-                <option>PERA</option>
-              </select>
-            </div>
-            <div class="field">
-              <label>Fecha de entrega *</label>
-              <input id="f-fecha" type="date">
-            </div>
-          </div>
-          <div class="form-grid section-gap" style="grid-template-columns:repeat(6,1fr)">
-            <div class="field">
-              <label>Presentación</label>
-              <select id="f-pres">
-                <option value="">Seleccionar...</option>
-                <option>BLOQUE</option><option>TAJADO</option>
-                <option>DEDOS</option><option>PORCIÓN</option>
-                <option>MONEDA</option>
-              </select>
-            </div>
-            <div class="field">
-              <label>Cantidad solicitada</label>
-              <input id="f-cantidad" type="number" placeholder="# Unidades">
-            </div>
-            <div class="field">
-              <label>Unidad de cantidad</label>
-              <select id="f-unidad-tipo" onchange="actualizarPlaceholderCantidad()">
-                <option value="Unidades">Unidades</option>
-                <option value="Kilos">Kilos</option>
-                <option value="Bloques">Bloques</option>
-              </select>
-            </div>
-            <div class="field">
-              <label>Peso (g)</label>
-              <input id="f-peso" type="number" placeholder="Ej: 25">
-            </div>
-            <div class="field">
-              <label>Menú / Referencia</label>
-              <input id="f-menu" placeholder="Ej: PE-11/SE-1">
-            </div>
-            <div class="field">
-              <label>Operador</label>
-              <input id="f-operador" placeholder="Nombre">
-            </div>
-          </div>
-          <div class="form-grid form-grid-3 section-gap">
-            <div class="field">
-              <label>Marca</label>
-              <select id="f-marca">
-                <option value="">Seleccionar...</option>
-                <option>GUALI</option>
-                <option>LATTI</option>
-                <option>LATTERIA</option>
-                <option>QUESARTE</option>
-              </select>
-            </div>
-            <div class="field">
-              <label>Fecha fabricación</label>
-              <input id="f-fab" type="date" oninput="autoVto()">
-            </div>
-            <div class="field">
-              <label>L / F. Vto. <span style="color:var(--accent-mid);font-size:10px">AUTO</span></label>
-              <input id="f-vto" type="date">
             </div>
           </div>
           <div class="form-grid form-grid-3">
             <div class="field">
-              <label>F/Vto. 2</label>
-              <input id="f-vto2" type="date">
+              <label>Menú *</label>
+              <input id="f-menu" value="NO APLICA" placeholder="Ej: PE-11/SE-1">
             </div>
             <div class="field">
-              <label>F/Vto. 3</label>
-              <input id="f-vto3" type="date">
+              <label>Operador *</label>
+              <input id="f-operador" value="NO APLICA" placeholder="Nombre">
             </div>
             <div class="field">
-              <label>Observaciones</label>
-              <input id="f-obs" placeholder="Notas adicionales">
+              <label>Responsable del ingreso de la información *</label>
+              <select id="f-responsable">
+                <option value="">Seleccionar responsable...</option>
+                <option>WILLIAM BERMUDEZ</option>
+                <option>HECTOR CASALLAS</option>
+                <option>ANDRES CENDALES</option>
+                <option>HERSSON SUAREZ F</option>
+              </select>
             </div>
           </div>
         </div>
       </div>
 
-      <div class="card">
-        <div class="card-header">
-          <span class="card-title">Datos de producción</span>
+      <!-- ── SECCIÓN 2: MATERIAS PRIMAS ── -->
+      <div class="card" id="card-mp">
+        <div class="card-header collapsible" onclick="toggleSection(this)">
+          <span class="card-title">Información de materias primas (cortadas y/o selladas)</span>
+          <span class="card-header-right"><span class="card-chevron">▾</span></span>
         </div>
         <div class="card-body">
-          <div class="form-grid form-grid-4 section-gap">
+          <div class="form-grid form-grid-3 section-gap">
             <div class="field">
-              <label>Operación realizada</label>
-              <select id="f-operacion">
+              <label>Cantidad de producto según orden de compra *</label>
+              <input id="f-mp-cantidad-oc" type="number" min="0" step="1" placeholder="0">
+            </div>
+            <div class="field">
+              <label>Tipo de producto *</label>
+              <select id="f-mp-tipo" onchange="onTipoMPChange()">
+                <option value="">Seleccionar...</option>
+                <option>QUESO FRESCO VARIEDADES: SEMIGRASO SEMIBLANDO DOBLE CREMA</option>
+                <option>QUESO FRESCO VARIEDADES: SEMIGRASO SEMIBLANDO CAMPESINO</option>
+                <option>QUESO FRESCO VARIEDADES: SEMIGRASO SEMIDURO MOZARELLA</option>
+                <option>QUESO FRESCO VARIEDADES: SEMIGRASO SEMIDURO PERA</option>
+                <option>BOCADILLO DE FRUTAS VARIEDAD GUAYABA</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Peso del producto (Gr) *</label>
+              <select id="f-mp-peso" onchange="calcularCampos()">
+                <option value="">Seleccionar...</option>
+                <option>10</option>
+                <option>20</option>
+                <option>30</option>
+                <option>45</option>
+                <option>300</option>
+                <option>350</option>
+                <option>1800</option>
+                <option>2000</option>
+                <option>2100</option>
+                <option>2200</option>
+                <option>2400</option>
+                <option>2500</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-grid form-grid-3">
+            <div class="field">
+              <label>Cantidad de producto empleada *</label>
+              <input id="f-mp-cant-emp" type="number" min="0" step="1" oninput="calcularCampos()" placeholder="0">
+            </div>
+            <div class="field">
+              <label>Libras tajadas <span style="color:var(--accent-mid);font-size:10px">AUTO</span></label>
+              <input id="f-mp-libras-taj" readonly style="background:var(--surface2);color:var(--accent);font-weight:600;font-family:'DM Mono',monospace;font-size:13px" placeholder="Calculado">
+            </div>
+            <div class="field">
+              <label>Lote ó L / F. Vto. del producto cortado y/o sellado *</label>
+              <input id="f-mp-lote" type="date" min="2025-01-01" max="2027-12-31">
+            </div>
+          </div>
+
+          <!-- Sub-sección condicional: unidades no conformes a reempacar -->
+          <div id="reempaque-wrap" style="display:none;margin-top:18px">
+            <div class="subsection">
+              <div class="subsection-title">Unidades no conformes a reempacar</div>
+              <div class="cintas-list" id="reempaque-container"></div>
+              <button class="add-cinta" onclick="addReempaqueRow()" style="margin-top:10px">
+                <span style="font-size:16px;font-weight:300">+</span> Agregar
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ── SECCIÓN 3: PRODUCTO TERMINADO ── -->
+      <div class="card" id="card-pt">
+        <div class="card-header collapsible" onclick="toggleSection(this)">
+          <span class="card-title">Información de producto terminado (cortado y/o sellado)</span>
+          <span class="card-header-right"><span class="card-chevron">▾</span></span>
+        </div>
+        <div class="card-body">
+          <div class="form-grid form-grid-3 section-gap">
+            <div class="field">
+              <label>Tipo de producto obtenido *</label>
+              <select id="f-pt-tipo">
+                <option value="">Seleccionar...</option>
+                <option>QUESO FRESCO VARIEDADES: SEMIGRASO SEMIBLANDO DOBLE CREMA</option>
+                <option>QUESO FRESCO VARIEDADES: SEMIGRASO SEMIBLANDO CAMPESINO</option>
+                <option>QUESO FRESCO VARIEDADES: SEMIGRASO SEMIDURO MOZARELLA</option>
+                <option>QUESO FRESCO VARIEDADES: SEMIGRASO SEMIDURO PERA</option>
+                <option>QUESO FRESCO VARIEDADES: SEMIGRASO SEMIBLANDO DOBLE CREMA CON BOCADILLO</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Presentación *</label>
+              <select id="f-pt-pres">
+                <option value="">Seleccionar...</option>
+                <option>BLOQUE</option>
+                <option>BLOQUE QUESO CAMPESINO</option>
+                <option>DEDO</option>
+                <option>MATRIMONIO QUESO CON BOCADILLO</option>
+                <option>PORCIÓN</option>
+                <option>PORCIÓN (PERA)</option>
+                <option>RUEDA QUESO PERA</option>
+                <option>TAJADO</option>
+              </select>
+            </div>
+            <div class="field">
+              <label>Peso (Gr) *</label>
+              <select id="f-pt-peso" onchange="calcularCampos()">
+                <option value="">Seleccionar...</option>
+                <option>10</option>
+                <option>20</option>
+                <option>30</option>
+                <option>35</option>
+                <option>40</option>
+                <option>45</option>
+                <option>50</option>
+                <option>60</option>
+                <option>80</option>
+                <option>90</option>
+                <option>125</option>
+                <option>250</option>
+                <option>300</option>
+                <option>350</option>
+                <option>500</option>
+                <option>2500</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-grid form-grid-3 section-gap">
+            <div class="field">
+              <label>Operación realizada *</label>
+              <select id="f-pt-operacion">
                 <option value="">Seleccionar...</option>
                 <option>CORTE Y EMPAQUE</option>
                 <option>EMPAQUE</option>
               </select>
             </div>
             <div class="field">
-              <label>Tipo de sellado</label>
-              <select id="f-sellado">
+              <label>Tipo de sellado *</label>
+              <select id="f-pt-sellado">
                 <option value="">Seleccionar...</option>
                 <option>SELLADO MANUAL</option>
                 <option>TERMOFORMADORA</option>
@@ -846,89 +909,54 @@ table.data-table {
               </select>
             </div>
             <div class="field">
-              <label>Gramaje (g)</label>
-              <input id="f-gramaje" type="number" oninput="calcularCampos()" placeholder="Ej: 43">
-            </div>
-            <div class="field">
-              <label>Gramaje bloque (g)</label>
-              <input id="f-gram-bloque" type="number" oninput="calcularCampos()" placeholder="Ej: 3300">
+              <label>Cantidad obtenida *</label>
+              <input id="f-pt-cant-obt" type="number" min="0" step="1" oninput="calcularCampos()" placeholder="0">
             </div>
           </div>
-          <div class="form-grid form-grid-3 section-gap">
+          <div class="form-grid form-grid-2 section-gap">
             <div class="field">
-              <label>Bloques gastados</label>
-              <input id="f-bloques" type="number" oninput="calcularCampos()" placeholder="Cantidad">
+              <label>Retal (libras) *</label>
+              <input id="f-pt-retal" type="number" min="0" step="0.01" oninput="calcularCampos()" placeholder="0.00">
             </div>
             <div class="field">
-              <label>Unidades obtenidas</label>
-              <input id="f-unidades" type="number" oninput="calcularCampos()" placeholder="Cantidad">
-            </div>
-            <div class="field">
-              <label>Retal queso (libras)</label>
-              <input id="f-retal" type="number" oninput="calcularCampos()" step="0.01" placeholder="0.00">
-            </div>
-            <div class="field" id="field-retal-bocadillo" style="display:none">
-              <label>Retal bocadillo (libras)</label>
-              <input id="f-retal-bocadillo" type="number" oninput="calcularCampos()" step="0.01" placeholder="0.00">
+              <label>Libras entregadas <span style="color:var(--accent-mid);font-size:10px">AUTO</span></label>
+              <input id="f-pt-libras-ent" readonly style="background:var(--surface2);color:var(--accent);font-weight:600;font-family:'DM Mono',monospace;font-size:13px" placeholder="Calculado">
             </div>
           </div>
+
           <div style="display:flex;align-items:center;gap:8px;margin:16px 0 10px">
             <div style="flex:1;height:1px;background:var(--border)"></div>
             <span style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;white-space:nowrap">Calculado automáticamente</span>
             <div style="flex:1;height:1px;background:var(--border)"></div>
           </div>
-          <div class="form-grid form-grid-3" style="margin-top:0">
+          <div class="form-grid form-grid-3 section-gap">
             <div class="field">
-              <label>Libras entregadas <span style="color:var(--accent-mid);font-size:10px">AUTO</span></label>
-              <input id="f-libras-ent" readonly style="background:var(--surface2);color:var(--accent);font-weight:600;font-family:var(--font-mono,monospace);font-size:13px" placeholder="Calculado">
+              <label>% de retal <span style="color:var(--accent-mid);font-size:10px">AUTO</span></label>
+              <input id="f-pt-pct-retal" readonly style="background:var(--danger-light);color:var(--danger);font-weight:600;font-family:'DM Mono',monospace;font-size:13px" placeholder="Calculado">
             </div>
             <div class="field">
-              <label>Kilos entregados <span style="color:var(--accent-mid);font-size:10px">AUTO</span></label>
-              <input id="f-kilos-ent" readonly style="background:var(--surface2);color:var(--accent);font-weight:600;font-family:var(--font-mono,monospace);font-size:13px" placeholder="Calculado">
+              <label>Diferencia (libras) <span style="color:var(--accent-mid);font-size:10px">AUTO</span></label>
+              <input id="f-pt-dif" readonly style="background:var(--surface2);color:var(--text2);font-weight:600;font-family:'DM Mono',monospace;font-size:13px" placeholder="Calculado">
             </div>
             <div class="field">
-              <label>Libras tajadas <span style="color:var(--accent-mid);font-size:10px">AUTO</span></label>
-              <input id="f-libras-taj" readonly style="background:var(--surface2);color:var(--accent);font-weight:600;font-family:var(--font-mono,monospace);font-size:13px" placeholder="Calculado">
-            </div>
-          </div>
-          <div class="form-grid form-grid-3" style="margin-top:10px">
-            <div class="field">
-              <label>% Retal <span style="color:var(--accent-mid);font-size:10px">AUTO</span></label>
-              <input id="f-pct-retal" readonly style="background:var(--danger-light);color:var(--danger);font-weight:600;font-family:var(--font-mono,monospace);font-size:13px" placeholder="Calculado">
-            </div>
-            <div class="field">
-              <label>Diferencia <span style="color:var(--accent-mid);font-size:10px">AUTO</span></label>
-              <input id="f-diferencia" readonly style="background:var(--surface2);color:var(--text2);font-weight:600;font-family:var(--font-mono,monospace);font-size:13px" placeholder="Calculado">
-            </div>
-            <div class="field">
-              <label>% Diferencia <span style="color:var(--accent-mid);font-size:10px">AUTO</span></label>
-              <input id="f-pct-dif" readonly style="background:var(--surface2);color:var(--text2);font-weight:600;font-family:var(--font-mono,monospace);font-size:13px" placeholder="Calculado">
+              <label>% de diferencia <span style="color:var(--accent-mid);font-size:10px">AUTO</span></label>
+              <input id="f-pt-pct-dif" readonly style="background:var(--surface2);color:var(--text2);font-weight:600;font-family:'DM Mono',monospace;font-size:13px" placeholder="Calculado">
             </div>
           </div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-header">
-          <span class="card-title">Producto empleado</span>
-        </div>
-        <div class="card-body">
-          <div class="cintas-list" id="bloques-container"></div>
-          <button class="add-cinta" onclick="addBloqueRow()" style="margin-top:10px">
-            <span style="font-size:16px;font-weight:300">+</span> Agregar bloque empleado
-          </button>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="card-header">
-          <span class="card-title">Día de corte y/o empaque</span>
-        </div>
-        <div class="card-body">
-          <div class="cintas-list" id="cintas-container"></div>
-          <button class="add-cinta" onclick="addCintaRow()" style="margin-top:10px">
-            <span style="font-size:16px;font-weight:300">+</span> Agregar día de corte
-          </button>
+          <div class="form-grid form-grid-3">
+            <div class="field">
+              <label>L / F. Vto. *</label>
+              <input id="f-pt-lote" type="date" min="2025-01-01" max="2027-12-31">
+            </div>
+            <div class="field">
+              <label>Código de trazabilidad *</label>
+              <input id="f-pt-codigo" class="mono" placeholder="CALENDARIO JULIANO - AÑO (DOS DÍGITOS) - MÁQUINA - TURNO - LETRA DE A a Z">
+            </div>
+            <div class="field">
+              <label>Color de cinta *</label>
+              <input id="f-pt-color-cinta" value="NO APLICA" placeholder="NO APLICA">
+            </div>
+          </div>
         </div>
       </div>
 
@@ -956,10 +984,10 @@ table.data-table {
                 <th>Producto</th>
                 <th>Pres.</th>
                 <th>F. Entrega</th>
-                <th style="text-align:right">Cant. Sol.</th>
+                <th style="text-align:right">Cant. OC</th>
                 <th>Operación</th>
                 <th>Sellado</th>
-                <th style="text-align:right">Unidades</th>
+                <th style="text-align:right">Cant. Obtenida</th>
                 <th style="text-align:right">Lb. Entregadas</th>
                 <th style="text-align:right">Kg. Entregados</th>
                 <th style="text-align:right">Lb. Tajadas</th>
@@ -968,7 +996,7 @@ table.data-table {
                 <th style="text-align:right">Diferencia</th>
                 <th style="text-align:right">% Dif.</th>
                 <th>Estado</th>
-                <th>Día de corte/empaque</th>
+                <th>Cód. Trazabilidad</th>
                 <th>Responsable</th>
                 <th></th>
               </tr>
@@ -1016,13 +1044,13 @@ table.data-table {
           <table class="data-table">
             <thead>
               <tr>
-                <th>Código</th>
-                <th>Cinta</th>
-                <th>Cantidad</th>
+                <th>Código trazabilidad</th>
+                <th>Color de cinta</th>
+                <th style="text-align:right">Cant. obtenida</th>
                 <th>Cliente</th>
-                <th>Producto</th>
-                <th>Día de corte</th>
-                <th>Producto empleado</th>
+                <th>Producto terminado</th>
+                <th>F. Corte</th>
+                <th>Materia prima</th>
                 <th>F. Entrega</th>
                 <th></th>
               </tr>
@@ -1137,7 +1165,7 @@ table.data-table {
 
       <!-- Info de lo que se incluye -->
       <div id="informe-preview-info" style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;font-size:12px;color:var(--text2)">
-        El archivo Excel tendrá <strong>3 hojas</strong>: <em>PEDIDOS</em>, <em>CINTAS</em> y <em>BLOQUES</em>, con toda la información de los pedidos seleccionados.
+        El archivo Excel tendrá <strong>2 hojas</strong>: <em>PEDIDOS</em> y <em>REEMPAQUE</em>, con toda la información de los pedidos seleccionados.
       </div>
 
     </div>
@@ -1173,13 +1201,26 @@ function safeText(v) {
   const s = String(v ?? '');
   return /^[=+\-@]/.test(s) ? "'" + s : s;
 }
-// -- Config central de columnas de PEDIDOS por NOMBRE (#7). 'unidad' = col AK (#6) --
-const COLS_PEDIDOS = ['id','cliente','menu','fecha_entrega','producto','presentacion',
-  'peso','operador','cantidad','fecha_fab','fecha_vto','marca','mes','fecha_corte',
-  'operacion','sellado','gramaje','gram_bloque','bloques','unidades','libras_ent',
-  'kilos_ent','libras_taj','retal','retal_bocadillo','pct_retal','diferencia','pct_dif',
-  'tipo_queso','lote','vto2','vto3','observaciones','estado','fecha_creacion',
-  'ultima_edicion','unidad','responsable'];
+// -- Config central de columnas por NOMBRE (#7 auditoria) --
+// Hoja PEDIDOS_V2 -> columnas A..AE, en este orden exacto.
+const COLS_PEDIDOS = ['id','fecha_corte','fecha_entrega','cliente','menu','operador',
+  'responsable','mp_cantidad_oc','mp_tipo_producto','mp_peso','mp_cantidad_empleada',
+  'mp_libras_tajadas','mp_lote_vto','pt_tipo_producto','pt_presentacion','pt_peso',
+  'pt_operacion','pt_sellado','pt_cantidad_obtenida','pt_libras_entregadas','pt_retal_lb',
+  'pt_pct_retal','pt_diferencia','pt_pct_diferencia','pt_lote_vto','pt_codigo_trazabilidad',
+  'pt_color_cinta','estado','creado_por','fecha_creacion','ultima_edicion'];
+// Hoja REEMPAQUE_V2 -> columnas A..G
+const COLS_REEMPAQUE = ['id_reempaque','id_pedido','cantidad_no_conformes','letra_codigo',
+  'vto_real','retal_lb','fecha_reg'];
+const HOJA_PEDIDOS    = 'PEDIDOS_V2';
+const HOJA_REEMPAQUE  = 'REEMPAQUE_V2';
+const RANGO_PEDIDOS   = 'PEDIDOS_V2!A:AE';
+const RANGO_REEMPAQUE = 'REEMPAQUE_V2!A:G';
+// Tipos de materia prima que habilitan el registro de unidades no conformes
+const MP_TIPOS_REEMPAQUE = [
+  'QUESO FRESCO VARIEDADES: SEMIGRASO SEMIBLANDO CAMPESINO',
+  'QUESO FRESCO VARIEDADES: SEMIGRASO SEMIDURO PERA'
+];
 function objToRow(o, cols) { return cols.map(c => (o[c] ?? '')); }
 function rowToObj(r, cols) { return Object.fromEntries(cols.map((c, i) => [c, r[i] ?? ''])); }
 
@@ -1193,16 +1234,12 @@ let accessToken = null;
 let userInfo = null;
 let tokenExpiresAt = 0;
 let pedidos = [];
-let cintas = [];
-let bloques = [];
-let cintaCount = 0;
-let bloqueCount = 0;
+let reempaques = [];
+let reempaqueCount = 0;
 let editingId = null;
-let editCintaCount = 0;
-let editBloqueCount = 0;
+let editReempaqueCount = 0;
 let sheetIds = {};
-let deletedCintaIds = [];
-let deletedBloqueIds = [];
+let deletedReempaqueIds = [];
 
 // ═══════════════════════════════════════════════════════════
 // ROLES Y ACCESO
@@ -1486,8 +1523,11 @@ function showApp() {
   document.getElementById('topbar-date').textContent = today.toLocaleDateString('es-CO', {
     weekday: 'long', day: 'numeric', month: 'long'
   });
-  const fFecha = document.getElementById('f-fecha');
-  if (fFecha && !fFecha.value) fFecha.value = today.toISOString().split('T')[0];
+  const hoyISO = today.toISOString().split('T')[0];
+  ['f-fecha-corte','f-fecha-entrega'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el && !el.value) el.value = hoyISO;
+  });
   reiniciarTemporizadorInactividad();
   loadData();
 }
@@ -1606,54 +1646,27 @@ async function sheetsFindRow(sheet, colIdx, value) {
 async function loadData() {
   setSyncStatus('Sincronizando...');
   try {
-    const [pData, cData, bData] = await Promise.all([
-      sheetsGet('PEDIDOS!A2:AL5000'),
-      sheetsGet('CINTAS!A2:J5000'),
-      sheetsGet('BLOQUES!A2:G5000'),
+    const [pData, rData] = await Promise.all([
+      sheetsGet(`${HOJA_PEDIDOS}!A2:AE5000`),
+      sheetsGet(`${HOJA_REEMPAQUE}!A2:G5000`),
     ]);
 
-    const pRows = pData.values || [];
-    pedidos = pRows.filter(r => r[0]).map(r => {
+    pedidos = (pData.values || []).filter(r => r[0]).map(r => {
       const o = rowToObj(r, COLS_PEDIDOS);   // mapeo por NOMBRE, no por indice (#7)
-      // Compat cantidad/unidad (#6): nuevos guardan numero puro + unidad (col AK);
-      // historicos guardan "100 Unidades" en cantidad. Normalizamos al leer.
-      if ((!o.unidad || o.unidad === '') && /[a-zA-Z]/.test(String(o.cantidad))) {
-        const partes = String(o.cantidad).trim().split(/\s+/);
-        o.cantidad = partes[0] || '';
-        o.unidad = partes.slice(1).join(' ') || 'Unidades';
-      }
-      if (!o.unidad) o.unidad = 'Unidades';
-      o.libras_ent = parseColNumber(o.libras_ent);
-      o.kilos_ent  = parseColNumber(o.kilos_ent);
-      o.libras_taj = parseColNumber(o.libras_taj);
-      o.retal      = parseColNumber(o.retal);
-      o.retal_bocadillo = parseColNumber(o.retal_bocadillo);
-      o.pct_retal  = parseColNumber(o.pct_retal);
-      o.diferencia = parseColNumber(o.diferencia);
-      o.pct_dif    = parseColNumber(o.pct_dif);
+      ['mp_cantidad_oc','mp_peso','mp_cantidad_empleada','mp_libras_tajadas',
+       'pt_peso','pt_cantidad_obtenida','pt_libras_entregadas','pt_retal_lb',
+       'pt_pct_retal','pt_diferencia','pt_pct_diferencia']
+        .forEach(k => { o[k] = parseColNumber(o[k]); });
       o.estado = o.estado || 'ABIERTO';
       return o;
     });
 
-    const cRows = cData.values || [];
-    cintas = cRows.filter(r => r[0]).map(r => ({
-      id_cinta: r[0], id_pedido: r[1], dia_corte: r[2],
-      prod_empleado: r[3], codigo: r[4], cinta: r[5]||'',
-      cantidad_cinta: r[6]||'', unidad_cinta: r[7]||'Unidades', obs_cinta: r[8]||'', fecha_reg: r[9]||'',
-    }));
-
-    const bRows = bData.values || [];
-    bloques = bRows.filter(r => r[0]).map(r => ({
-      id_bloque: r[0], id_pedido: r[1],
-      gramaje_bloque_emp: r[2]||'', tipo_queso: r[3]||'',
-      cant_bloques: r[4]||'', lote_bloque: r[5]||'', fecha_reg: r[6]||'',
-    }));
-
-    // Populate datalists
-    const clientes = [...new Set(pedidos.map(p => p.cliente).filter(Boolean))].sort();
-    const prods = [...new Set(pedidos.map(p => p.producto).filter(Boolean))].sort();
-    // list-clientes no longer used (now a select)
-    // list-productos not used (now a select)
+    reempaques = (rData.values || []).filter(r => r[0]).map(r => {
+      const o = rowToObj(r, COLS_REEMPAQUE);
+      o.cantidad_no_conformes = parseColNumber(o.cantidad_no_conformes);
+      o.retal_lb = parseColNumber(o.retal_lb);
+      return o;
+    });
 
     setSyncStatus('Actualizado ' + new Date().toLocaleTimeString('es-CO', {hour:'2-digit',minute:'2-digit'}));
 
@@ -1695,84 +1708,111 @@ function showView(v) {
 }
 
 // ═══════════════════════════════════════════════════════════
-// CINTA ROWS (formulario)
+// SECCIONES COLAPSABLES
 // ═══════════════════════════════════════════════════════════
-function addCintaRow(data, containerId, counterRef) {
-  const container = document.getElementById(containerId || 'cintas-container');
-  const n = ++cintaCount;
+function toggleSection(headerEl) {
+  headerEl.closest('.card').classList.toggle('collapsed');
+}
+
+// ═══════════════════════════════════════════════════════════
+// FILAS DE REEMPAQUE (unidades no conformes)
+// ═══════════════════════════════════════════════════════════
+function addReempaqueRow(data) {
+  const container = document.getElementById('reempaque-container');
+  const n = ++reempaqueCount;
   const div = document.createElement('div');
   div.className = 'cinta-item';
-  div.id = 'cinta-' + n;
-  div.style.gridTemplateColumns = '28px repeat(7, minmax(0, 1fr)) 32px';
+  div.id = 'reemp-' + n;
+  div.style.gridTemplateColumns = '28px repeat(4, minmax(0, 1fr)) 32px';
   div.innerHTML = `
     <div class="cinta-num">${n}</div>
     <div class="field">
-      <label>Día de corte/empaque</label>
-      <input id="c-dia-${n}" type="date" value="${data?.dia_corte||''}">
+      <label>Cant. unidades no conformes</label>
+      <input id="r-cant-${n}" type="number" min="0" step="1" placeholder="0" value="${esc(data?.cantidad_no_conformes ?? '')}">
     </div>
     <div class="field">
-      <label>Producto empleado (bloque)</label>
-      <input id="c-prod-${n}" placeholder="Ej: Bloque 23-03-2026" value="${esc(data?.prod_empleado||'')}">
+      <label>Letra según código de trazabilidad</label>
+      <input id="r-letra-${n}" class="mono" placeholder="Ej: A" value="${esc(data?.letra_codigo || '')}">
     </div>
     <div class="field">
-      <label>Código</label>
-      <input id="c-cod-${n}" placeholder="Ej: 18442A" value="${esc(data?.codigo||'')}" class="mono">
+      <label>L / F. Vto. real a reempacar</label>
+      <input id="r-vto-${n}" type="date" min="2025-01-01" max="2027-12-31" value="${data?.vto_real || ''}">
     </div>
     <div class="field">
-      <label>Cinta</label>
-      <input id="c-cinta-${n}" placeholder="Ej: 1 Azul" value="${esc(data?.cinta||'')}">
+      <label>Retal (libras)</label>
+      <input id="r-retal-${n}" type="number" min="0" step="0.01" placeholder="0.00" value="${esc(data?.retal_lb ?? '')}">
     </div>
-    <div class="field">
-      <label>Cantidad</label>
-      <input id="c-cant-${n}" type="number" placeholder="0" value="${esc(data?.cantidad_cinta||'')}" style="text-transform:none">
-    </div>
-    <div class="field">
-      <label>Unidad</label>
-      <select id="c-unidad-${n}">
-        <option value="Unidades"${(data?.unidad_cinta||'Unidades')==='Unidades'?' selected':''}>UNIDADES</option>
-        <option value="Kilos"${(data?.unidad_cinta||'')==='Kilos'?' selected':''}>KILOS</option>
-        <option value="Bloques"${(data?.unidad_cinta||'')==='Bloques'?' selected':''}>BLOQUES</option>
-      </select>
-    </div>
-    <div class="field">
-      <label>Observación</label>
-      <input id="c-obs-${n}" placeholder="Notas..." value="${esc(data?.obs_cinta||'')}">
-    </div>
-    <button class="btn btn-xs btn-danger" onclick="quitarCintaRow(this)" title="Quitar" style="align-self:flex-end;margin-bottom:1px;font-size:15px;line-height:1;padding:4px 8px">✕</button>`;
+    <button class="btn btn-xs btn-danger" onclick="quitarReempaqueRow(this)" title="Quitar" style="align-self:flex-end;margin-bottom:1px;font-size:15px;line-height:1;padding:4px 8px">✕</button>`;
   container.appendChild(div);
-  renumberContainer(containerId || 'cintas-container');
+  renumberContainer('reempaque-container');
 }
 
-function getCintas() {
-  return Array.from(document.querySelectorAll('#cintas-container .cinta-item')).map(item => {
+function quitarReempaqueRow(btn) {
+  btn.closest('.cinta-item').remove();
+  renumberContainer('reempaque-container');
+}
+
+function getReempaques() {
+  return Array.from(document.querySelectorAll('#reempaque-container .cinta-item')).map(item => {
     const n = item.id.split('-')[1];
     return {
-      dia_corte: document.getElementById('c-dia-' + n)?.value?.trim() || '',
-      prod_empleado: (document.getElementById('c-prod-' + n)?.value?.trim() || '').toUpperCase(),
-      codigo: (document.getElementById('c-cod-' + n)?.value?.trim() || '').toUpperCase(),
-      cinta: (document.getElementById('c-cinta-' + n)?.value?.trim() || '').toUpperCase(),
-      cantidad_cinta: document.getElementById('c-cant-' + n)?.value?.trim() || '',
-      unidad_cinta: document.getElementById('c-unidad-' + n)?.value || 'Unidades',
-      obs_cinta: (document.getElementById('c-obs-' + n)?.value?.trim() || '').toUpperCase(),
+      cantidad_no_conformes: document.getElementById('r-cant-' + n)?.value?.trim() || '',
+      letra_codigo: (document.getElementById('r-letra-' + n)?.value?.trim() || '').toUpperCase(),
+      vto_real: document.getElementById('r-vto-' + n)?.value || '',
+      retal_lb: document.getElementById('r-retal-' + n)?.value?.trim() || '',
     };
-  }).filter(c => c.dia_corte || c.codigo);
+  }).filter(r => r.cantidad_no_conformes || r.letra_codigo || r.vto_real || r.retal_lb);
+}
+
+// Habilita la sub-sección de no conformes solo para CAMPESINO y PERA
+function onTipoMPChange() {
+  const tipo = document.getElementById('f-mp-tipo').value;
+  const wrap = document.getElementById('reempaque-wrap');
+  const aplica = MP_TIPOS_REEMPAQUE.includes(tipo);
+  wrap.style.display = aplica ? '' : 'none';
+  if (!aplica) {
+    document.getElementById('reempaque-container').innerHTML = '';
+    reempaqueCount = 0;
+  }
+  calcularCampos();
 }
 
 // ═══════════════════════════════════════════════════════════
 // GUARDAR PEDIDO
 // ═══════════════════════════════════════════════════════════
+const CAMPOS_OBLIGATORIOS = [
+  ['f-fecha-corte',    'Fecha de corte y/o empaque'],
+  ['f-fecha-entrega',  'Fecha de entrega'],
+  ['f-cliente',        'Cliente'],
+  ['f-menu',           'Menú'],
+  ['f-operador',       'Operador'],
+  ['f-responsable',    'Responsable del ingreso'],
+  ['f-mp-cantidad-oc', 'Cantidad según orden de compra'],
+  ['f-mp-tipo',        'Tipo de producto (materia prima)'],
+  ['f-mp-peso',        'Peso del producto (materia prima)'],
+  ['f-mp-cant-emp',    'Cantidad de producto empleada'],
+  ['f-mp-lote',        'Lote / F. Vto. del producto cortado'],
+  ['f-pt-tipo',        'Tipo de producto obtenido'],
+  ['f-pt-pres',        'Presentación'],
+  ['f-pt-peso',        'Peso (producto terminado)'],
+  ['f-pt-operacion',   'Operación realizada'],
+  ['f-pt-sellado',     'Tipo de sellado'],
+  ['f-pt-cant-obt',    'Cantidad obtenida'],
+  ['f-pt-retal',       'Retal (libras)'],
+  ['f-pt-lote',        'L / F. Vto.'],
+  ['f-pt-codigo',      'Código de trazabilidad'],
+  ['f-pt-color-cinta', 'Color de cinta'],
+];
+
 async function guardarPedido() {
-  const cliente = document.getElementById('f-cliente').value.trim();
-  const producto = document.getElementById('f-producto').value.trim();
-  const fecha = document.getElementById('f-fecha').value;
-  const fechaCorte = document.getElementById('f-fecha-corte').value;
-  const responsable = document.getElementById('f-responsable').value.trim();
-  if (!cliente || !producto || !fecha) {
-    toast('Completa los campos obligatorios: Cliente, Producto y Fecha de entrega', 'error');
-    return;
-  }
-  if (!fechaCorte || !responsable) {
-    toast('Completa la Información Operativa: Fecha de corte y Nombre del responsable', 'error');
+  const g = id => (document.getElementById(id)?.value ?? '').trim();
+
+  const faltantes = CAMPOS_OBLIGATORIOS.filter(([cid]) => g(cid) === '').map(([, lbl]) => lbl);
+  if (faltantes.length) {
+    toast('Faltan campos obligatorios: ' + faltantes.slice(0, 3).join(', ')
+      + (faltantes.length > 3 ? ` y ${faltantes.length - 3} más` : ''), 'error');
+    const primero = document.getElementById(CAMPOS_OBLIGATORIOS.find(([cid]) => g(cid) === '')[0]);
+    if (primero) { primero.closest('.card')?.classList.remove('collapsed'); primero.focus(); }
     return;
   }
 
@@ -1782,82 +1822,62 @@ async function guardarPedido() {
   const id = 'P' + Date.now();
   try {
     const now = new Date().toISOString();
-    const mes = fecha ? new Date(fecha + 'T12:00:00').toLocaleString('es-CO', {month:'short'}).toUpperCase() : '';
+    const c = calcularCampos();   // recalcula y devuelve los valores derivados
 
-    // Calcular valores derivados como floats puros (sin formato colombiano)
-    // para que Sheets los almacene como números y no como celdas de porcentaje.
-    const grm_p  = parseFloat(document.getElementById('f-gramaje').value)   || 0;
-    const unds_p = parseFloat(document.getElementById('f-unidades').value)   || 0;
-    const retl_p = parseFloat(document.getElementById('f-retal').value)      || 0;
-    const retlB_p = parseFloat(document.getElementById('f-retal-bocadillo')?.value) || 0;
-    let lbTaj_p = 0;
-    document.querySelectorAll('#bloques-container .cinta-item').forEach(item => {
-      const n = item.id.split('-')[1];
-      const g = parseFloat(document.getElementById('b-gramaje-' + n)?.value) || 0;
-      const c = parseFloat(document.getElementById('b-cant-'    + n)?.value) || 0;
-      if (g > 0 && c > 0) lbTaj_p += (g / 500) * c;
-    });
-    const lbEnt_p   = grm_p > 0 ? (unds_p * grm_p) / 500 : 0;
-    const kgEnt_p   = lbEnt_p / 2;
-    const pctRetl_p = lbTaj_p > 0 ? (retl_p  / lbTaj_p) * 100 : 0;
-    const dif_p     = lbTaj_p > 0 ?  lbTaj_p - lbEnt_p - retl_p  : 0;
-    const pctDif_p  = lbTaj_p > 0 ? (dif_p   / lbTaj_p) * 100 : 0;
-
-    const cantidadNum = document.getElementById('f-cantidad').value || '';
-    const unidadCant  = document.getElementById('f-unidad-tipo').value || 'Unidades';
     const pedidoObj = {
-      id, cliente: safeText(cliente),
-      menu: safeText(document.getElementById('f-menu').value),
-      fecha_entrega: fecha, producto: safeText(producto),
-      presentacion: document.getElementById('f-pres').value,
-      peso: document.getElementById('f-peso').value,
-      operador: safeText(document.getElementById('f-operador').value),
-      cantidad: cantidadNum,
-      fecha_fab: document.getElementById('f-fab').value,
-      fecha_vto: document.getElementById('f-vto').value,
-      marca: document.getElementById('f-marca').value,
-      mes, fecha_corte: fechaCorte,
-      operacion: document.getElementById('f-operacion').value,
-      sellado: document.getElementById('f-sellado').value,
-      gramaje: document.getElementById('f-gramaje').value,
-      gram_bloque: document.getElementById('f-gram-bloque').value,
-      bloques: document.getElementById('f-bloques').value,
-      unidades: document.getElementById('f-unidades').value,
-      libras_ent: lbEnt_p, kilos_ent: kgEnt_p, libras_taj: lbTaj_p,
-      retal: retl_p, retal_bocadillo: retlB_p,
-      pct_retal: pctRetl_p, diferencia: dif_p, pct_dif: pctDif_p,
-      tipo_queso: '', lote: '',
-      vto2: document.getElementById('f-vto2').value,
-      vto3: document.getElementById('f-vto3').value,
-      observaciones: safeText(document.getElementById('f-obs').value),
-      estado: 'ABIERTO', fecha_creacion: now, ultima_edicion: now,
-      unidad: unidadCant,
-      responsable: safeText(responsable),
+      id,
+      fecha_corte:            g('f-fecha-corte'),
+      fecha_entrega:          g('f-fecha-entrega'),
+      cliente:                safeText(g('f-cliente')),
+      menu:                   safeText(g('f-menu')),
+      operador:               safeText(g('f-operador')),
+      responsable:            safeText(g('f-responsable')),
+      mp_cantidad_oc:         g('f-mp-cantidad-oc'),
+      mp_tipo_producto:       safeText(g('f-mp-tipo')),
+      mp_peso:                g('f-mp-peso'),
+      mp_cantidad_empleada:   g('f-mp-cant-emp'),
+      mp_libras_tajadas:      c.librasTajadas,
+      mp_lote_vto:            g('f-mp-lote'),
+      pt_tipo_producto:       safeText(g('f-pt-tipo')),
+      pt_presentacion:        safeText(g('f-pt-pres')),
+      pt_peso:                g('f-pt-peso'),
+      pt_operacion:           safeText(g('f-pt-operacion')),
+      pt_sellado:             safeText(g('f-pt-sellado')),
+      pt_cantidad_obtenida:   g('f-pt-cant-obt'),
+      pt_libras_entregadas:   c.librasEntregadas,
+      pt_retal_lb:            g('f-pt-retal'),
+      pt_pct_retal:           c.pctRetal,
+      pt_diferencia:          c.diferencia,
+      pt_pct_diferencia:      c.pctDiferencia,
+      pt_lote_vto:            g('f-pt-lote'),
+      pt_codigo_trazabilidad: safeText(g('f-pt-codigo')),
+      pt_color_cinta:         safeText(g('f-pt-color-cinta')),
+      estado: 'ABIERTO',
+      creado_por: userInfo?.email || '',
+      fecha_creacion: now,
+      ultima_edicion: now,
     };
-    const rowPedido = objToRow(pedidoObj, COLS_PEDIDOS);
 
-    await sheetsAppend('PEDIDOS!A:AL', [rowPedido]);
+    await sheetsAppend(RANGO_PEDIDOS, [objToRow(pedidoObj, COLS_PEDIDOS)]);
 
-    // Detalles (dias de corte y bloques). Si el pedido ya se guardo, un fallo aqui
-    // NO debe llevar a recrear el pedido: se completan luego desde Editar (#5).
+    // Detalle de no conformes: si el pedido ya se guardó, un fallo aquí NO debe
+    // llevar a recrearlo; se completa luego desde Editar (#5 auditoría).
     try {
-      const cintasNuevas = getCintas();
-      if (cintasNuevas.length > 0) {
-        const cRows = cintasNuevas.map((c, i) => [
-          id + '_C' + (i + 1), id, c.dia_corte, safeText(c.prod_empleado), safeText(c.codigo), safeText(c.cinta), safeText(c.cantidad_cinta), c.unidad_cinta, safeText(c.obs_cinta), now
-        ]);
-        await sheetsAppend('CINTAS!A:J', cRows);
-      }
-
-      const bloquesNuevos = getBloques();
-      if (bloquesNuevos.length > 0) {
-        const bRows = bloquesNuevos.map((b, i) => [
-          id + '_B' + (i + 1), id, b.gramaje_bloque_emp, safeText(b.tipo_queso), b.cant_bloques, b.lote_bloque, now
-        ]);
-        await sheetsAppend('BLOQUES!A:G', bRows);
+      const nuevos = getReempaques();
+      if (nuevos.length > 0) {
+        const filas = nuevos.map((r, i) => objToRow({
+          id_reempaque: id + '_R' + (i + 1),
+          id_pedido: id,
+          cantidad_no_conformes: r.cantidad_no_conformes,
+          letra_codigo: safeText(r.letra_codigo),
+          vto_real: r.vto_real,
+          retal_lb: r.retal_lb,
+          fecha_reg: now,
+        }, COLS_REEMPAQUE));
+        await sheetsAppend(RANGO_REEMPAQUE, filas);
       }
     } catch (eDetalle) {
-      toast('El pedido SI se guardo, pero fallaron los dias de corte / bloques. Abrelo en "Editar" para completarlos — NO lo crees de nuevo.', 'error');
+      toast('El pedido SI se guardó, pero falló el registro de unidades no conformes. Complétalo desde "Editar" — NO lo crees de nuevo.', 'error');
       await loadData();
       btn.disabled = false; btn.textContent = 'Guardar pedido';
       return;
@@ -1865,140 +1885,80 @@ async function guardarPedido() {
 
     toast('Pedido guardado correctamente', 'success');
     limpiarForm();
-    const cliFoco = document.getElementById('f-cliente'); if (cliFoco) cliFoco.focus();
+    const foco = document.getElementById('f-fecha-corte'); if (foco) foco.focus();
     await loadData();
   } catch(e) {
-    // Fallo de red: revisar si el pedido alcanzo a escribirse, para evitar duplicados (#4).
+    // Fallo de red: revisar si alcanzó a escribirse, para no duplicar (#4 auditoría)
     let yaGuardado = false;
-    try { yaGuardado = (await sheetsFindRow('PEDIDOS', 0, id)) > 0; } catch(_) {}
+    try { yaGuardado = (await sheetsFindRow(HOJA_PEDIDOS, 0, id)) > 0; } catch(_) {}
     toast(yaGuardado
-      ? 'El pedido SI quedo guardado (revisalo en Historial). NO vuelvas a intentar: crearias un duplicado.'
-      : 'No se pudo guardar. Revisa tu conexion e intentalo de nuevo.',
+      ? 'El pedido SÍ quedó guardado (revísalo en Historial). NO vuelvas a intentar: crearías un duplicado.'
+      : 'No se pudo guardar. Revisa tu conexión e inténtalo de nuevo.',
       yaGuardado ? 'info' : 'error');
   }
 
   btn.disabled = false; btn.textContent = 'Guardar pedido';
 }
 
-
-// ═══════════════════════════════════════════════════════════
-// PRODUCTO CHANGE
-// ═══════════════════════════════════════════════════════════
-function onProductoChange() {
-  const prod = document.getElementById('f-producto').value;
-  const bocadilloField = document.getElementById('field-retal-bocadillo');
-  const isBocadillo = prod === 'QUESO CON BOCADILLO' || prod === 'QUESO DOBLE CREMA (BOCADILLO)';
-  bocadilloField.style.display = isBocadillo ? '' : 'none';
-  if (!isBocadillo) document.getElementById('f-retal-bocadillo').value = '';
-  calcularCampos();
-}
-
 // ═══════════════════════════════════════════════════════════
 // CÁLCULOS AUTOMÁTICOS
 // ═══════════════════════════════════════════════════════════
-function autoVto() {
-  const fab = document.getElementById('f-fab').value;
-  if (!fab) return;
-  const d = new Date(fab + 'T12:00:00');
-  d.setDate(d.getDate() + 29);
-  document.getElementById('f-vto').value = d.toISOString().split('T')[0];
-}
+// Fórmulas:
+//   Libras tajadas    = (peso materia prima / 500) * cantidad empleada
+//   Libras entregadas = (peso producto terminado * cantidad obtenida) / 500
+//   % retal           = (retal / libras tajadas) * 100
+//   Diferencia        = libras tajadas - libras entregadas - retal
+//   % diferencia      = (diferencia / libras tajadas) * 100
+// pref: 'f' = formulario nuevo · 'e' = modal de edición
+function calcularCamposGen(pref) {
+  const num = id => parseFloat(document.getElementById(id)?.value) || 0;
+  const mpPeso  = num(`${pref}-mp-peso`);
+  const mpCant  = num(`${pref}-mp-cant-emp`);
+  const ptPeso  = num(`${pref}-pt-peso`);
+  const ptCant  = num(`${pref}-pt-cant-obt`);
+  const ptRetal = num(`${pref}-pt-retal`);
 
-function actualizarPlaceholderCantidad() {
-  const tipo = document.getElementById('f-unidad-tipo').value;
-  const ph = { Kilos: '# Kilos', Bloques: '# Bloques', Unidades: '# Unidades' };
-  document.getElementById('f-cantidad').placeholder = ph[tipo] || '# Unidades';
-}
-
-// Versión de calcularCampos para el modal de edición (usa ids e- en lugar de f-)
-function calcularCamposEdit() {
-  const gramaje  = parseFloat(document.getElementById('e-gramaje')?.value)  || 0;
-  const unidades = parseFloat(document.getElementById('e-unidades')?.value) || 0;
-  const retal    = parseFloat(document.getElementById('e-retal')?.value)    || 0;
-  let librasTaj = 0;
-  document.querySelectorAll('#edit-bloques-container .cinta-item').forEach(item => {
-    const n = item.id.split('-')[1];
-    const g = parseFloat(document.getElementById('eb-gramaje-' + n)?.value) || 0;
-    const c = parseFloat(document.getElementById('eb-cant-'    + n)?.value) || 0;
-    if (g > 0 && c > 0) librasTaj += (g / 500) * c;
-  });
-  const librasEnt = gramaje > 0 ? (unidades * gramaje) / 500 : 0;
-  const kilosEnt  = librasEnt / 2;
-  const pctRetal  = librasTaj > 0 ? (retal / librasTaj) * 100 : 0;
-  const diferencia = librasTaj > 0 ? librasTaj - librasEnt - retal : 0;
-  const pctDif    = librasTaj > 0 ? (diferencia / librasTaj) * 100 : 0;
-  const fmt2 = v => v.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  const setV = (id, v, cond) => { const el = document.getElementById(id); if (el) el.value = cond ? fmt2(v) : ''; };
-  setV('e-libras-ent', librasEnt, librasEnt > 0);
-  setV('e-kilos-ent',  kilosEnt,  kilosEnt  > 0);
-  setV('e-libras-taj', librasTaj, librasTaj > 0);
-  const ep = document.getElementById('e-pct-retal');
-  if (ep) ep.value = pctRetal !== 0 ? fmt2(pctRetal) + '%' : '';
-  const ed = document.getElementById('e-diferencia');
-  if (ed) ed.value = diferencia !== 0 ? fmt2(diferencia) : '';
-  const epd = document.getElementById('e-pct-dif');
-  if (epd) epd.value = pctDif !== 0 ? fmt2(pctDif) + '%' : '';
-  // Mostrar/ocultar retal bocadillo en modal edición
-  const prod = document.getElementById('e-producto')?.value || '';
-  const isBoc = prod === 'QUESO CON BOCADILLO' || prod === 'QUESO DOBLE CREMA (BOCADILLO)';
-  const bocFld = document.getElementById('efield-retal-bocadillo');
-  if (bocFld) bocFld.style.display = isBoc ? '' : 'none';
-  if (!isBoc) { const rb = document.getElementById('e-retal-bocadillo'); if (rb) rb.value = ''; }
-}
-
-function calcularCampos() {
-  const gramaje = parseFloat(document.getElementById('f-gramaje').value) || 0;
-  const unidades = parseFloat(document.getElementById('f-unidades').value) || 0;
-  const retal = parseFloat(document.getElementById('f-retal').value) || 0;
-
-  // Sumar libras tajadas de TODAS las entradas de Producto Empleado
-  let librasTaj = 0;
-  document.querySelectorAll('#bloques-container .cinta-item').forEach(item => {
-    const n = item.id.split('-')[1];
-    const g = parseFloat(document.getElementById('b-gramaje-' + n)?.value) || 0;
-    const c = parseFloat(document.getElementById('b-cant-' + n)?.value) || 0;
-    if (g > 0 && c > 0) librasTaj += (g / 500) * c;
-  });
-
-  const librasEnt = gramaje > 0 ? (unidades * gramaje) / 500 : 0;
-  const kilosEnt = librasEnt / 2;
-  const pctRetal = librasTaj > 0 ? (retal / librasTaj) * 100 : 0;
-  const diferencia = librasTaj - librasEnt - retal;
-  const pctDif = librasTaj > 0 ? (diferencia / librasTaj) * 100 : 0;
+  const librasTajadas    = (mpPeso / 500) * mpCant;
+  const librasEntregadas = (ptPeso * ptCant) / 500;
+  const pctRetal         = librasTajadas > 0 ? (ptRetal / librasTajadas) * 100 : 0;
+  const diferencia       = librasTajadas > 0 ? librasTajadas - librasEntregadas - ptRetal : 0;
+  const pctDiferencia    = librasTajadas > 0 ? (diferencia / librasTajadas) * 100 : 0;
 
   const fmt2 = v => v.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  document.getElementById('f-libras-ent').value = librasEnt > 0 ? fmt2(librasEnt) : '';
-  document.getElementById('f-kilos-ent').value = kilosEnt > 0 ? fmt2(kilosEnt) : '';
-  document.getElementById('f-libras-taj').value = librasTaj > 0 ? fmt2(librasTaj) : '';
-  document.getElementById('f-pct-retal').value = pctRetal !== 0 ? fmt2(pctRetal) + '%' : '';
-  document.getElementById('f-diferencia').value = diferencia !== 0 ? fmt2(diferencia) : '';
-  document.getElementById('f-pct-dif').value = pctDif !== 0 ? fmt2(pctDif) + '%' : '';
+  const set = (id, val, mostrar, suf = '') => {
+    const el = document.getElementById(id);
+    if (el) el.value = mostrar ? fmt2(val) + suf : '';
+  };
+  set(`${pref}-mp-libras-taj`, librasTajadas,    librasTajadas > 0);
+  set(`${pref}-pt-libras-ent`, librasEntregadas, librasEntregadas > 0);
+  set(`${pref}-pt-pct-retal`,  pctRetal,         pctRetal !== 0, '%');
+  set(`${pref}-pt-dif`,        diferencia,       librasTajadas > 0);
+  set(`${pref}-pt-pct-dif`,    pctDiferencia,    pctDiferencia !== 0, '%');
+
+  return { librasTajadas, librasEntregadas, pctRetal, diferencia, pctDiferencia };
 }
+
+function calcularCampos()     { return calcularCamposGen('f'); }
+function calcularCamposEdit() { return calcularCamposGen('e'); }
 
 function limpiarForm() {
-  ['f-producto','f-menu','f-peso','f-cantidad','f-fab',
-   'f-vto','f-operador','f-responsable','f-fecha-corte','f-gramaje','f-gram-bloque',
-   'f-bloques','f-unidades','f-retal',
-   'f-vto2','f-vto3','f-obs',
-   'f-libras-ent','f-kilos-ent','f-libras-taj','f-pct-retal','f-diferencia','f-pct-dif'
-  ].forEach(id => {
-    const el = document.getElementById(id);
-    if (el) el.value = '';
-  });
-  document.getElementById('f-fecha').value = new Date().toISOString().split('T')[0];
-  document.getElementById('f-cliente').value = '';
-  document.getElementById('f-producto').value = '';
-  document.getElementById('f-retal-bocadillo').value = '';
-  document.getElementById('field-retal-bocadillo').style.display = 'none';
-  document.getElementById('f-pres').value = '';
-  document.getElementById('f-marca').value = '';
-  document.getElementById('f-operacion').value = '';
-  document.getElementById('f-sellado').value = '';
-  document.getElementById('f-unidad-tipo').value = 'Unidades';
-  document.getElementById('cintas-container').innerHTML = '';
-  document.getElementById('bloques-container').innerHTML = '';
-  cintaCount = 0;
-  bloqueCount = 0;
+  ['f-fecha-corte','f-fecha-entrega','f-mp-cantidad-oc','f-mp-cant-emp','f-mp-libras-taj',
+   'f-mp-lote','f-pt-cant-obt','f-pt-libras-ent','f-pt-retal','f-pt-pct-retal','f-pt-dif',
+   'f-pt-pct-dif','f-pt-lote','f-pt-codigo',
+   'f-cliente','f-responsable','f-mp-tipo','f-mp-peso','f-pt-tipo','f-pt-pres',
+   'f-pt-peso','f-pt-operacion','f-pt-sellado'
+  ].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
+
+  const hoyISO = new Date().toISOString().split('T')[0];
+  document.getElementById('f-fecha-corte').value   = hoyISO;
+  document.getElementById('f-fecha-entrega').value = hoyISO;
+  document.getElementById('f-menu').value           = 'NO APLICA';
+  document.getElementById('f-operador').value       = 'NO APLICA';
+  document.getElementById('f-pt-color-cinta').value = 'NO APLICA';
+
+  document.getElementById('reempaque-container').innerHTML = '';
+  document.getElementById('reempaque-wrap').style.display = 'none';
+  reempaqueCount = 0;
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -2006,20 +1966,18 @@ function limpiarForm() {
 // ═══════════════════════════════════════════════════════════
 function renderHistorial() {
   const clientes = [...new Set(pedidos.map(p => p.cliente).filter(Boolean))].sort();
-  const prods    = [...new Set(pedidos.map(p => p.producto).filter(Boolean))].sort();
-  const pres     = [...new Set(pedidos.map(p => p.presentacion).filter(Boolean))].sort();
+  const prods    = [...new Set(pedidos.map(p => p.pt_tipo_producto).filter(Boolean))].sort();
+  const pres     = [...new Set(pedidos.map(p => p.pt_presentacion).filter(Boolean))].sort();
   const estados  = ['ABIERTO', 'CERRADO'];
 
-  // ── Construir barra de filtros (solo la primera vez) ──
   const filterBar = document.getElementById('hist-filter-bar');
   if (!filterBar._built) {
     filterBar._built = true;
     filterBar.innerHTML = '';
 
-    // Buscar
     const buscarInput = document.createElement('input');
     buscarInput.id = 'h-buscar';
-    buscarInput.placeholder = 'Buscar cliente, producto…';
+    buscarInput.placeholder = 'Buscar cliente, producto, código…';
     buscarInput.value = histFiltros.buscar;
     buscarInput.style.minWidth = '190px';
     buscarInput.addEventListener('input', () => { histFiltros.buscar = buscarInput.value; applyHistFilters(); });
@@ -2037,7 +1995,6 @@ function renderHistorial() {
     corteWrap.querySelector('#h-corte-hasta').addEventListener('change', e => { histFiltros.fechaCorteHasta = e.target.value; applyHistFilters(); });
     filterBar.appendChild(corteWrap);
 
-    // Multi-selects
     filterBar._msCliente = buildMultiSelect('Cliente', clientes, histFiltros.clientes, applyHistFilters);
     filterBar._msProducto = buildMultiSelect('Producto', prods, histFiltros.productos, applyHistFilters);
     filterBar._msPresentacion = buildMultiSelect('Presentación', pres, histFiltros.presentaciones, applyHistFilters);
@@ -2047,7 +2004,6 @@ function renderHistorial() {
     filterBar.appendChild(filterBar._msPresentacion);
     filterBar.appendChild(filterBar._msEstado);
 
-    // Rango de fecha de entrega
     const dateWrap = document.createElement('div');
     dateWrap.className = 'date-range-wrap';
     dateWrap.innerHTML = `
@@ -2059,7 +2015,6 @@ function renderHistorial() {
     dateWrap.querySelector('#h-fecha-hasta').addEventListener('change', e => { histFiltros.fechaHasta = e.target.value; applyHistFilters(); });
     filterBar.appendChild(dateWrap);
 
-    // Botón limpiar
     const btnLimpiar = document.createElement('button');
     btnLimpiar.className = 'btn btn-sm';
     btnLimpiar.textContent = 'Limpiar';
@@ -2072,12 +2027,11 @@ function renderHistorial() {
       document.getElementById('h-fecha-hasta').value = '';
       document.getElementById('h-corte-desde').value = '';
       document.getElementById('h-corte-hasta').value = '';
-      filterBar._built = false; // force rebuild with cleared state
+      filterBar._built = false;
       renderHistorial();
     });
     filterBar.appendChild(btnLimpiar);
   } else {
-    // Actualizar opciones de los multi-selects sin destruirlos
     filterBar._msCliente?.updateOptions(clientes);
     filterBar._msProducto?.updateOptions(prods);
     filterBar._msPresentacion?.updateOptions(pres);
@@ -2088,23 +2042,23 @@ function renderHistorial() {
 
 function applyHistFilters() {
   const fil = pedidos.filter(p => {
-    if (histFiltros.clientes.length      && !histFiltros.clientes.includes(p.cliente))           return false;
-    if (histFiltros.productos.length     && !histFiltros.productos.includes(p.producto))          return false;
-    if (histFiltros.presentaciones.length && !histFiltros.presentaciones.includes(p.presentacion)) return false;
-    if (histFiltros.estados.length       && !histFiltros.estados.includes(p.estado))              return false;
+    if (histFiltros.clientes.length       && !histFiltros.clientes.includes(p.cliente))              return false;
+    if (histFiltros.productos.length      && !histFiltros.productos.includes(p.pt_tipo_producto))     return false;
+    if (histFiltros.presentaciones.length && !histFiltros.presentaciones.includes(p.pt_presentacion)) return false;
+    if (histFiltros.estados.length        && !histFiltros.estados.includes(p.estado))                 return false;
     if (histFiltros.fechaDesde && (p.fecha_entrega||'') < histFiltros.fechaDesde) return false;
     if (histFiltros.fechaHasta && (p.fecha_entrega||'') > histFiltros.fechaHasta) return false;
     if (histFiltros.fechaCorteDesde && (p.fecha_corte||'') < histFiltros.fechaCorteDesde) return false;
     if (histFiltros.fechaCorteHasta && (p.fecha_corte||'') > histFiltros.fechaCorteHasta) return false;
-    if (histFiltros.buscar && !`${p.cliente} ${p.producto} ${p.id}`.toLowerCase().includes(histFiltros.buscar.toLowerCase())) return false;
+    if (histFiltros.buscar && !`${p.cliente} ${p.pt_tipo_producto} ${p.pt_codigo_trazabilidad} ${p.id}`
+        .toLowerCase().includes(histFiltros.buscar.toLowerCase())) return false;
     return true;
-  }).sort((a,b) => (b.fecha_entrega||'').localeCompare(a.fecha_entrega||''));
+  }).sort((a,b) => (b.fecha_corte||'').localeCompare(a.fecha_corte||''));
 
-  // Metrics
-  const totCintas = fil.reduce((a,p) => a + cintas.filter(c => c.id_pedido === p.id).length, 0);
-  const totUnid = fil.reduce((a,p) => a + (parseFloat(p.unidades)||0), 0);
-  const totRetal = fil.reduce((a,p) => a + (parseFloat(p.retal)||0), 0);
-  const abiertos = fil.filter(p => p.estado === 'ABIERTO').length;
+  const totCantObt   = fil.reduce((a,p) => a + (parseFloat(p.pt_cantidad_obtenida)||0), 0);
+  const totLibrasEnt = fil.reduce((a,p) => a + (parseFloat(p.pt_libras_entregadas)||0), 0);
+  const totRetal     = fil.reduce((a,p) => a + (parseFloat(p.pt_retal_lb)||0), 0);
+  const abiertos     = fil.filter(p => p.estado === 'ABIERTO').length;
 
   document.getElementById('metrics-grid').innerHTML = `
     <div class="metric-card">
@@ -2113,22 +2067,22 @@ function applyHistFilters() {
       <div class="metric-sub">${abiertos} abiertos</div>
     </div>
     <div class="metric-card">
-      <div class="metric-label">Códigos totales</div>
-      <div class="metric-value">${totCintas}</div>
-      <div class="metric-sub">días de corte</div>
-    </div>
-    <div class="metric-card">
-      <div class="metric-label">Unidades obtenidas</div>
-      <div class="metric-value">${totUnid.toLocaleString('es-CO')}</div>
+      <div class="metric-label">Cantidad obtenida</div>
+      <div class="metric-value">${totCantObt.toLocaleString('es-CO')}</div>
       <div class="metric-sub">unidades</div>
     </div>
     <div class="metric-card">
+      <div class="metric-label">Libras entregadas</div>
+      <div class="metric-value">${fmtNum(totLibrasEnt,1)}</div>
+      <div class="metric-sub">${fmtNum(totLibrasEnt*LB_TO_KG,1)} kg</div>
+    </div>
+    <div class="metric-card">
       <div class="metric-label">Retal total</div>
-      <div class="metric-value" style="${totRetal>0?'color:var(--danger)':''}">${totRetal.toFixed(1)} lb</div>
+      <div class="metric-value" style="${totRetal>0?'color:var(--danger)':''}">${fmtNum(totRetal,1)} lb</div>
       <div class="metric-sub">libras de retal</div>
     </div>`;
 
-  const pBadge = { BLOQUE:'badge-blue', TAJADO:'badge-green', DEDOS:'badge-amber', 'PORCIÓN':'badge-red' };
+  const pBadge = { BLOQUE:'badge-blue', TAJADO:'badge-green', DEDO:'badge-amber', 'PORCIÓN':'badge-red' };
 
   const tbody = document.getElementById('hist-body');
   if (!fil.length) {
@@ -2137,8 +2091,7 @@ function applyHistFilters() {
   }
 
   tbody.innerHTML = fil.map(p => {
-    const pCintas = cintas.filter(c => c.id_pedido === p.id);
-    const bcls = pBadge[p.presentacion] || 'badge-gray';
+    const bcls = pBadge[p.pt_presentacion] || 'badge-gray';
     const esAbierto = p.estado === 'ABIERTO';
     const esCerrado = p.estado === 'CERRADO';
     const estadoHtml = esAbierto
@@ -2146,53 +2099,26 @@ function applyHistFilters() {
       : esCerrado
         ? `<span class="estado-badge estado-cerrado"><span class="dot dot-cerrado"></span>Cerrado</span>`
         : `<span class="estado-badge" style="background:var(--surface2);color:var(--text3);font-size:10px">Sin estado</span>`;
-    const retal      = parseFloat(p.retal)||0;
-    const lbEnt      = parseFloat(p.libras_ent)||0;
-    const kgEnt      = parseFloat(p.kilos_ent)||0;
-    const lbTaj      = parseFloat(p.libras_taj)||0;
-    const pctRetal   = p.pct_retal ? parseFloat(p.pct_retal) : 0;
-    const dif        = parseFloat(p.diferencia)||0;
-    const pctDif     = p.pct_dif ? parseFloat(p.pct_dif) : 0;
+    const retal    = parseFloat(p.pt_retal_lb)||0;
+    const lbEnt    = parseFloat(p.pt_libras_entregadas)||0;
+    const kgEnt    = lbEnt * LB_TO_KG;
+    const lbTaj    = parseFloat(p.mp_libras_tajadas)||0;
+    const pctRetal = parseFloat(p.pt_pct_retal)||0;
+    const dif      = parseFloat(p.pt_diferencia)||0;
+    const pctDif   = parseFloat(p.pt_pct_diferencia)||0;
     const fNum = (v,d=2) => v ? fmtNum(v,d) : '—';
-
-    const cintasHeaderRow = pCintas.length > 0 ? `<tr class="row-cinta" data-pedido="${p.id}" style="display:none;background:var(--surface2)">
-        <td></td>
-        <td style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em">#</td>
-        <td style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em">Día de corte</td>
-        <td colspan="2" style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em">Producto empleado</td>
-        <td style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em">Código</td>
-        <td style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em">Cinta</td>
-        <td style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;text-align:right">Cantidad</td>
-        <td style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em">Unidad</td>
-        <td colspan="11"></td>
-      </tr>` : '';
-    const cintasRows = pCintas.map((c,i) => {
-      const isLast = i === pCintas.length - 1;
-      return `<tr class="row-cinta${isLast?' row-cinta-last':''}" data-pedido="${p.id}" style="display:none">
-        <td></td>
-        <td style="color:var(--text3);font-size:11px">${i+1}</td>
-        <td style="color:var(--text2);font-size:12px">${fmtFecha(c.dia_corte)}</td>
-        <td colspan="2" style="color:var(--text2);font-size:12px">${esc(c.prod_empleado||'—')}</td>
-        <td class="mono" style="color:var(--text)">${esc(c.codigo||'—')}</td>
-        <td style="color:var(--text2);font-size:12px">${esc(c.cinta||'—')}</td>
-        <td style="text-align:right;font-size:12px">${esc(c.cantidad_cinta||'—')}</td>
-        <td style="font-size:12px;color:var(--text2)">${esc(c.unidad_cinta||'—')}</td>
-        <td colspan="7"></td>
-        <td></td><td></td><td></td><td></td>
-      </tr>`;
-    }).join('');
 
     return `
       <tr class="row-pedido">
         <td style="color:var(--text2);font-size:12px">${fmtFecha(p.fecha_corte)}</td>
         <td><strong>${esc(p.cliente)}</strong></td>
-        <td>${esc(p.producto)}</td>
-        <td><span class="badge ${bcls}">${esc(p.presentacion||'—')}</span></td>
+        <td style="font-size:12px">${esc(p.pt_tipo_producto||'—')}</td>
+        <td><span class="badge ${bcls}">${esc(p.pt_presentacion||'—')}</span></td>
         <td style="color:var(--text2);font-size:12px">${fmtFecha(p.fecha_entrega)}</td>
-        <td style="text-align:right">${(parseFloat(p.cantidad)||0).toLocaleString('es-CO')}</td>
-        <td style="font-size:12px;color:var(--text2)">${esc(p.operacion||'—')}</td>
-        <td style="font-size:12px;color:var(--text2)">${esc(p.sellado||'—')}</td>
-        <td style="text-align:right">${(parseFloat(p.unidades)||0).toLocaleString('es-CO')}</td>
+        <td style="text-align:right">${(parseFloat(p.mp_cantidad_oc)||0).toLocaleString('es-CO')}</td>
+        <td style="font-size:12px;color:var(--text2)">${esc(p.pt_operacion||'—')}</td>
+        <td style="font-size:12px;color:var(--text2)">${esc(p.pt_sellado||'—')}</td>
+        <td style="text-align:right">${(parseFloat(p.pt_cantidad_obtenida)||0).toLocaleString('es-CO')}</td>
         <td style="text-align:right">${fNum(lbEnt)}</td>
         <td style="text-align:right">${fNum(kgEnt)}</td>
         <td style="text-align:right">${fNum(lbTaj)}</td>
@@ -2203,11 +2129,7 @@ function applyHistFilters() {
         <td style="text-align:right">${dif ? fmtNum(dif,2) : '—'}</td>
         <td style="text-align:right">${pctDif ? fmtNum(pctDif,2)+'%' : '—'}</td>
         <td>${estadoHtml}</td>
-        <td>
-          ${pCintas.length > 0
-            ? `<button class="toggle-cintas-btn" onclick="toggleCintas('${p.id}')">${pCintas.length} código${pCintas.length!==1?'s':''}</button>`
-            : '<span class="text-muted" style="font-size:11px">Sin códigos</span>'}
-        </td>
+        <td class="mono" style="font-size:12px">${esc(p.pt_codigo_trazabilidad||'—')}</td>
         <td style="font-size:12px;color:var(--text2)">${esc(p.responsable||'—')}</td>
         <td>
           <div style="display:flex;gap:4px">
@@ -2215,191 +2137,138 @@ function applyHistFilters() {
             ${esAbierto ? `<button class="btn btn-xs btn-danger" onclick="eliminarPedido('${p.id}')">Eliminar</button>` : ''}
           </div>
         </td>
-      </tr>
-      ${cintasHeaderRow}${cintasRows}`;
+      </tr>`;
   }).join('');
-}
-
-function toggleCintas(id) {
-  document.querySelectorAll(`.row-cinta[data-pedido="${id}"]`).forEach(r => {
-    r.style.display = r.style.display === 'none' ? '' : 'none';
-  });
 }
 
 // ═══════════════════════════════════════════════════════════
 // EDITAR PEDIDO (modal)
 // ═══════════════════════════════════════════════════════════
+const LISTA_CLIENTES = ['BIMBO DE COLOMBIA S.A.','COMERCIALIZADORA NUTRIMOS S.A.','D1 SAS',
+  'DON MAIZ S.A.S.','INVERJENOS S.A.S.','PUNTO DE VENTA INTERNO','SECRETARIA DE EDUCACIÓN DEL DISTRITO'];
+const LISTA_RESPONSABLES = ['WILLIAM BERMUDEZ','HECTOR CASALLAS','ANDRES CENDALES','HERSSON SUAREZ F'];
+const LISTA_MP_TIPOS = ['QUESO FRESCO VARIEDADES: SEMIGRASO SEMIBLANDO DOBLE CREMA',
+  'QUESO FRESCO VARIEDADES: SEMIGRASO SEMIBLANDO CAMPESINO',
+  'QUESO FRESCO VARIEDADES: SEMIGRASO SEMIDURO MOZARELLA',
+  'QUESO FRESCO VARIEDADES: SEMIGRASO SEMIDURO PERA',
+  'BOCADILLO DE FRUTAS VARIEDAD GUAYABA'];
+const LISTA_PT_TIPOS = ['QUESO FRESCO VARIEDADES: SEMIGRASO SEMIBLANDO DOBLE CREMA',
+  'QUESO FRESCO VARIEDADES: SEMIGRASO SEMIBLANDO CAMPESINO',
+  'QUESO FRESCO VARIEDADES: SEMIGRASO SEMIDURO MOZARELLA',
+  'QUESO FRESCO VARIEDADES: SEMIGRASO SEMIDURO PERA',
+  'QUESO FRESCO VARIEDADES: SEMIGRASO SEMIBLANDO DOBLE CREMA CON BOCADILLO'];
+const LISTA_PRESENTACIONES = ['BLOQUE','BLOQUE QUESO CAMPESINO','DEDO',
+  'MATRIMONIO QUESO CON BOCADILLO','PORCIÓN','PORCIÓN (PERA)','RUEDA QUESO PERA','TAJADO'];
+const LISTA_MP_PESOS = [10,20,30,45,300,350,1800,2000,2100,2200,2400,2500];
+const LISTA_PT_PESOS = [10,20,30,35,40,45,50,60,80,90,125,250,300,350,500,2500];
+const LISTA_OPERACIONES = ['CORTE Y EMPAQUE','EMPAQUE'];
+const LISTA_SELLADOS = ['SELLADO MANUAL','TERMOFORMADORA','EMPACADORA AL VACIO','FLOW PACK','SELLADORA DE PEDAL'];
+const RANGO_FECHA = 'min="2025-01-01" max="2027-12-31"';
+
+function optionsHTML(lista, seleccionado) {
+  return ['<option value="">Seleccionar...</option>']
+    .concat(lista.map(o => `<option${String(o) === String(seleccionado ?? '') ? ' selected' : ''}>${esc(o)}</option>`))
+    .join('');
+}
+
 function abrirEditar(id) {
   editingId = id;
-  editCintaCount = 0;
-  deletedCintaIds = [];
+  editReempaqueCount = 0;
+  deletedReempaqueIds = [];
   const p = pedidos.find(x => x.id === id);
   if (!p) return;
 
-  const pCintas = cintas.filter(c => c.id_pedido === id);
   const esAbierto = p.estado !== 'CERRADO';
-
-  document.getElementById('modal-titulo').textContent = `${p.cliente} — ${p.producto}` + (!esAbierto ? '  (CERRADO)' : '');
+  document.getElementById('modal-titulo').textContent =
+    `${p.cliente} — ${p.pt_tipo_producto || ''}` + (!esAbierto ? '  (CERRADO)' : '');
   document.getElementById('btn-estado-label').textContent = esAbierto ? 'Cerrar pedido' : 'Reabrir pedido';
 
-  // Usuarios no pueden reabrir pedidos cerrados — ocultar botón si aplica
   const btnEstadoModal = document.querySelector('.modal-footer .btn-danger');
-  if (btnEstadoModal) {
-    btnEstadoModal.style.display = (!esAbierto && !isAdmin()) ? 'none' : '';
-  }
+  if (btnEstadoModal) btnEstadoModal.style.display = (!esAbierto && !isAdmin()) ? 'none' : '';
 
-  // Parsear cantidad + unidad (guardado como "100 Unidades" o "50 Kilos")
-  const cantNum  = (p.cantidad ?? '') === '' ? '' : String(p.cantidad);
-  const cantUnit = p.unidad || 'Unidades';
-  const fmtCalc  = v => (v && parseFloat(v) !== 0)
-    ? parseFloat(v).toLocaleString('es-CO',{minimumFractionDigits:2,maximumFractionDigits:2})
-    : '';
-  const isBocEdit = (p.producto||'') === 'QUESO CON BOCADILLO' || (p.producto||'') === 'QUESO DOBLE CREMA (BOCADILLO)';
+  const fmtCalc = v => (v && parseFloat(v) !== 0)
+    ? parseFloat(v).toLocaleString('es-CO',{minimumFractionDigits:2,maximumFractionDigits:2}) : '';
+  const CALC = `readonly style="background:var(--surface2);color:var(--accent);font-weight:600;font-family:'DM Mono',monospace;font-size:13px" placeholder="Calculado"`;
+  const SUBT = 'font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px';
 
   document.getElementById('modal-body').innerHTML = `
-    <!-- Información Operativa -->
-    <div class="form-grid form-grid-2 section-gap">
-      <div class="field"><label>Fecha de corte *</label><input id="e-fecha-corte" type="date" value="${p.fecha_corte||''}"></div>
-      <div class="field"><label>Nombre del responsable *</label><input id="e-responsable" value="${esc(p.responsable||'')}"></div>
-    </div>
-    <!-- Datos del pedido -->
+    <div style="${SUBT}">Información general</div>
     <div class="form-grid form-grid-3 section-gap">
-      <div class="field"><label>Cliente</label><input id="e-cliente" value="${esc(p.cliente||'')}"></div>
-      <div class="field"><label>Producto</label><input id="e-producto" oninput="calcularCamposEdit()" value="${esc(p.producto||'')}"></div>
-      <div class="field"><label>Menú / Referencia</label><input id="e-menu" value="${esc(p.menu||'')}"></div>
-    </div>
-    <div class="form-grid form-grid-4 section-gap">
-      <div class="field"><label>Presentación</label>
-        <select id="e-pres">
-          <option value="">—</option>
-          ${['BLOQUE','TAJADO','DEDOS','PORCIÓN'].map(o=>`<option${o===p.presentacion?' selected':''}>${o}</option>`).join('')}
-        </select>
-      </div>
-      <div class="field"><label>Peso (g)</label><input id="e-peso" type="number" value="${p.peso||''}"></div>
-      <div class="field">
-        <label>Cantidad solicitada</label>
-        <div style="display:flex;gap:6px">
-          <input id="e-cantidad" type="number" value="${cantNum}" style="flex:1" placeholder="Cantidad">
-          <select id="e-unidad-tipo" style="width:100px">
-            <option${cantUnit==='Unidades'?' selected':''}>Unidades</option>
-            <option${cantUnit==='Kilos'?' selected':''}>Kilos</option>
-            <option${cantUnit==='Bloques'?' selected':''}>Bloques</option>
-          </select>
-        </div>
-      </div>
-      <div class="field"><label>Fecha entrega</label><input id="e-fecha" type="date" value="${p.fecha_entrega||''}"></div>
+      <div class="field"><label>Fecha de corte y/o empaque *</label><input id="e-fecha-corte" type="date" ${RANGO_FECHA} value="${p.fecha_corte||''}"></div>
+      <div class="field"><label>Fecha de entrega *</label><input id="e-fecha-entrega" type="date" ${RANGO_FECHA} value="${p.fecha_entrega||''}"></div>
+      <div class="field"><label>Cliente *</label><select id="e-cliente">${optionsHTML(LISTA_CLIENTES, p.cliente)}</select></div>
     </div>
     <div class="form-grid form-grid-3 section-gap">
-      <div class="field"><label>Fecha fabricación</label><input id="e-fab" type="date" value="${p.fecha_fab||''}"></div>
-      <div class="field"><label>L / F. Vto.</label><input id="e-vto" type="date" value="${p.fecha_vto||''}"></div>
-      <div class="field"><label>Marca</label>
-        <select id="e-marca">
-          <option value="">Seleccionar...</option>
-          ${['GUALI','LATTI','LATTERIA','QUESARTE'].map(o=>`<option${o===p.marca?' selected':''}>${o}</option>`).join('')}
-        </select>
-      </div>
+      <div class="field"><label>Menú *</label><input id="e-menu" value="${esc(p.menu||'NO APLICA')}"></div>
+      <div class="field"><label>Operador *</label><input id="e-operador" value="${esc(p.operador||'NO APLICA')}"></div>
+      <div class="field"><label>Responsable del ingreso *</label><select id="e-responsable">${optionsHTML(LISTA_RESPONSABLES, p.responsable)}</select></div>
     </div>
-    <!-- Datos de producción -->
+
     <div class="divider" style="margin:14px 0 10px"></div>
-    <div style="font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px">Datos de producción</div>
-    <div class="form-grid form-grid-4 section-gap">
-      <div class="field"><label>Operación realizada</label>
-        <select id="e-operacion">
-          <option value="">Seleccionar...</option>
-          ${['CORTE Y EMPAQUE','EMPAQUE'].map(o=>`<option${o===p.operacion?' selected':''}>${o}</option>`).join('')}
-        </select>
-      </div>
-      <div class="field"><label>Tipo de sellado</label>
-        <select id="e-sellado">
-          <option value="">Seleccionar...</option>
-          ${['SELLADO MANUAL','TERMOFORMADORA','EMPACADORA AL VACIO','FLOW PACK','SELLADORA DE PEDAL'].map(o=>`<option${o===p.sellado?' selected':''}>${o}</option>`).join('')}
-        </select>
-      </div>
-      <div class="field"><label>Gramaje (g)</label><input id="e-gramaje" type="number" oninput="calcularCamposEdit()" value="${p.gramaje||''}"></div>
-      <div class="field"><label>Gramaje bloque (g)</label><input id="e-gram-bloque" type="number" value="${p.gram_bloque||''}"></div>
+    <div style="${SUBT}">Información de materias primas (cortadas y/o selladas)</div>
+    <div class="form-grid form-grid-3 section-gap">
+      <div class="field"><label>Cantidad según orden de compra *</label><input id="e-mp-cantidad-oc" type="number" min="0" step="1" value="${esc(p.mp_cantidad_oc ?? '')}"></div>
+      <div class="field"><label>Tipo de producto *</label><select id="e-mp-tipo" onchange="onTipoMPChangeEdit()">${optionsHTML(LISTA_MP_TIPOS, p.mp_tipo_producto)}</select></div>
+      <div class="field"><label>Peso del producto (Gr) *</label><select id="e-mp-peso" onchange="calcularCamposEdit()">${optionsHTML(LISTA_MP_PESOS, p.mp_peso)}</select></div>
     </div>
     <div class="form-grid form-grid-3 section-gap">
-      <div class="field"><label>Bloques gastados</label><input id="e-bloques" type="number" value="${p.bloques||''}"></div>
-      <div class="field"><label>Unidades obtenidas</label><input id="e-unidades" type="number" oninput="calcularCamposEdit()" value="${p.unidades||''}"></div>
-      <div class="field"><label>Retal queso (libras)</label><input id="e-retal" type="number" oninput="calcularCamposEdit()" step="0.01" value="${parseFloat(p.retal)||''}"></div>
-      <div class="field" id="efield-retal-bocadillo" style="display:${isBocEdit?'':'none'}">
-        <label>Retal bocadillo (libras)</label>
-        <input id="e-retal-bocadillo" type="number" oninput="calcularCamposEdit()" step="0.01" value="${parseFloat(p.retal_bocadillo)||''}">
+      <div class="field"><label>Cantidad de producto empleada *</label><input id="e-mp-cant-emp" type="number" min="0" step="1" oninput="calcularCamposEdit()" value="${esc(p.mp_cantidad_empleada ?? '')}"></div>
+      <div class="field"><label>Libras tajadas (auto)</label><input id="e-mp-libras-taj" ${CALC} value="${fmtCalc(p.mp_libras_tajadas)}"></div>
+      <div class="field"><label>Lote ó L / F. Vto. producto cortado *</label><input id="e-mp-lote" type="date" ${RANGO_FECHA} value="${p.mp_lote_vto||''}"></div>
+    </div>
+    <div id="e-reempaque-wrap" style="display:none">
+      <div class="subsection">
+        <div class="subsection-title">Unidades no conformes a reempacar</div>
+        <div class="cintas-list" id="edit-reempaque-container"></div>
+        <button class="add-cinta" onclick="addEditReempaque()" style="margin-top:10px">
+          <span style="font-size:16px;font-weight:300">+</span> Agregar
+        </button>
       </div>
     </div>
-    <div style="display:flex;align-items:center;gap:8px;margin:14px 0 8px">
-      <div style="flex:1;height:1px;background:var(--border)"></div>
-      <span style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;white-space:nowrap">Calculado automáticamente</span>
-      <div style="flex:1;height:1px;background:var(--border)"></div>
+
+    <div class="divider" style="margin:14px 0 10px"></div>
+    <div style="${SUBT}">Información de producto terminado (cortado y/o sellado)</div>
+    <div class="form-grid form-grid-3 section-gap">
+      <div class="field"><label>Tipo de producto obtenido *</label><select id="e-pt-tipo">${optionsHTML(LISTA_PT_TIPOS, p.pt_tipo_producto)}</select></div>
+      <div class="field"><label>Presentación *</label><select id="e-pt-pres">${optionsHTML(LISTA_PRESENTACIONES, p.pt_presentacion)}</select></div>
+      <div class="field"><label>Peso (Gr) *</label><select id="e-pt-peso" onchange="calcularCamposEdit()">${optionsHTML(LISTA_PT_PESOS, p.pt_peso)}</select></div>
+    </div>
+    <div class="form-grid form-grid-3 section-gap">
+      <div class="field"><label>Operación realizada *</label><select id="e-pt-operacion">${optionsHTML(LISTA_OPERACIONES, p.pt_operacion)}</select></div>
+      <div class="field"><label>Tipo de sellado *</label><select id="e-pt-sellado">${optionsHTML(LISTA_SELLADOS, p.pt_sellado)}</select></div>
+      <div class="field"><label>Cantidad obtenida *</label><input id="e-pt-cant-obt" type="number" min="0" step="1" oninput="calcularCamposEdit()" value="${esc(p.pt_cantidad_obtenida ?? '')}"></div>
+    </div>
+    <div class="form-grid form-grid-2 section-gap">
+      <div class="field"><label>Retal (libras) *</label><input id="e-pt-retal" type="number" min="0" step="0.01" oninput="calcularCamposEdit()" value="${esc(p.pt_retal_lb ?? '')}"></div>
+      <div class="field"><label>Libras entregadas (auto)</label><input id="e-pt-libras-ent" ${CALC} value="${fmtCalc(p.pt_libras_entregadas)}"></div>
+    </div>
+    <div class="form-grid form-grid-3 section-gap">
+      <div class="field"><label>% de retal (auto)</label><input id="e-pt-pct-retal" readonly style="background:var(--danger-light);color:var(--danger);font-weight:600;font-family:'DM Mono',monospace;font-size:13px" value="${fmtCalc(p.pt_pct_retal)}"></div>
+      <div class="field"><label>Diferencia (libras) (auto)</label><input id="e-pt-dif" readonly style="background:var(--surface2);color:var(--text2);font-weight:600;font-family:'DM Mono',monospace;font-size:13px" value="${fmtCalc(p.pt_diferencia)}"></div>
+      <div class="field"><label>% de diferencia (auto)</label><input id="e-pt-pct-dif" readonly style="background:var(--surface2);color:var(--text2);font-weight:600;font-family:'DM Mono',monospace;font-size:13px" value="${fmtCalc(p.pt_pct_diferencia)}"></div>
     </div>
     <div class="form-grid form-grid-3">
-      <div class="field"><label>Libras entregadas <span style="color:var(--accent-mid);font-size:10px">AUTO</span></label>
-        <input id="e-libras-ent" readonly style="background:var(--surface2);color:var(--accent);font-weight:600;font-family:var(--font-mono,monospace);font-size:13px" placeholder="Calculado" value="${fmtCalc(p.libras_ent)}"></div>
-      <div class="field"><label>Kilos entregados <span style="color:var(--accent-mid);font-size:10px">AUTO</span></label>
-        <input id="e-kilos-ent" readonly style="background:var(--surface2);color:var(--accent);font-weight:600;font-family:var(--font-mono,monospace);font-size:13px" placeholder="Calculado" value="${fmtCalc(p.kilos_ent)}"></div>
-      <div class="field"><label>Libras tajadas <span style="color:var(--accent-mid);font-size:10px">AUTO</span></label>
-        <input id="e-libras-taj" readonly style="background:var(--surface2);color:var(--accent);font-weight:600;font-family:var(--font-mono,monospace);font-size:13px" placeholder="Calculado" value="${fmtCalc(p.libras_taj)}"></div>
-    </div>
-    <div class="form-grid form-grid-3" style="margin-top:8px">
-      <div class="field"><label>% Retal <span style="color:var(--accent-mid);font-size:10px">AUTO</span></label>
-        <input id="e-pct-retal" readonly style="background:var(--danger-light);color:var(--danger);font-weight:600;font-family:var(--font-mono,monospace);font-size:13px" placeholder="Calculado" value="${fmtCalc(p.pct_retal)+'%'}"></div>
-      <div class="field"><label>Diferencia <span style="color:var(--accent-mid);font-size:10px">AUTO</span></label>
-        <input id="e-diferencia" readonly style="background:var(--surface2);color:var(--text2);font-weight:600;font-family:var(--font-mono,monospace);font-size:13px" placeholder="Calculado" value="${fmtCalc(p.diferencia)}"></div>
-      <div class="field"><label>% Diferencia <span style="color:var(--accent-mid);font-size:10px">AUTO</span></label>
-        <input id="e-pct-dif" readonly style="background:var(--surface2);color:var(--text2);font-weight:600;font-family:var(--font-mono,monospace);font-size:13px" placeholder="Calculado" value="${fmtCalc(p.pct_dif)+'%'}"></div>
-    </div>
-    <div class="form-grid form-grid-3" style="margin-top:14px">
-      <div class="field"><label>F/Vto. 2</label><input id="e-vto2" type="date" value="${p.vto2||''}"></div>
-      <div class="field"><label>F/Vto. 3</label><input id="e-vto3" type="date" value="${p.vto3||''}"></div>
-      <div class="field"><label>Observaciones</label><input id="e-obs" value="${esc(p.observaciones||'')}"></div>
-    </div>
+      <div class="field"><label>L / F. Vto. *</label><input id="e-pt-lote" type="date" ${RANGO_FECHA} value="${p.pt_lote_vto||''}"></div>
+      <div class="field"><label>Código de trazabilidad *</label><input id="e-pt-codigo" class="mono" value="${esc(p.pt_codigo_trazabilidad||'')}"></div>
+      <div class="field"><label>Color de cinta *</label><input id="e-pt-color-cinta" value="${esc(p.pt_color_cinta||'NO APLICA')}"></div>
+    </div>`;
 
-    <div class="divider"></div>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-      <div style="font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.05em">Producto empleado</div>
-      <span style="font-size:11px;color:var(--text3)">Bloques de queso utilizados en este pedido</span>
-    </div>
-    <div class="cintas-list" id="edit-bloques-container"></div>
-    <button class="add-cinta" onclick="addEditBloque()" style="margin-top:10px">
-      <span style="font-size:16px;font-weight:300">+</span> Agregar bloque empleado
-    </button>
-
-    <div class="divider" style="margin-top:16px"></div>
-    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-      <div style="font-size:12px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.05em">Días de corte/empaque</div>
-      <span style="font-size:11px;color:var(--text3)">Agrega días conforme se trabajan</span>
-    </div>
-    <div class="cintas-list" id="edit-cintas-container"></div>
-    <button class="add-cinta" onclick="addEditCinta()" style="margin-top:10px">
-      <span style="font-size:16px;font-weight:300">+</span> Agregar día de corte
-    </button>`;
-
-  // Render existing bloques y cintas
-  const pBloques = bloques.filter(b => b.id_pedido === id);
-  deletedBloqueIds = [];
-  editBloqueCount = 0;
-  pBloques.forEach(b => addEditBloque(b));
-  pCintas.forEach(c => addEditCinta(c));
+  reempaques.filter(r => r.id_pedido === id).forEach(r => addEditReempaque(r));
+  onTipoMPChangeEdit(true);
 
   document.getElementById('modal-editar').classList.add('open');
 
-  // If closed, disable all inputs and hide save button
   setTimeout(() => {
     const isClosed = p.estado === 'CERRADO';
     const modalBody = document.getElementById('modal-body');
     const saveBtn = document.querySelector('.modal-footer .btn-primary');
-    const addCintaBtns = modalBody.querySelectorAll('.add-cinta');
     if (isClosed) {
-      modalBody.querySelectorAll('input, select, textarea, button.btn-icon').forEach(el => {
-        el.disabled = true;
-        el.style.opacity = '0.5';
-        el.style.cursor = 'not-allowed';
+      modalBody.querySelectorAll('input, select, textarea, button').forEach(el => {
+        el.disabled = true; el.style.opacity = '0.5'; el.style.cursor = 'not-allowed';
       });
-      addCintaBtns.forEach(btn => { btn.disabled = true; btn.style.opacity='0.5'; btn.style.cursor='not-allowed'; });
       if (saveBtn) saveBtn.style.display = 'none';
-      // Show notice
       const notice = document.createElement('div');
-      notice.style.cssText = 'background:var(--warn-light);border:1px solid #ffe08a;border-radius:8px;padding:10px 14px;font-size:12px;color:var(--warn);margin-bottom:16px;display:flex;align-items:center;gap:8px';
+      notice.style.cssText = 'background:var(--warn-light);border:1px solid #ffe08a;border-radius:8px;padding:10px 14px;font-size:12px;color:var(--warn);margin-bottom:16px';
       notice.innerHTML = 'Este pedido está cerrado. Para editarlo, primero usa el botón <strong>Reabrir pedido</strong>.';
       modalBody.insertBefore(notice, modalBody.firstChild);
     } else {
@@ -2408,44 +2277,61 @@ function abrirEditar(id) {
   }, 50);
 }
 
-function addEditCinta(data) {
-  editCintaCount++;
-  const n = editCintaCount;
-  const container = document.getElementById('edit-cintas-container');
+// Muestra la sub-sección de no conformes en el modal según el tipo de materia prima
+function onTipoMPChangeEdit(inicial) {
+  const tipo = document.getElementById('e-mp-tipo')?.value || '';
+  const wrap = document.getElementById('e-reempaque-wrap');
+  if (!wrap) return;
+  const aplica = MP_TIPOS_REEMPAQUE.includes(tipo);
+  wrap.style.display = aplica ? '' : 'none';
+  if (!aplica && !inicial) {
+    document.querySelectorAll('#edit-reempaque-container .cinta-item').forEach(item => {
+      const rid = item.dataset.reempaqueId;
+      if (rid) deletedReempaqueIds.push(rid);
+      item.remove();
+    });
+  }
+  if (!inicial) calcularCamposEdit();
+}
+
+function addEditReempaque(data) {
+  editReempaqueCount++;
+  const n = editReempaqueCount;
+  const container = document.getElementById('edit-reempaque-container');
   const div = document.createElement('div');
   div.className = 'cinta-item';
-  div.id = 'ecinta-' + n;
-  div.dataset.cintaId = data?.id_cinta || '';
-  div.style.gridTemplateColumns = '28px repeat(6, minmax(0, 1fr)) 32px';
+  div.id = 'ereemp-' + n;
+  div.dataset.reempaqueId = data?.id_reempaque || '';
+  div.style.gridTemplateColumns = '28px repeat(4, minmax(0, 1fr)) 32px';
   div.innerHTML = `
     <div class="cinta-num">${n}</div>
     <div class="field">
-      <label>Día de corte</label>
-      <input id="ec-dia-${n}" type="date" value="${data?.dia_corte||''}">
+      <label>Cant. unidades no conformes</label>
+      <input id="er-cant-${n}" type="number" min="0" step="1" placeholder="0" value="${esc(data?.cantidad_no_conformes ?? '')}">
     </div>
     <div class="field">
-      <label>Producto empleado</label>
-      <input id="ec-prod-${n}" placeholder="Ej: Bloque 23-03-2026" value="${esc(data?.prod_empleado||'')}">
+      <label>Letra según código de trazabilidad</label>
+      <input id="er-letra-${n}" class="mono" placeholder="Ej: A" value="${esc(data?.letra_codigo || '')}">
     </div>
     <div class="field">
-      <label>Código</label>
-      <input id="ec-cod-${n}" placeholder="Ej: 18442A" value="${esc(data?.codigo||'')}" class="mono">
+      <label>L / F. Vto. real a reempacar</label>
+      <input id="er-vto-${n}" type="date" min="2025-01-01" max="2027-12-31" value="${data?.vto_real || ''}">
     </div>
     <div class="field">
-      <label>Cinta</label>
-      <input id="ec-cinta-${n}" placeholder="Ej: 1 Azul" value="${esc(data?.cinta||'')}">
+      <label>Retal (libras)</label>
+      <input id="er-retal-${n}" type="number" min="0" step="0.01" placeholder="0.00" value="${esc(data?.retal_lb ?? '')}">
     </div>
-    <div class="field">
-      <label>Cantidad</label>
-      <input id="ec-cant-${n}" placeholder="Ej: 4,200 Uds" value="${esc(data?.cantidad_cinta||'')}">
-    </div>
-    <div class="field">
-      <label>Observación cinta</label>
-      <input id="ec-obs-cinta-${n}" placeholder="Notas..." value="${esc(data?.obs_cinta||'')}">
-    </div>
-    <button class="btn btn-xs btn-danger" onclick="quitarEditCinta(this)" style="align-self:flex-end;margin-bottom:1px;font-size:15px;line-height:1;padding:4px 8px">✕</button>`;
+    <button class="btn btn-xs btn-danger" onclick="quitarEditReempaque(this)" title="Quitar" style="align-self:flex-end;margin-bottom:1px;font-size:15px;line-height:1;padding:4px 8px">✕</button>`;
   container.appendChild(div);
-  renumberContainer('edit-cintas-container');
+  renumberContainer('edit-reempaque-container');
+}
+
+function quitarEditReempaque(btn) {
+  const item = btn.closest('.cinta-item');
+  const rid = item.dataset.reempaqueId;
+  if (rid) deletedReempaqueIds.push(rid);
+  item.remove();
+  renumberContainer('edit-reempaque-container');
 }
 
 function closeModal() {
@@ -2462,208 +2348,119 @@ async function guardarEdicion() {
     return;
   }
 
-  const eFechaCorte = document.getElementById('e-fecha-corte')?.value || '';
-  const eResponsable = (document.getElementById('e-responsable')?.value || '').trim();
-  if (!eFechaCorte || !eResponsable) {
-    toast('Completa la Información Operativa: Fecha de corte y Nombre del responsable', 'error');
+  const g = id => (document.getElementById(id)?.value ?? '').trim();
+  const obligatorios = [
+    ['e-fecha-corte','Fecha de corte'], ['e-fecha-entrega','Fecha de entrega'],
+    ['e-cliente','Cliente'], ['e-menu','Menú'], ['e-operador','Operador'],
+    ['e-responsable','Responsable'], ['e-mp-cantidad-oc','Cantidad según OC'],
+    ['e-mp-tipo','Tipo de producto (MP)'], ['e-mp-peso','Peso (MP)'],
+    ['e-mp-cant-emp','Cantidad empleada'], ['e-mp-lote','Lote / F. Vto. MP'],
+    ['e-pt-tipo','Tipo de producto obtenido'], ['e-pt-pres','Presentación'],
+    ['e-pt-peso','Peso (PT)'], ['e-pt-operacion','Operación'], ['e-pt-sellado','Sellado'],
+    ['e-pt-cant-obt','Cantidad obtenida'], ['e-pt-retal','Retal (libras)'],
+    ['e-pt-lote','L / F. Vto.'], ['e-pt-codigo','Código de trazabilidad'],
+    ['e-pt-color-cinta','Color de cinta'],
+  ];
+  const faltantes = obligatorios.filter(([cid]) => g(cid) === '').map(([, lbl]) => lbl);
+  if (faltantes.length) {
+    toast('Faltan campos obligatorios: ' + faltantes.slice(0,3).join(', ')
+      + (faltantes.length > 3 ? ` y ${faltantes.length-3} más` : ''), 'error');
     return;
   }
 
+  const btn = document.querySelector('.modal-footer .btn-primary');
+  if (btn) { btn.disabled = true; btn.textContent = 'Guardando...'; }
+
   try {
-    const data = await sheetsGet('PEDIDOS!A:A');
-    const rows = data.values || [];
-    let rowNum = -1;
-    for (let i = 1; i < rows.length; i++) {
-      if (rows[i][0] === editingId) { rowNum = i + 1; break; }
-    }
-    if (rowNum < 0) { toast('No se encontró el pedido en el Sheet', 'error'); return; }
+    const rowNum = await sheetsFindRow(HOJA_PEDIDOS, 0, editingId);
+    if (rowNum < 0) { toast('No se encontró el pedido en la hoja', 'error'); return; }
 
     const now = new Date().toISOString();
-    const fecha = document.getElementById('e-fecha').value;
-    const mes = fecha ? new Date(fecha+'T12:00:00').toLocaleString('es-CO',{month:'short'}).toUpperCase() : p.mes;
-
-    // Recalcular campos derivados como floats puros (igual que guardarPedido)
-    const grm  = parseFloat(document.getElementById('e-gramaje').value)  || 0;
-    const unds = parseFloat(document.getElementById('e-unidades').value) || 0;
-    const retl = parseFloat(document.getElementById('e-retal').value)    || 0;
-    const retlB = parseFloat(document.getElementById('e-retal-bocadillo')?.value) || 0;
-
-    let lbTaj = 0;
-    document.querySelectorAll('#edit-bloques-container .cinta-item').forEach(item => {
-      const n = item.id.split('-')[1];
-      const g = parseFloat(document.getElementById('eb-gramaje-' + n)?.value) || 0;
-      const c = parseFloat(document.getElementById('eb-cant-'    + n)?.value) || 0;
-      if (g > 0 && c > 0) lbTaj += (g / 500) * c;
-    });
-
-    const lbEnt   = (grm > 0 && unds > 0) ? (unds * grm) / 500 : (parseFloat(p.libras_ent) || 0);
-    const kgEnt   = lbEnt / 2;
-    const lbTajFn = lbTaj > 0 ? lbTaj : (parseFloat(p.libras_taj) || 0);
-    const pctRetl = lbTajFn > 0 ? (retl  / lbTajFn) * 100 : 0;
-    const dif     = lbTajFn > 0 ?  lbTajFn - lbEnt - retl  : 0;
-    const pctDf   = lbTajFn > 0 ? (dif   / lbTajFn) * 100 : 0;
-
-    const cantNum  = document.getElementById('e-cantidad').value;
-    const cantUnit = document.getElementById('e-unidad-tipo')?.value || 'Unidades';
+    const c = calcularCamposEdit();
 
     const pedidoObj = {
       id: editingId,
-      cliente: safeText(document.getElementById('e-cliente').value),
-      menu: safeText(document.getElementById('e-menu')?.value || p.menu),
-      fecha_entrega: fecha,
-      producto: safeText(document.getElementById('e-producto').value),
-      presentacion: document.getElementById('e-pres').value,
-      peso: document.getElementById('e-peso').value,
-      operador: p.operador,
-      cantidad: cantNum,
-      fecha_fab: document.getElementById('e-fab').value,
-      fecha_vto: document.getElementById('e-vto').value,
-      marca: document.getElementById('e-marca')?.value || p.marca,
-      mes, fecha_corte: eFechaCorte,
-      operacion: document.getElementById('e-operacion')?.value || p.operacion,
-      sellado: document.getElementById('e-sellado')?.value || p.sellado,
-      gramaje: document.getElementById('e-gramaje').value,
-      gram_bloque: document.getElementById('e-gram-bloque').value,
-      bloques: document.getElementById('e-bloques').value,
-      unidades: document.getElementById('e-unidades').value,
-      libras_ent: lbEnt, kilos_ent: kgEnt, libras_taj: lbTajFn,
-      retal: retl, retal_bocadillo: retlB,
-      pct_retal: pctRetl, diferencia: dif, pct_dif: pctDf,
-      tipo_queso: p.tipo_queso, lote: p.lote,
-      vto2: document.getElementById('e-vto2')?.value || p.vto2,
-      vto3: document.getElementById('e-vto3')?.value || p.vto3,
-      observaciones: safeText(document.getElementById('e-obs').value),
-      estado: p.estado, fecha_creacion: p.fecha_creacion, ultima_edicion: now,
-      unidad: cantUnit,
-      responsable: safeText(eResponsable),
+      fecha_corte:            g('e-fecha-corte'),
+      fecha_entrega:          g('e-fecha-entrega'),
+      cliente:                safeText(g('e-cliente')),
+      menu:                   safeText(g('e-menu')),
+      operador:               safeText(g('e-operador')),
+      responsable:            safeText(g('e-responsable')),
+      mp_cantidad_oc:         g('e-mp-cantidad-oc'),
+      mp_tipo_producto:       safeText(g('e-mp-tipo')),
+      mp_peso:                g('e-mp-peso'),
+      mp_cantidad_empleada:   g('e-mp-cant-emp'),
+      mp_libras_tajadas:      c.librasTajadas,
+      mp_lote_vto:            g('e-mp-lote'),
+      pt_tipo_producto:       safeText(g('e-pt-tipo')),
+      pt_presentacion:        safeText(g('e-pt-pres')),
+      pt_peso:                g('e-pt-peso'),
+      pt_operacion:           safeText(g('e-pt-operacion')),
+      pt_sellado:             safeText(g('e-pt-sellado')),
+      pt_cantidad_obtenida:   g('e-pt-cant-obt'),
+      pt_libras_entregadas:   c.librasEntregadas,
+      pt_retal_lb:            g('e-pt-retal'),
+      pt_pct_retal:           c.pctRetal,
+      pt_diferencia:          c.diferencia,
+      pt_pct_diferencia:      c.pctDiferencia,
+      pt_lote_vto:            g('e-pt-lote'),
+      pt_codigo_trazabilidad: safeText(g('e-pt-codigo')),
+      pt_color_cinta:         safeText(g('e-pt-color-cinta')),
+      estado: p.estado,
+      creado_por: p.creado_por || '',
+      fecha_creacion: p.fecha_creacion,
+      ultima_edicion: now,
     };
-    const updatedRow = objToRow(pedidoObj, COLS_PEDIDOS);
 
-    await sheetsUpdate(`PEDIDOS!A${rowNum}:AL${rowNum}`, [updatedRow]);
+    await sheetsUpdate(`${HOJA_PEDIDOS}!A${rowNum}:AE${rowNum}`, [objToRow(pedidoObj, COLS_PEDIDOS)]);
 
-    // ── CINTAS: actualizar existentes + agregar nuevas + eliminar quitadas ──
-    const editItems = document.querySelectorAll('#edit-cintas-container .cinta-item');
-    const existingIds = cintas.filter(c => c.id_pedido === editingId).map(c => c.id_cinta);
-    const cintaUpdates = []; // { cintaId, values }
-    const newCintas    = [];
+    // ── Reempaque: actualizar existentes, agregar nuevos y eliminar quitados ──
+    const items = document.querySelectorAll('#edit-reempaque-container .cinta-item');
+    const updates = [];
+    const nuevos  = [];
+    const existentes = reempaques.filter(r => r.id_pedido === editingId).length;
 
-    editItems.forEach((item) => {
+    items.forEach(item => {
       const n = item.id.split('-')[1];
-      const cintaId = item.dataset.cintaId;
+      const rid = item.dataset.reempaqueId;
       const vals = [
-        document.getElementById('ec-dia-'      + n)?.value || '',
-        safeText((document.getElementById('ec-prod-'    + n)?.value || '').toUpperCase()),
-        safeText((document.getElementById('ec-cod-'     + n)?.value || '').toUpperCase()),
-        safeText((document.getElementById('ec-cinta-'   + n)?.value || '').toUpperCase()),
-        safeText(document.getElementById('ec-cant-'     + n)?.value || ''),
-        'Unidades',
-        safeText((document.getElementById('ec-obs-cinta-' + n)?.value || '').toUpperCase()),
+        document.getElementById('er-cant-'  + n)?.value?.trim() || '',
+        safeText((document.getElementById('er-letra-' + n)?.value?.trim() || '').toUpperCase()),
+        document.getElementById('er-vto-'   + n)?.value || '',
+        document.getElementById('er-retal-' + n)?.value?.trim() || '',
       ];
-      if (cintaId) {
-        cintaUpdates.push({ cintaId, vals }); // actualizar fila existente
-      } else {
-        newCintas.push([
-          editingId + '_C' + (existingIds.length + newCintas.length + 1),
-          editingId, ...vals, now,
-        ]);
-      }
+      if (rid) updates.push({ rid, vals });
+      else nuevos.push([editingId + '_R' + (existentes + nuevos.length + 1), editingId, ...vals, now]);
     });
 
-    // Obtener mapa id→fila de CINTAS una sola vez (sirve para updates Y deletes)
-    let cinAllRows = [];
-    if (cintaUpdates.length > 0 || deletedCintaIds.length > 0) {
-      cinAllRows = (await sheetsGet('CINTAS!A:A')).values || [];
+    let filasReemp = [];
+    if (updates.length || deletedReempaqueIds.length) {
+      filasReemp = (await sheetsGet(`${HOJA_REEMPAQUE}!A:A`)).values || [];
     }
 
-    // Actualizar cintas existentes modificadas (columnas C a I)
-    for (const upd of cintaUpdates) {
-      for (let i = 1; i < cinAllRows.length; i++) {
-        if ((cinAllRows[i][0] || '').trim() === upd.cintaId) {
-          await sheetsUpdate(`CINTAS!C${i+1}:I${i+1}`, [upd.vals]);
+    for (const u of updates) {
+      for (let i = 1; i < filasReemp.length; i++) {
+        if ((filasReemp[i][0] || '').trim() === u.rid) {
+          await sheetsUpdate(`${HOJA_REEMPAQUE}!C${i+1}:F${i+1}`, [u.vals]);
           break;
         }
       }
     }
 
-    if (newCintas.length > 0) {
-      await sheetsAppend('CINTAS!A:J', newCintas);
-    }
+    if (nuevos.length) await sheetsAppend(RANGO_REEMPAQUE, nuevos);
 
-    // Eliminar cintas quitadas
-    if (deletedCintaIds.length > 0) {
-      const rowsToDelete = [];
-      for (let i = 1; i < cinAllRows.length; i++) {
-        if (deletedCintaIds.includes((cinAllRows[i][0] || '').trim())) rowsToDelete.push(i + 1);
+    if (deletedReempaqueIds.length) {
+      const rows = [];
+      for (let i = 1; i < filasReemp.length; i++) {
+        if (deletedReempaqueIds.includes((filasReemp[i][0] || '').trim())) rows.push(i + 1);
       }
-      if (rowsToDelete.length > 0) {
-        const cinSheetId = await obtenerSheetId('CINTAS');
-        const delRequests = rowsToDelete.sort((a, b) => b - a).map(row => ({
-          deleteDimension: { range: { sheetId: cinSheetId, dimension: 'ROWS', startIndex: row - 1, endIndex: row } }
-        }));
-        await eliminarFilasBatch(delRequests);
+      if (rows.length) {
+        const sid = await obtenerSheetId(HOJA_REEMPAQUE);
+        await eliminarFilasBatch(rows.sort((a,b) => b-a).map(row => ({
+          deleteDimension: { range: { sheetId: sid, dimension: 'ROWS', startIndex: row-1, endIndex: row } }
+        })));
       }
-      deletedCintaIds = [];
-    }
-
-    // ── BLOQUES: actualizar existentes + agregar nuevos + eliminar quitados ──
-    const editBloqueItems = document.querySelectorAll('#edit-bloques-container .cinta-item');
-    const existingBloqueIds = bloques.filter(b => b.id_pedido === editingId).map(b => b.id_bloque);
-    const bloqueUpdates = []; // { bloqueId, vals }
-    const newBloques    = [];
-
-    editBloqueItems.forEach((item) => {
-      const n = item.id.split('-')[1];
-      const bloqueId = item.dataset.bloqueId;
-      const vals = [
-        document.getElementById('eb-gramaje-' + n)?.value || '',
-        safeText((document.getElementById('eb-tipo-'   + n)?.value || '').toUpperCase()),
-        document.getElementById('eb-cant-'    + n)?.value || '',
-        document.getElementById('eb-lote-'    + n)?.value || '',
-      ];
-      if (bloqueId) {
-        bloqueUpdates.push({ bloqueId, vals }); // actualizar fila existente
-      } else {
-        newBloques.push([
-          editingId + '_B' + (existingBloqueIds.length + newBloques.length + 1),
-          editingId, ...vals, now,
-        ]);
-      }
-    });
-
-    // Obtener mapa id→fila de BLOQUES una sola vez
-    let blqAllRows = [];
-    if (bloqueUpdates.length > 0 || deletedBloqueIds.length > 0) {
-      blqAllRows = (await sheetsGet('BLOQUES!A:A')).values || [];
-    }
-
-    // Actualizar bloques existentes modificados (columnas C a F)
-    for (const upd of bloqueUpdates) {
-      for (let i = 1; i < blqAllRows.length; i++) {
-        if ((blqAllRows[i][0] || '').trim() === upd.bloqueId) {
-          await sheetsUpdate(`BLOQUES!C${i+1}:F${i+1}`, [upd.vals]);
-          break;
-        }
-      }
-    }
-
-    if (newBloques.length > 0) {
-      await sheetsAppend('BLOQUES!A:G', newBloques);
-    }
-
-    // Eliminar bloques quitados
-    if (deletedBloqueIds.length > 0) {
-      const blqRowsToDelete = [];
-      for (let i = 1; i < blqAllRows.length; i++) {
-        if (deletedBloqueIds.includes((blqAllRows[i][0] || '').trim())) blqRowsToDelete.push(i + 1);
-      }
-      if (blqRowsToDelete.length > 0) {
-        const blqSheetId = await obtenerSheetId('BLOQUES');
-        const delReqs = blqRowsToDelete.sort((a, b) => b - a).map(row => ({
-          deleteDimension: { range: { sheetId: blqSheetId, dimension: 'ROWS', startIndex: row - 1, endIndex: row } }
-        }));
-        await eliminarFilasBatch(delReqs);
-      }
-      deletedBloqueIds = [];
+      deletedReempaqueIds = [];
     }
 
     toast('Cambios guardados', 'success');
@@ -2671,6 +2468,8 @@ async function guardarEdicion() {
     await loadData();
   } catch(e) {
     toast('Error al guardar: ' + e.message, 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = 'Guardar cambios'; }
   }
 }
 
@@ -2680,25 +2479,25 @@ async function cambiarEstado() {
   if (!p) return;
   const nuevoEstado = p.estado === 'CERRADO' ? 'ABIERTO' : 'CERRADO';
 
-  // Solo ADMIN puede reabrir pedidos cerrados
   if (nuevoEstado === 'ABIERTO' && !isAdmin()) {
     toast('Solo los administradores pueden reabrir pedidos cerrados.', 'error');
     return;
   }
+  const btn = document.querySelector('.modal-footer .btn-danger');
+  if (btn) btn.disabled = true;
   try {
-    const data = await sheetsGet('PEDIDOS!A:A');
-    const rows = data.values || [];
-    let rowNum = -1;
-    for (let i = 1; i < rows.length; i++) {
-      if (rows[i][0] === editingId) { rowNum = i + 1; break; }
-    }
+    const rowNum = await sheetsFindRow(HOJA_PEDIDOS, 0, editingId);
     if (rowNum < 0) return;
-    await sheetsUpdate(`PEDIDOS!AH${rowNum}:AJ${rowNum}`, [[nuevoEstado, p.fecha_creacion, new Date().toISOString()]]);
+    // Columna AB = estado · columna AE = ultima_edicion
+    await sheetsUpdate(`${HOJA_PEDIDOS}!AB${rowNum}`, [[nuevoEstado]]);
+    await sheetsUpdate(`${HOJA_PEDIDOS}!AE${rowNum}`, [[new Date().toISOString()]]);
     toast(`Pedido marcado como ${nuevoEstado}`, 'success');
     closeModal();
     await loadData();
   } catch(e) {
     toast('Error: ' + e.message, 'error');
+  } finally {
+    if (btn) btn.disabled = false;
   }
 }
 
@@ -2711,7 +2510,7 @@ async function obtenerSheetId(sheetName) {
     `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}?fields=sheets.properties`, {}
   );
   const data = await r.json();
-  (data.sheets || []).forEach(s => { sheetIds[s.properties.title] = s.properties.sheetId; });
+  (data.sheets || []).forEach(sh => { sheetIds[sh.properties.title] = sh.properties.sheetId; });
   return sheetIds[sheetName];
 }
 
@@ -2727,24 +2526,20 @@ async function eliminarFilasBatch(requests) {
 async function eliminarPedido(id) {
   const p = pedidos.find(x => x.id === id);
   if (!p) return;
-  // Solo ADMIN puede eliminar pedidos cerrados
   if (p.estado === 'CERRADO' && !isAdmin()) {
     toast('Solo los administradores pueden eliminar pedidos cerrados.', 'error');
     return;
   }
-  const nCintas = cintas.filter(c => c.id_pedido === id).length;
-  const nBloques = bloques.filter(b => b.id_pedido === id).length;
-  const msg = '¿Eliminar el pedido de ' + p.cliente + ' — ' + p.producto + '?'
-    + (nCintas > 0 ? '\nSe eliminarán también ' + nCintas + ' código(s) de corte asociado(s).' : '')
-    + (nBloques > 0 ? '\nSe eliminarán también ' + nBloques + ' bloque(s) empleado(s).' : '')
+  const nReemp = reempaques.filter(r => r.id_pedido === id).length;
+  const msg = '¿Eliminar el pedido de ' + p.cliente + ' — ' + (p.pt_tipo_producto || '') + '?'
+    + (nReemp > 0 ? '\nSe eliminarán también ' + nReemp + ' registro(s) de unidades no conformes.' : '')
     + '\n\nEsta acción no se puede deshacer.';
   if (!confirm(msg)) return;
 
   try {
-    const [pedData, cinData, blqData] = await Promise.all([
-      sheetsGet('PEDIDOS!A:A'),
-      sheetsGet('CINTAS!B:B'),
-      sheetsGet('BLOQUES!B:B'),
+    const [pedData, reempData] = await Promise.all([
+      sheetsGet(`${HOJA_PEDIDOS}!A:A`),
+      sheetsGet(`${HOJA_REEMPAQUE}!B:B`),
     ]);
 
     const pedRows = pedData.values || [];
@@ -2754,28 +2549,18 @@ async function eliminarPedido(id) {
     }
     if (pedRow < 0) { toast('No se encontró el pedido', 'error'); return; }
 
-    const cinRows = cinData.values || [];
-    const cinRowNums = [];
-    for (let i = 1; i < cinRows.length; i++) {
-      if ((cinRows[i][0] || '').trim() === id) cinRowNums.push(i + 1);
+    const reempRows = reempData.values || [];
+    const reempNums = [];
+    for (let i = 1; i < reempRows.length; i++) {
+      if ((reempRows[i][0] || '').trim() === id) reempNums.push(i + 1);
     }
 
-    const blqRows = blqData.values || [];
-    const blqRowNums = [];
-    for (let i = 1; i < blqRows.length; i++) {
-      if ((blqRows[i][0] || '').trim() === id) blqRowNums.push(i + 1);
-    }
-
-    const pedSheetId = await obtenerSheetId('PEDIDOS');
-    const cinSheetId = await obtenerSheetId('CINTAS');
-    const blqSheetId = await obtenerSheetId('BLOQUES');
+    const pedSheetId   = await obtenerSheetId(HOJA_PEDIDOS);
+    const reempSheetId = await obtenerSheetId(HOJA_REEMPAQUE);
 
     const requests = [
-      ...blqRowNums.sort((a, b) => b - a).map(row => ({
-        deleteDimension: { range: { sheetId: blqSheetId, dimension: 'ROWS', startIndex: row - 1, endIndex: row } }
-      })),
-      ...cinRowNums.sort((a, b) => b - a).map(row => ({
-        deleteDimension: { range: { sheetId: cinSheetId, dimension: 'ROWS', startIndex: row - 1, endIndex: row } }
+      ...reempNums.sort((a, b) => b - a).map(row => ({
+        deleteDimension: { range: { sheetId: reempSheetId, dimension: 'ROWS', startIndex: row - 1, endIndex: row } }
       })),
       { deleteDimension: { range: { sheetId: pedSheetId, dimension: 'ROWS', startIndex: pedRow - 1, endIndex: pedRow } } }
     ];
@@ -2794,116 +2579,6 @@ function renumberContainer(containerId) {
     const num = item.querySelector('.cinta-num');
     if (num) num.textContent = idx + 1;
   });
-}
-
-function quitarCintaRow(btn) {
-  btn.closest('.cinta-item').remove();
-  renumberContainer('cintas-container');
-}
-
-function quitarBloqueRow(btn) {
-  btn.closest('.cinta-item').remove();
-  renumberContainer('bloques-container');
-  calcularCampos();
-}
-
-function quitarEditCinta(btn) {
-  const item = btn.closest('.cinta-item');
-  const cintaId = item.dataset.cintaId;
-  if (cintaId) deletedCintaIds.push(cintaId);
-  item.remove();
-  renumberContainer('edit-cintas-container');
-}
-
-// ═══════════════════════════════════════════════════════════
-// BLOQUE ROWS (Producto Empleado)
-// ═══════════════════════════════════════════════════════════
-function addBloqueRow(data, containerId) {
-  const container = document.getElementById(containerId || 'bloques-container');
-  const n = ++bloqueCount;
-  const div = document.createElement('div');
-  div.className = 'cinta-item';
-  div.id = 'bloque-' + n;
-  div.style.gridTemplateColumns = '28px 110px 1fr 100px 1fr 32px';
-  div.innerHTML = `
-    <div class="cinta-num">${n}</div>
-    <div class="field">
-      <label>Gramaje bloque (g)</label>
-      <input id="b-gramaje-${n}" type="number" placeholder="Ej: 3300" oninput="calcularCampos()" value="${data?.gramaje_bloque_emp||''}">
-    </div>
-    <div class="field">
-      <label>Tipo de queso</label>
-      <select id="b-tipo-${n}">
-        <option value="">Seleccionar...</option>
-        ${['MOZARELLA','DOBLE CREMA','QUESO DOBLE CREMA (BOCADILLO)','QUESO CON BOCADILLO','CAMPESINO','PERA'].map(p=>`<option${(data?.tipo_queso||'')=== p?' selected':''}>${p}</option>`).join('')}
-      </select>
-    </div>
-    <div class="field">
-      <label>Cant. bloques</label>
-      <input id="b-cant-${n}" type="number" placeholder="0" oninput="calcularCampos()" value="${data?.cant_bloques||''}">
-    </div>
-    <div class="field">
-      <label>Lote bloque empleado</label>
-      <input id="b-lote-${n}" type="date" value="${data?.lote_bloque||''}">
-    </div>
-    <button class="btn btn-xs btn-danger" onclick="quitarBloqueRow(this)" title="Quitar" style="align-self:flex-end;margin-bottom:1px;font-size:15px;line-height:1;padding:4px 8px">✕</button>`;
-  container.appendChild(div);
-  renumberContainer(containerId || 'bloques-container');
-}
-
-function getBloques() {
-  return Array.from(document.querySelectorAll('#bloques-container .cinta-item')).map(item => {
-    const n = item.id.split('-')[1];
-    return {
-      gramaje_bloque_emp: document.getElementById('b-gramaje-' + n)?.value?.trim() || '',
-      tipo_queso: (document.getElementById('b-tipo-' + n)?.value?.trim() || '').toUpperCase(),
-      cant_bloques: document.getElementById('b-cant-' + n)?.value?.trim() || '',
-      lote_bloque: document.getElementById('b-lote-' + n)?.value?.trim() || '',
-    };
-  }).filter(b => b.tipo_queso || b.lote_bloque || b.gramaje_bloque_emp);
-}
-
-function addEditBloque(data) {
-  editBloqueCount++;
-  const n = editBloqueCount;
-  const container = document.getElementById('edit-bloques-container');
-  const div = document.createElement('div');
-  div.className = 'cinta-item';
-  div.id = 'ebloque-' + n;
-  div.dataset.bloqueId = data?.id_bloque || '';
-  div.style.gridTemplateColumns = '28px 110px 1fr 100px 1fr 32px';
-  div.innerHTML = `
-    <div class="cinta-num">${n}</div>
-    <div class="field">
-      <label>Gramaje bloque (g)</label>
-      <input id="eb-gramaje-${n}" type="number" oninput="calcularCamposEdit()" placeholder="Ej: 3300" value="${data?.gramaje_bloque_emp||''}">
-    </div>
-    <div class="field">
-      <label>Tipo de queso</label>
-      <select id="eb-tipo-${n}">
-        <option value="">Seleccionar...</option>
-        ${['MOZARELLA','DOBLE CREMA','QUESO DOBLE CREMA (BOCADILLO)','QUESO CON BOCADILLO','CAMPESINO','PERA'].map(p=>`<option${(data?.tipo_queso||'')=== p?' selected':''}>${p}</option>`).join('')}
-      </select>
-    </div>
-    <div class="field">
-      <label>Cant. bloques</label>
-      <input id="eb-cant-${n}" type="number" oninput="calcularCamposEdit()" placeholder="0" value="${data?.cant_bloques||''}">
-    </div>
-    <div class="field">
-      <label>Lote bloque empleado</label>
-      <input id="eb-lote-${n}" type="date" value="${data?.lote_bloque||''}">
-    </div>
-    <button class="btn btn-xs btn-danger" onclick="quitarEditBloque(this)" style="align-self:flex-end;margin-bottom:1px;font-size:15px;line-height:1;padding:4px 8px">✕</button>`;
-  container.appendChild(div);
-  renumberContainer('edit-bloques-container');
-}
-
-function quitarEditBloque(btn) {
-  const item = btn.closest('.cinta-item');
-  const bloqueId = item.dataset.bloqueId;
-  if (bloqueId) deletedBloqueIds.push(bloqueId);
-  item.remove();
-  renumberContainer('edit-bloques-container');
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -3015,17 +2690,14 @@ let resumenFiltros = { clientes: [], productos: [], presentaciones: [], fechaDes
 
 function renderResumen() {
   const cont = document.getElementById('resumen-content');
-
-  // Asegurar estructura base (filtros + datos)
   if (!document.getElementById('resumen-filter-bar')) {
     cont.innerHTML = `<div id="resumen-filter-bar" class="filter-bar" style="margin-bottom:16px"></div><div id="resumen-data"></div>`;
   }
 
   const clientes = [...new Set(pedidos.map(p => p.cliente).filter(Boolean))].sort();
-  const prods    = [...new Set(pedidos.map(p => p.producto).filter(Boolean))].sort();
-  const pres     = [...new Set(pedidos.map(p => p.presentacion).filter(Boolean))].sort();
+  const prods    = [...new Set(pedidos.map(p => p.pt_tipo_producto).filter(Boolean))].sort();
+  const pres     = [...new Set(pedidos.map(p => p.pt_presentacion).filter(Boolean))].sort();
 
-  // ── Barra de filtros persistente ──
   const fb = document.getElementById('resumen-filter-bar');
   if (!fb._built) {
     fb._built = true;
@@ -3092,9 +2764,9 @@ function renderResumen() {
 
 function applyResumenFilters() {
   const filtPedidos = pedidos.filter(p => {
-    if (resumenFiltros.clientes.length      && !resumenFiltros.clientes.includes(p.cliente))           return false;
-    if (resumenFiltros.productos.length     && !resumenFiltros.productos.includes(p.producto))          return false;
-    if (resumenFiltros.presentaciones.length && !resumenFiltros.presentaciones.includes(p.presentacion)) return false;
+    if (resumenFiltros.clientes.length       && !resumenFiltros.clientes.includes(p.cliente))              return false;
+    if (resumenFiltros.productos.length      && !resumenFiltros.productos.includes(p.pt_tipo_producto))     return false;
+    if (resumenFiltros.presentaciones.length && !resumenFiltros.presentaciones.includes(p.pt_presentacion)) return false;
     if (resumenFiltros.fechaDesde && (p.fecha_entrega||'') < resumenFiltros.fechaDesde) return false;
     if (resumenFiltros.fechaHasta && (p.fecha_entrega||'') > resumenFiltros.fechaHasta) return false;
     if (resumenFiltros.fechaCorteDesde && (p.fecha_corte||'') < resumenFiltros.fechaCorteDesde) return false;
@@ -3108,14 +2780,14 @@ function applyResumenFilters() {
   const mapa = {};
   filtPedidos.forEach(p => {
     const k = p.cliente || '(SIN CLIENTE)';
-    if (!mapa[k]) mapa[k] = { cliente: k, listaPedidos: [], unidades: 0, retal: 0, cintas: 0 };
+    if (!mapa[k]) mapa[k] = { cliente: k, listaPedidos: [], cantObt: 0, retal: 0, librasEnt: 0 };
     mapa[k].listaPedidos.push(p);
-    mapa[k].unidades += parseFloat(p.unidades) || 0;
-    mapa[k].retal    += parseFloat(p.retal)    || 0;
-    mapa[k].cintas   += cintas.filter(c => c.id_pedido === p.id).length;
+    mapa[k].cantObt   += parseFloat(p.pt_cantidad_obtenida) || 0;
+    mapa[k].retal     += parseFloat(p.pt_retal_lb)          || 0;
+    mapa[k].librasEnt += parseFloat(p.pt_libras_entregadas) || 0;
   });
-  const rows = Object.values(mapa).sort((a, b) => b.unidades - a.unidades);
-  const pBadge = { BLOQUE:'badge-blue', TAJADO:'badge-green', DEDOS:'badge-amber', 'PORCIÓN':'badge-red' };
+  const rows = Object.values(mapa).sort((a, b) => b.cantObt - a.cantObt);
+  const pBadge = { BLOQUE:'badge-blue', TAJADO:'badge-green', DEDO:'badge-amber', 'PORCIÓN':'badge-red' };
 
   const dataDiv = document.getElementById('resumen-data');
   if (!dataDiv) return;
@@ -3129,33 +2801,33 @@ function applyResumenFilters() {
             <span class="card-sub" style="margin-left:10px">${r.listaPedidos.length} pedido${r.listaPedidos.length!==1?'s':''}</span>
           </div>
           <div style="display:flex;gap:20px;font-size:12px;color:var(--text2);align-items:center">
-            <span><strong style="color:var(--text)">${r.unidades.toLocaleString('es-CO')}</strong> unidades</span>
-            <span><strong style="color:${r.retal>0?'var(--danger)':'var(--text)'}">${r.retal.toFixed(1)}</strong> lb retal</span>
-            <span><strong style="color:var(--text)">${r.cintas}</strong> cinta${r.cintas!==1?'s':''}</span>
+            <span><strong style="color:var(--text)">${r.cantObt.toLocaleString('es-CO')}</strong> unidades</span>
+            <span><strong style="color:var(--text)">${fmtNum(r.librasEnt,1)}</strong> lb entregadas</span>
+            <span><strong style="color:${r.retal>0?'var(--danger)':'var(--text)'}">${fmtNum(r.retal,1)}</strong> lb retal</span>
           </div>
         </div>
         <div class="table-wrap">
           <table class="data-table" style="font-size:12px">
             <thead><tr>
               <th>F. Corte</th><th>Producto</th><th>Presentación</th><th>F. Entrega</th>
-              <th style="text-align:right">Cant. Sol.</th>
-              <th style="text-align:right">Unidades</th>
+              <th style="text-align:right">Cant. OC</th>
+              <th style="text-align:right">Cant. obtenida</th>
               <th style="text-align:right">Retal (lb)</th>
               <th>Estado</th><th></th>
             </tr></thead>
             <tbody>
-              ${r.listaPedidos.sort((a,b)=>(b.fecha_entrega||'').localeCompare(a.fecha_entrega||'')).map(p => {
+              ${r.listaPedidos.sort((a,b)=>(b.fecha_corte||'').localeCompare(a.fecha_corte||'')).map(p => {
                 const esAb = p.estado === 'ABIERTO'; const esCe = p.estado === 'CERRADO';
-                const retal = parseFloat(p.retal)||0;
-                const bcls = pBadge[p.presentacion] || 'badge-gray';
+                const retal = parseFloat(p.pt_retal_lb)||0;
+                const bcls = pBadge[p.pt_presentacion] || 'badge-gray';
                 return `<tr>
                   <td style="color:var(--text2)">${fmtFecha(p.fecha_corte)}</td>
-                  <td><strong>${esc(p.producto||'—')}</strong></td>
-                  <td>${p.presentacion?`<span class="badge ${bcls}">${esc(p.presentacion)}</span>`:'—'}</td>
+                  <td><strong>${esc(p.pt_tipo_producto||'—')}</strong></td>
+                  <td>${p.pt_presentacion?`<span class="badge ${bcls}">${esc(p.pt_presentacion)}</span>`:'—'}</td>
                   <td style="color:var(--text2)">${fmtFecha(p.fecha_entrega)}</td>
-                  <td style="text-align:right">${esc(p.cantidad||'—')}</td>
-                  <td style="text-align:right">${(parseFloat(p.unidades)||0).toLocaleString('es-CO')}</td>
-                  <td style="text-align:right;${retal>0?'color:var(--danger);font-weight:600':''}">${retal>0?retal.toFixed(1):'—'}</td>
+                  <td style="text-align:right">${(parseFloat(p.mp_cantidad_oc)||0).toLocaleString('es-CO')}</td>
+                  <td style="text-align:right">${(parseFloat(p.pt_cantidad_obtenida)||0).toLocaleString('es-CO')}</td>
+                  <td style="text-align:right;${retal>0?'color:var(--danger);font-weight:600':''}">${retal>0?fmtNum(retal,2):'—'}</td>
                   <td>${esAb?'<span class="estado-badge estado-abierto"><span class="dot dot-abierto"></span>Abierto</span>'
                       :esCe?'<span class="estado-badge estado-cerrado"><span class="dot dot-cerrado"></span>Cerrado</span>'
                       :'<span class="estado-badge" style="background:var(--surface2);color:var(--text3);font-size:10px">Sin estado</span>'}</td>
@@ -3308,9 +2980,9 @@ function renderDashboard() {
 
   // ── Barra de filtros persistente ──
   const clientes  = [...new Set(pedidos.map(p => p.cliente).filter(Boolean))].sort();
-  const prods     = [...new Set(pedidos.map(p => p.producto).filter(Boolean))].sort();
-  const pres      = [...new Set(pedidos.map(p => p.presentacion).filter(Boolean))].sort();
-  const sellados  = [...new Set(pedidos.map(p => p.sellado).filter(Boolean))].sort();
+  const prods     = [...new Set(pedidos.map(p => p.pt_tipo_producto).filter(Boolean))].sort();
+  const pres      = [...new Set(pedidos.map(p => p.pt_presentacion).filter(Boolean))].sort();
+  const sellados  = [...new Set(pedidos.map(p => p.pt_sellado).filter(Boolean))].sort();
   const anios     = [...new Set(pedidos.map(p => p.fecha_entrega?.slice(0,4)).filter(Boolean))].sort().reverse();
   const meses     = [...new Set(pedidos.map(p => p.fecha_entrega?.slice(0,7)).filter(Boolean))].sort().reverse();
 
@@ -3379,9 +3051,9 @@ function renderDashboard() {
     if (dashFiltros.anios.length && !dashFiltros.anios.some(a => p.fecha_entrega?.startsWith(a))) return false;
     if (dashFiltros.meses.length && !dashFiltros.meses.some(m => p.fecha_entrega?.startsWith(m))) return false;
     if (dashFiltros.clientes.length       && !dashFiltros.clientes.includes(p.cliente))           return false;
-    if (dashFiltros.productos.length      && !dashFiltros.productos.includes(p.producto))          return false;
-    if (dashFiltros.presentaciones.length && !dashFiltros.presentaciones.includes(p.presentacion)) return false;
-    if (dashFiltros.sellados.length       && !dashFiltros.sellados.includes(p.sellado))            return false;
+    if (dashFiltros.productos.length      && !dashFiltros.productos.includes(p.pt_tipo_producto))          return false;
+    if (dashFiltros.presentaciones.length && !dashFiltros.presentaciones.includes(p.pt_presentacion)) return false;
+    if (dashFiltros.sellados.length       && !dashFiltros.sellados.includes(p.pt_sellado))            return false;
     if (dashFiltros.fechaDesde && (p.fecha_entrega||'') < dashFiltros.fechaDesde) return false;
     if (dashFiltros.fechaHasta && (p.fecha_entrega||'') > dashFiltros.fechaHasta) return false;
     if (dashFiltros.fechaCorteDesde && (p.fecha_corte||'') < dashFiltros.fechaCorteDesde) return false;
@@ -3393,15 +3065,15 @@ function renderDashboard() {
   if (dashInfoEl) dashInfoEl.textContent = `${fil.length} pedido${fil.length===1?'':'s'} considerados`;
 
   // KPIs
-  const totLibrasEnt = fil.reduce((a,p) => a + (parseFloat(p.libras_ent)||0), 0);
-  const totLibrasRetal = fil.reduce((a,p) => a + (parseFloat(p.retal)||0), 0);
+  const totLibrasEnt = fil.reduce((a,p) => a + (parseFloat(p.pt_libras_entregadas)||0), 0);
+  const totLibrasRetal = fil.reduce((a,p) => a + (parseFloat(p.pt_retal_lb)||0), 0);
   const totKilosEnt = totLibrasEnt * LB_TO_KG;
   const totKilosRetal = totLibrasRetal * LB_TO_KG;
-  const totLibrasTaj = fil.reduce((a,p) => a + (parseFloat(p.libras_taj)||0), 0);
-  const totUnidades = fil.reduce((a,p) => a + (parseFloat(p.unidades)||0), 0);
+  const totLibrasTaj = fil.reduce((a,p) => a + (parseFloat(p.mp_libras_tajadas)||0), 0);
+  const totUnidades = fil.reduce((a,p) => a + (parseFloat(p.pt_cantidad_obtenida)||0), 0);
   const pctRetalProm = totLibrasTaj > 0 ? (totLibrasRetal / totLibrasTaj) * 100 : 0;
   const clientesActivos = new Set(fil.map(p => p.cliente).filter(Boolean)).size;
-  const productosActivos = new Set(fil.map(p => p.producto).filter(Boolean)).size;
+  const productosActivos = new Set(fil.map(p => p.pt_tipo_producto).filter(Boolean)).size;
   const abiertos = fil.filter(p => p.estado === 'ABIERTO').length;
 
   document.getElementById('dash-metrics').innerHTML = `
@@ -3449,13 +3121,13 @@ function renderDashboard() {
   // Agrupar por producto
   const porProd = {};
   fil.forEach(p => {
-    const k = p.producto || '(SIN PRODUCTO)';
+    const k = p.pt_tipo_producto || '(SIN PRODUCTO)';
     if (!porProd[k]) porProd[k] = { producto: k, pedidos: 0, unidades: 0, librasEnt: 0, librasRetal: 0, librasTaj: 0 };
     porProd[k].pedidos++;
-    porProd[k].unidades    += parseFloat(p.unidades)||0;
-    porProd[k].librasEnt   += parseFloat(p.libras_ent)||0;
-    porProd[k].librasRetal += parseFloat(p.retal)||0;
-    porProd[k].librasTaj   += parseFloat(p.libras_taj)||0;
+    porProd[k].unidades    += parseFloat(p.pt_cantidad_obtenida)||0;
+    porProd[k].librasEnt   += parseFloat(p.pt_libras_entregadas)||0;
+    porProd[k].librasRetal += parseFloat(p.pt_retal_lb)||0;
+    porProd[k].librasTaj   += parseFloat(p.mp_libras_tajadas)||0;
   });
   Object.values(porProd).forEach(r => { r.kilosEnt = r.librasEnt * LB_TO_KG; r.kilosRetal = r.librasRetal * LB_TO_KG; });
   const prodArr = Object.values(porProd).sort((a,b) => b.librasRetal - a.librasRetal);
@@ -3466,9 +3138,9 @@ function renderDashboard() {
     const k = p.cliente || '(SIN CLIENTE)';
     if (!porCli[k]) porCli[k] = { cliente: k, pedidos: 0, unidades: 0, librasEnt: 0, librasRetal: 0 };
     porCli[k].pedidos++;
-    porCli[k].unidades    += parseFloat(p.unidades)||0;
-    porCli[k].librasEnt   += parseFloat(p.libras_ent)||0;
-    porCli[k].librasRetal += parseFloat(p.retal)||0;
+    porCli[k].unidades    += parseFloat(p.pt_cantidad_obtenida)||0;
+    porCli[k].librasEnt   += parseFloat(p.pt_libras_entregadas)||0;
+    porCli[k].librasRetal += parseFloat(p.pt_retal_lb)||0;
   });
   Object.values(porCli).forEach(r => { r.kilosEnt = r.librasEnt * LB_TO_KG; r.kilosRetal = r.librasRetal * LB_TO_KG; });
   const cliArr = Object.values(porCli).sort((a,b) => b.librasEnt - a.librasEnt);
@@ -3478,8 +3150,8 @@ function renderDashboard() {
   fil.forEach(p => {
     const k = (p.fecha_entrega || '').slice(0,7) || '(SIN FECHA)';
     if (!porMes[k]) porMes[k] = { mes: k, librasEnt: 0, librasRetal: 0 };
-    porMes[k].librasEnt   += parseFloat(p.libras_ent)||0;
-    porMes[k].librasRetal += parseFloat(p.retal)||0;
+    porMes[k].librasEnt   += parseFloat(p.pt_libras_entregadas)||0;
+    porMes[k].librasRetal += parseFloat(p.pt_retal_lb)||0;
   });
   const mesArr = Object.values(porMes).filter(m => m.mes !== '(SIN FECHA)').sort((a,b) => a.mes.localeCompare(b.mes));
 
@@ -3546,13 +3218,13 @@ function renderDashboard() {
     fil.forEach(p => {
       if (!p.fecha_entrega) return;
       const mes = p.fecha_entrega.slice(0, 7);
-      const prod = p.producto || '(SIN PROD)';
+      const prod = p.pt_tipo_producto || '(SIN PROD)';
       const k = mes + '||' + prod;
       if (!porMesProd[k]) porMesProd[k] = { mes, prod, unidades: 0, kilos: 0, librasTaj: 0, librasRetal: 0 };
-      porMesProd[k].unidades   += parseFloat(p.unidades)||0;
-      porMesProd[k].kilos      += (parseFloat(p.kilos_ent)||0);
-      porMesProd[k].librasTaj  += parseFloat(p.libras_taj)||0;
-      porMesProd[k].librasRetal += parseFloat(p.retal)||0;
+      porMesProd[k].unidades   += parseFloat(p.pt_cantidad_obtenida)||0;
+      porMesProd[k].kilos      += (parseFloat(p.pt_libras_entregadas)||0) * LB_TO_KG;
+      porMesProd[k].librasTaj  += parseFloat(p.mp_libras_tajadas)||0;
+      porMesProd[k].librasRetal += parseFloat(p.pt_retal_lb)||0;
     });
 
     const mesLabels = [...new Set(Object.values(porMesProd).map(r => r.mes))].sort();
@@ -3648,7 +3320,7 @@ function renderDashboard() {
   // ── Tabla retal por lote (tabla única) ──
   const retalLoteBody = document.getElementById('retal-lote-body');
   if (retalLoteBody) {
-    const pedConRetal = fil.filter(p => (parseFloat(p.retal)||0) > 0)
+    const pedConRetal = fil.filter(p => (parseFloat(p.pt_retal_lb)||0) > 0)
       .sort((a,b) => (a.producto||'').localeCompare(b.producto||'') || (a.fecha_entrega||'').localeCompare(b.fecha_entrega||''));
 
     if (!pedConRetal.length) {
@@ -3670,16 +3342,12 @@ function renderDashboard() {
         </tr></thead>
         <tbody>
           ${pedConRetal.map((p,i) => {
-            const retal = parseFloat(p.retal)||0;
+            const retal = parseFloat(p.pt_retal_lb)||0;
             const kgs = retal * 0.5;
             const bg = i%2===1 ? 'background:var(--bg)' : '';
-            // Get bloques for this pedido (use newest lote_bloque as representative)
-            const pedBloques = bloques.filter(b => b.id_pedido === p.id);
-            const lotesStr = pedBloques.length
-              ? pedBloques.map(b => b.lote_bloque ? fmtFecha(b.lote_bloque) : '—').filter((v,i,a)=>a.indexOf(v)===i).join(', ')
-              : (p.lote ? fmtFecha(p.lote) : '—');
+            const lotesStr = p.mp_lote_vto ? fmtFecha(p.mp_lote_vto) : '—';
             return `<tr style="${bg}">
-              <td style="${tdS}"><strong>${esc(p.producto||'—')}</strong></td>
+              <td style="${tdS}"><strong>${esc(p.pt_tipo_producto||'—')}</strong></td>
               <td style="${tdS}">${fmtFecha(p.fecha_corte)}</td>
               <td style="${tdS}">${fmtFecha(p.fecha_entrega)}</td>
               <td style="${tdS}">${lotesStr}</td>
@@ -3689,8 +3357,8 @@ function renderDashboard() {
           }).join('')}
           <tr style="background:var(--accent-light)">
             <td colspan="4" style="padding:7px 12px;font-weight:700;font-size:11px;color:var(--accent);border-top:2px solid var(--border)">TOTAL</td>
-            <td style="${tdN};font-weight:700;color:var(--accent);border-top:2px solid var(--border)">${fmtNum(pedConRetal.reduce((a,p)=>a+(parseFloat(p.retal)||0),0),2)}</td>
-            <td style="${tdN};font-weight:700;color:var(--accent);border-top:2px solid var(--border)">${fmtNum(pedConRetal.reduce((a,p)=>a+(parseFloat(p.retal)||0)*0.5,0),2)}</td>
+            <td style="${tdN};font-weight:700;color:var(--accent);border-top:2px solid var(--border)">${fmtNum(pedConRetal.reduce((a,p)=>a+(parseFloat(p.pt_retal_lb)||0),0),2)}</td>
+            <td style="${tdN};font-weight:700;color:var(--accent);border-top:2px solid var(--border)">${fmtNum(pedConRetal.reduce((a,p)=>a+(parseFloat(p.pt_retal_lb)||0)*0.5,0),2)}</td>
           </tr>
         </tbody>
       </table>`;
@@ -3758,26 +3426,25 @@ function renderCintas() {
   const tbody = document.getElementById('cintas-body');
   const countEl = document.getElementById('c-count');
 
-  let lista = cintas.slice();
+  let lista = pedidos.slice();
 
   if (buscar) {
-    lista = lista.filter(c => {
-      const p = pedidos.find(x => x.id === c.id_pedido) || {};
-      const blob = [c.codigo, c.cinta, c.dia_corte, c.prod_empleado, p.cliente, p.producto, p.id, c.cantidad_cinta].join(' ').toLowerCase();
-      return blob.includes(buscar);
-    });
+    lista = lista.filter(p => [
+      p.pt_codigo_trazabilidad, p.pt_color_cinta, p.fecha_corte, p.mp_tipo_producto,
+      p.cliente, p.pt_tipo_producto, p.id, p.pt_cantidad_obtenida
+    ].join(' ').toLowerCase().includes(buscar));
   }
 
   lista.sort((a, b) => {
-    if (orden === 'codigo') return (a.codigo || '').localeCompare(b.codigo || '');
-    const da = a.dia_corte || '';
-    const db = b.dia_corte || '';
+    if (orden === 'codigo') return (a.pt_codigo_trazabilidad || '').localeCompare(b.pt_codigo_trazabilidad || '');
+    const da = a.fecha_corte || '';
+    const db = b.fecha_corte || '';
     if (orden === 'antiguos') return da.localeCompare(db);
     return db.localeCompare(da);
   });
 
   if (countEl) {
-    countEl.textContent = buscar ? `${lista.length} de ${cintas.length} códigos` : `${cintas.length} códigos en total`;
+    countEl.textContent = buscar ? `${lista.length} de ${pedidos.length} códigos` : `${pedidos.length} códigos en total`;
   }
 
   if (!lista.length) {
@@ -3787,20 +3454,17 @@ function renderCintas() {
     return;
   }
 
-  tbody.innerHTML = lista.map(c => {
-    const p = pedidos.find(x => x.id === c.id_pedido);
-    return `<tr>
-      <td class="mono" style="font-size:12px"><strong>${esc(c.codigo || '—')}</strong></td>
-      <td>${esc(c.cinta || '—')}</td>
-      <td>${c.cantidad_cinta ? esc(`${c.cantidad_cinta} ${c.unidad_cinta||''}`.trim()) : '—'}</td>
-      <td>${esc(p?.cliente || c.id_pedido)}</td>
-      <td>${esc(p?.producto || '—')}</td>
-      <td style="color:var(--text2);font-size:12px">${fmtFecha(c.dia_corte)}</td>
-      <td style="color:var(--text2);font-size:12px">${esc(c.prod_empleado || '—')}</td>
-      <td style="color:var(--text2);font-size:12px">${fmtFecha(p?.fecha_entrega)}</td>
-      <td>${p ? `<button class="btn btn-xs" onclick="abrirEditar('${p.id}')">Ver pedido</button>` : ''}</td>
-    </tr>`;
-  }).join('');
+  tbody.innerHTML = lista.map(p => `<tr>
+      <td class="mono" style="font-size:12px"><strong>${esc(p.pt_codigo_trazabilidad || '—')}</strong></td>
+      <td>${esc(p.pt_color_cinta || '—')}</td>
+      <td style="text-align:right">${(parseFloat(p.pt_cantidad_obtenida)||0).toLocaleString('es-CO')}</td>
+      <td>${esc(p.cliente || '—')}</td>
+      <td style="font-size:12px">${esc(p.pt_tipo_producto || '—')}</td>
+      <td style="color:var(--text2);font-size:12px">${fmtFecha(p.fecha_corte)}</td>
+      <td style="color:var(--text2);font-size:12px">${esc(p.mp_tipo_producto || '—')}</td>
+      <td style="color:var(--text2);font-size:12px">${fmtFecha(p.fecha_entrega)}</td>
+      <td><button class="btn btn-xs" onclick="abrirEditar('${p.id}')">Ver pedido</button></td>
+    </tr>`).join('');
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -3938,66 +3602,44 @@ function generarXLSX(pedidosFiltrados) {
   }
 
   const wb = XLSX.utils.book_new();
+  const num = v => (v === '' || v === null || v === undefined) ? '' : (parseFloat(v) || 0);
 
-  // ── HOJA 1: PEDIDOS ──────────────────────────────────────
+  // ── HOJA 1: PEDIDOS ──
   const pedidosHeader = [
-    'N°','ID Pedido','Estado','Cliente','Producto','Presentación','Peso (g)',
-    'Menú/Ref','Operador','Responsable','Marca','Cant. Solicitada','Fecha Entrega','Fecha Corte',
-    'Fecha Fabricación','F. Vto. 1','F. Vto. 2','F. Vto. 3','Mes',
-    'Operación','Sellado','Gramaje (g)','Gram. Bloque (g)','Bloques Gastados',
-    'Unidades Obtenidas','Lib. Entregadas','Kg. Entregados','Lib. Tajadas',
-    'Retal (lb)','% Retal','Diferencia','% Diferencia',
-    'Tipo Queso','Lote','Observaciones','Fecha Creación','Última Edición'
+    'N°','ID Pedido','Estado','Fecha de corte','Fecha de entrega','Cliente','Menú','Operador','Responsable',
+    'Cant. según OC','Tipo de producto (MP)','Peso MP (Gr)','Cant. empleada','Libras tajadas','Lote / F.Vto. MP',
+    'Tipo de producto obtenido','Presentación','Peso PT (Gr)','Operación','Sellado','Cantidad obtenida',
+    'Libras entregadas','Retal (lb)','% Retal','Diferencia (lb)','% Diferencia',
+    'L / F. Vto.','Código de trazabilidad','Color de cinta','Creado por','Fecha creación','Última edición'
   ];
   const pedidosRows = pedidosFiltrados.map((p, i) => [
-    i + 1, p.id, p.estado, p.cliente, p.producto, p.presentacion,
-    p.peso ? parseFloat(p.peso) : '', p.menu, p.operador, p.responsable || '', p.marca,
-    p.cantidad ? parseFloat(p.cantidad) : '', p.fecha_entrega, p.fecha_corte || '',
-    p.fecha_fab, p.fecha_vto, p.vto2 || '', p.vto3 || '', p.mes,
-    p.operacion, p.sellado,
-    p.gramaje ? parseFloat(p.gramaje) : '',
-    p.gram_bloque ? parseFloat(p.gram_bloque) : '',
-    p.bloques ? parseFloat(p.bloques) : '',
-    p.unidades ? parseFloat(p.unidades) : '',
-    p.libras_ent ? parseFloat(p.libras_ent) : '',
-    p.kilos_ent ? parseFloat(p.kilos_ent) : '',
-    p.libras_taj ? parseFloat(p.libras_taj) : '',
-    p.retal ? parseFloat(p.retal) : '',
-    p.pct_retal ? parseFloat(p.pct_retal) : '',
-    p.diferencia ? parseFloat(p.diferencia) : '',
-    p.pct_dif ? parseFloat(p.pct_dif) : '',
-    p.tipo_queso || '', p.lote || '', p.observaciones || '',
-    p.fecha_creacion || '', p.ultima_edicion || ''
+    i + 1, p.id, p.estado, p.fecha_corte, p.fecha_entrega, p.cliente, p.menu, p.operador, p.responsable,
+    num(p.mp_cantidad_oc), p.mp_tipo_producto, num(p.mp_peso), num(p.mp_cantidad_empleada),
+    num(p.mp_libras_tajadas), p.mp_lote_vto,
+    p.pt_tipo_producto, p.pt_presentacion, num(p.pt_peso), p.pt_operacion, p.pt_sellado,
+    num(p.pt_cantidad_obtenida), num(p.pt_libras_entregadas), num(p.pt_retal_lb), num(p.pt_pct_retal),
+    num(p.pt_diferencia), num(p.pt_pct_diferencia),
+    p.pt_lote_vto, p.pt_codigo_trazabilidad, p.pt_color_cinta,
+    p.creado_por || '', p.fecha_creacion || '', p.ultima_edicion || ''
   ]);
   const wsPedidos = XLSX.utils.aoa_to_sheet([pedidosHeader, ...pedidosRows]);
-  // Anchos de columna aproximados
-  wsPedidos['!cols'] = pedidosHeader.map((h, i) => ({ wch: [4,14,9,14,14,10,7,10,10,8,11,12,12,12,12,12,6,16,18,8,12,10,10,11,11,9,7,6,8,7,10,8,22,18,18][i] || 12 }));
+  wsPedidos['!cols'] = pedidosHeader.map(h => ({ wch: Math.min(Math.max(h.length + 2, 10), 32) }));
   XLSX.utils.book_append_sheet(wb, wsPedidos, 'PEDIDOS');
 
-  // ── HOJA 2: CINTAS ───────────────────────────────────────
-  const pedidoIds = new Set(pedidosFiltrados.map(p => p.id));
-  const cintasFil = cintas.filter(c => pedidoIds.has(c.id_pedido));
-  const cintasHeader = ['N°','ID Cinta','ID Pedido','Cliente','Producto','Día de Corte','Producto Empleado','Código','Cinta','Cantidad','Unidad','Observación'];
-  const cintasRows = cintasFil.map((c, i) => {
-    const p = pedidosFiltrados.find(x => x.id === c.id_pedido) || {};
-    return [i+1, c.id_cinta, c.id_pedido, p.cliente||'', p.producto||'', c.dia_corte||'', c.prod_empleado||'', c.codigo||'', c.cinta||'', c.cantidad_cinta ? parseFloat(c.cantidad_cinta)||'' : '', c.unidad_cinta||'', c.obs_cinta||''];
+  // ── HOJA 2: REEMPAQUE (unidades no conformes) ──
+  const ids = new Set(pedidosFiltrados.map(p => p.id));
+  const reempFil = reempaques.filter(r => ids.has(r.id_pedido));
+  const reempHeader = ['N°','ID Reempaque','ID Pedido','Cliente','Producto terminado',
+    'Cant. no conformes','Letra código','L/F.Vto. real','Retal (lb)','Fecha registro'];
+  const reempRows = reempFil.map((r, i) => {
+    const p = pedidosFiltrados.find(x => x.id === r.id_pedido) || {};
+    return [i+1, r.id_reempaque, r.id_pedido, p.cliente || '', p.pt_tipo_producto || '',
+      num(r.cantidad_no_conformes), r.letra_codigo || '', r.vto_real || '', num(r.retal_lb), r.fecha_reg || ''];
   });
-  const wsCintas = XLSX.utils.aoa_to_sheet([cintasHeader, ...cintasRows]);
-  wsCintas['!cols'] = cintasHeader.map((_, i) => ({ wch: [4,14,14,14,14,12,20,10,10,8,8,22][i] || 12 }));
-  XLSX.utils.book_append_sheet(wb, wsCintas, 'CINTAS');
+  const wsReemp = XLSX.utils.aoa_to_sheet([reempHeader, ...reempRows]);
+  wsReemp['!cols'] = reempHeader.map(h => ({ wch: Math.min(Math.max(h.length + 2, 10), 32) }));
+  XLSX.utils.book_append_sheet(wb, wsReemp, 'REEMPAQUE');
 
-  // ── HOJA 3: BLOQUES ──────────────────────────────────────
-  const bloquesFil = bloques.filter(b => pedidoIds.has(b.id_pedido));
-  const bloquesHeader = ['N°','ID Bloque','ID Pedido','Cliente','Producto','Gramaje Bloque (g)','Tipo Queso','Cant. Bloques','Lote','Fecha Registro'];
-  const bloquesRows = bloquesFil.map((b, i) => {
-    const p = pedidosFiltrados.find(x => x.id === b.id_pedido) || {};
-    return [i+1, b.id_bloque, b.id_pedido, p.cliente||'', p.producto||'', b.gramaje_bloque_emp ? parseFloat(b.gramaje_bloque_emp)||'' : '', b.tipo_queso||'', b.cant_bloques ? parseFloat(b.cant_bloques)||'' : '', b.lote_bloque||'', b.fecha_reg||''];
-  });
-  const wsBloques = XLSX.utils.aoa_to_sheet([bloquesHeader, ...bloquesRows]);
-  wsBloques['!cols'] = bloquesHeader.map((_, i) => ({ wch: [4,14,14,14,14,14,14,10,10,18][i] || 12 }));
-  XLSX.utils.book_append_sheet(wb, wsBloques, 'BLOQUES');
-
-  // Retornar como base64
   return XLSX.write(wb, { bookType: 'xlsx', type: 'base64' });
 }
 
@@ -4023,10 +3665,9 @@ async function enviarEmailGmail(destinos, asunto, nombreArchivo, xlsxBase64, tot
     '  - Fecha de generacion: ' + fechaStr,
     '  - Generado por      : ' + (userInfo?.name || userInfo?.email || 'Sistema'),
     '',
-    'El archivo contiene 3 hojas:',
-    '  1. PEDIDOS  - Datos principales de cada pedido',
-    '  2. CINTAS   - Dias de corte/empaque y codigos de produccion',
-    '  3. BLOQUES  - Bloques de queso empleados',
+    'El archivo contiene 2 hojas:',
+    '  1. PEDIDOS   - Datos principales de cada pedido',
+    '  2. REEMPAQUE - Unidades no conformes a reempacar',
     '',
     '---',
     'Seguimiento de Produccion | Inversiones Peniel | Planta Mosquera',
