@@ -480,20 +480,20 @@ table.data-table {
 /* ── Métricas ── */
 .metrics-grid {
   display: grid; grid-template-columns: repeat(4, 1fr);
-  gap: 22px; margin-bottom: 30px;
+  gap: 18px; margin-bottom: 24px;
 }
 .metric-card {
   background: var(--bg);
   border: none;
   border-radius: var(--radius-lg);
-  padding: 26px 28px;
+  padding: 17px 24px 16px;
   box-shadow: var(--nm-out-md);
   transition: box-shadow .22s ease;
 }
 .metric-card:hover { box-shadow: var(--nm-out); }
-.metric-label { font-size: 10.5px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: .1em; margin-bottom: 12px; }
-.metric-value { font-size: 30px; font-weight: 700; color: var(--accent); line-height: 1.05; letter-spacing: -.02em; }
-.metric-sub { font-size: 11.5px; color: var(--text3); margin-top: 8px; }
+.metric-label { font-size: 10px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: .1em; margin-bottom: 7px; }
+.metric-value { font-size: 25px; font-weight: 700; color: var(--accent); line-height: 1.05; letter-spacing: -.02em; }
+.metric-sub { font-size: 11px; color: var(--text3); margin-top: 4px; }
 
 /* ── Barras de filtros ── */
 .filter-bar, .dash-filter-bar {
@@ -501,8 +501,8 @@ table.data-table {
   padding: 18px 20px; border-radius: var(--radius-lg);
   background: var(--bg); box-shadow: var(--nm-out-sm);
 }
-.filter-bar input, .filter-bar select,
-.dash-filter-bar select, .dash-filter-bar input {
+.filter-bar input:not([type=checkbox]), .filter-bar select,
+.dash-filter-bar select, .dash-filter-bar input:not([type=checkbox]) {
   padding: 11px 16px;
   border: none;
   border-radius: var(--radius);
@@ -512,9 +512,9 @@ table.data-table {
   box-shadow: var(--nm-in-xs);
   transition: box-shadow .2s ease;
 }
-.filter-bar input { min-width: 240px; }
-.filter-bar input:focus, .filter-bar select:focus,
-.dash-filter-bar select:focus, .dash-filter-bar input:focus {
+.filter-bar input[type=text], .filter-bar input:not([type]) { min-width: 300px; }
+.filter-bar input:not([type=checkbox]):focus, .filter-bar select:focus,
+.dash-filter-bar select:focus, .dash-filter-bar input:not([type=checkbox]):focus {
   outline: none; box-shadow: var(--nm-in-sm), 0 0 0 2px var(--accent-soft);
 }
 
@@ -659,7 +659,7 @@ table.data-table {
 /* ── Dashboard ── */
 .dash-metrics {
   display: grid; grid-template-columns: repeat(4, 1fr);
-  gap: 22px; margin-bottom: 30px;
+  gap: 18px; margin-bottom: 24px;
 }
 .dash-grid {
   display: grid; grid-template-columns: 1fr 1fr; gap: 26px;
@@ -820,8 +820,8 @@ table.data-table {
   .data-table th { padding: 12px 11px; }
   .data-table td { padding: 10px 11px; font-size: 12.5px; }
   .card-body { padding: 22px 22px 24px; }
-  .metric-card { padding: 20px 22px; }
-  .metric-value { font-size: 26px; }
+  .metric-card { padding: 15px 20px 14px; }
+  .metric-value { font-size: 22px; }
 }
 @media (max-width: 1200px) {
   .dash-metrics, .metrics-grid { grid-template-columns: repeat(2, 1fr); }
@@ -861,9 +861,14 @@ table.data-table {
   background: linear-gradient(145deg, #24425c, #142838);
   box-shadow: var(--nm-out-xs);
   display: flex; align-items: center; justify-content: center;
-  padding: 6px;
+  padding: 0; overflow: hidden;
 }
-.brand-mark img { width: 100%; height: 100%; object-fit: contain; display: block; }
+/* Se amplía y sube la imagen para encuadrar la montaña: a 42px el texto
+   "INVERSIONES PENIEL" del logo es ilegible y solo ensucia. */
+.brand-mark img {
+  width: 100%; height: 100%; object-fit: contain; display: block;
+  transform: translateY(14%) scale(1.62);
+}
 .brand-text { flex: 1; min-width: 0; overflow: hidden; }
 
 .sidebar-toggle {
@@ -1073,6 +1078,41 @@ table.mini-table {
   transition: transform .25s ease;
 }
 
+/* Los campos numéricos van sin flechas de incremento: con la rueda del ratón
+   encima cambiaban el valor sin que el operario se diera cuenta. El bloqueo
+   de la rueda está además en el JS (blurNumeroConRueda). */
+input[type=number] { appearance: textfield; -moz-appearance: textfield; }
+input[type=number]::-webkit-outer-spin-button,
+input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+/* ── Casillas del desplegable de filtros ──
+   Heredaban el ancho de ".filter-bar input" (pensado para el buscador) y
+   salían como una barra larguísima. */
+.ms-panel .ms-item input[type=checkbox] {
+  inline-size: 16px; block-size: 16px; min-inline-size: 0;
+  flex: 0 0 16px; padding: 0; margin: 0;
+  border-radius: 4px; box-shadow: none;
+  accent-color: var(--accent-mid); cursor: pointer;
+}
+
+/* ── Barra de filtros del historial: dos filas ── */
+#hist-filter-bar { flex-direction: column; align-items: stretch; gap: 14px; }
+.filter-row {
+  display: flex; gap: 12px; flex-wrap: wrap; align-items: center; inline-size: 100%;
+}
+#h-buscar { flex: 1 1 320px; max-inline-size: 460px; }
+
+/* ── Encabezados ordenables ── */
+.th-ordenable { cursor: pointer; user-select: none; transition: color .15s ease; }
+.th-ordenable:hover { color: var(--accent-mid); }
+.th-ordenable.ordenada { color: var(--accent); }
+.sort-arrow {
+  display: inline-block; margin-left: 5px; font-size: 9px;
+  opacity: .3; transition: opacity .15s ease;
+}
+.th-ordenable:hover .sort-arrow { opacity: .6; }
+.th-ordenable.ordenada .sort-arrow { opacity: 1; }
+
 /* Fecha con año fuera de 2025-2027: se marca en rojo al escribirla */
 
 .fecha-invalida,
@@ -1123,7 +1163,7 @@ table.mini-table {
   <!-- Sidebar -->
   <div class="sidebar">
     <div class="sidebar-logo">
-      <span class="brand-mark"><img src="logo-marca.png" alt="Inversiones Peniel"></span>
+      <span class="brand-mark"><img src="logo.png" alt="Inversiones Peniel"></span>
       <div class="brand-text">
         <div class="sidebar-logo-title">Seguimiento Producción</div>
         <div class="sidebar-logo-sub">Planta Mosquera · 2026</div>
@@ -1205,7 +1245,7 @@ table.mini-table {
         <div class="card-header collapsible" onclick="toggleSection(this)">
           <span class="card-title">Información general</span>
           <span class="card-header-right">
-            <span class="card-sub">Trazabilidad de la información · todos los campos obligatorios</span>
+            
             <span class="card-chevron">▾</span>
           </span>
         </div>
@@ -1265,7 +1305,7 @@ table.mini-table {
         <div class="card-body">
           <div class="form-grid form-grid-2 section-gap">
             <div class="field">
-              <label>Cantidad de producto según orden de compra *</label>
+              <label>Cantidad de producto según orden de compra</label>
               <input id="f-mp-cantidad-oc" type="number" min="0" step="1" oninput="calcularCampos()" placeholder="0">
             </div>
             <div class="field">
@@ -1304,7 +1344,7 @@ table.mini-table {
         <div class="card-body">
           <div class="form-grid form-grid-3 section-gap">
             <div class="field">
-              <label>Tipo de producto obtenido *</label>
+              <label>Tipo de producto obtenido</label>
               <select id="f-pt-tipo">
                 <option value="">Seleccionar...</option>
                 <option>QUESO FRESCO VARIEDADES: SEMIGRASO SEMIBLANDO DOBLE CREMA</option>
@@ -1315,7 +1355,7 @@ table.mini-table {
               </select>
             </div>
             <div class="field">
-              <label>Presentación *</label>
+              <label>Presentación</label>
               <select id="f-pt-pres">
                 <option value="">Seleccionar...</option>
                 <option>BLOQUE</option>
@@ -1329,7 +1369,7 @@ table.mini-table {
               </select>
             </div>
             <div class="field">
-              <label>Peso (Gr) *</label>
+              <label>Peso (Gr)</label>
               <select id="f-pt-peso" onchange="calcularCampos()">
                 <option value="">Seleccionar...</option>
                 <option>10</option>
@@ -1353,7 +1393,7 @@ table.mini-table {
           </div>
           <div class="form-grid form-grid-3 section-gap">
             <div class="field">
-              <label>Operación realizada *</label>
+              <label>Operación realizada</label>
               <select id="f-pt-operacion">
                 <option value="">Seleccionar...</option>
                 <option>CORTE Y EMPAQUE</option>
@@ -1361,7 +1401,7 @@ table.mini-table {
               </select>
             </div>
             <div class="field">
-              <label>Tipo de sellado *</label>
+              <label>Tipo de sellado</label>
               <select id="f-pt-sellado">
                 <option value="">Seleccionar...</option>
                 <option>SELLADO MANUAL</option>
@@ -1378,7 +1418,7 @@ table.mini-table {
           </div>
           <div class="form-grid form-grid-2 section-gap">
             <div class="field">
-              <label>Retal (libras) *</label>
+              <label>Retal (libras)</label>
               <input id="f-pt-retal" type="number" min="0" step="0.01" oninput="calcularCampos()" placeholder="0.00">
             </div>
             <div class="field">
@@ -1440,25 +1480,25 @@ table.mini-table {
           <table class="data-table">
             <thead>
               <tr>
-                <th>F. Corte</th>
-                <th>Cliente</th>
-                <th>Producto</th>
-                <th>Pres.</th>
-                <th>F. Entrega</th>
-                <th style="text-align:right">Cant. OC</th>
-                <th>Operación</th>
-                <th>Sellado</th>
-                <th style="text-align:right">Cant. Obtenida</th>
-                <th style="text-align:right">Lb. Entregadas</th>
-                <th style="text-align:right">Kg. Entregados</th>
-                <th style="text-align:right">Lb. Tajadas</th>
-                <th style="text-align:right">Retal (lb)</th>
-                <th style="text-align:right">% Retal</th>
-                <th style="text-align:right">Diferencia</th>
-                <th style="text-align:right">% Dif.</th>
-                <th>Estado</th>
-                <th>Cód. Trazabilidad</th>
-                <th>Responsable</th>
+                <th data-orden="fecha_corte">F. Corte</th>
+                <th data-orden="cliente">Cliente</th>
+                <th data-orden="pt_tipo_producto">Producto</th>
+                <th data-orden="pt_presentacion">Pres.</th>
+                <th data-orden="fecha_entrega">F. Entrega</th>
+                <th data-orden="mp_cantidad_oc" style="text-align:right">Cant. OC</th>
+                <th data-orden="pt_operacion">Operación</th>
+                <th data-orden="pt_sellado">Sellado</th>
+                <th data-orden="pt_cantidad_obtenida" style="text-align:right">Cant. Obtenida</th>
+                <th data-orden="pt_libras_entregadas" style="text-align:right">Lb. Entregadas</th>
+                <th data-orden="pt_libras_entregadas" style="text-align:right">Kg. Entregados</th>
+                <th data-orden="mp_libras_tajadas" style="text-align:right">Lb. Tajadas</th>
+                <th data-orden="pt_retal_lb" style="text-align:right">Retal (lb)</th>
+                <th data-orden="pt_pct_retal" style="text-align:right">% Retal</th>
+                <th data-orden="pt_diferencia" style="text-align:right">Diferencia</th>
+                <th data-orden="pt_pct_diferencia" style="text-align:right">% Dif.</th>
+                <th data-orden="estado">Estado</th>
+                <th data-orden="pt_codigo_trazabilidad">Cód. Trazabilidad</th>
+                <th data-orden="responsable">Responsable</th>
                 <th></th>
               </tr>
             </thead>
@@ -1493,7 +1533,7 @@ table.mini-table {
     <div class="view" id="view-cintas">
       <div class="filter-bar">
         <input id="c-buscar" placeholder="Buscar por código, cliente, producto..." oninput="renderCintas()" style="flex:1">
-        <select id="c-orden" onchange="renderCintas()">
+        <select id="c-orden" onchange="limpiarOrdenColumna('cintas'); renderCintas()">
           <option value="recientes">Más recientes primero</option>
           <option value="antiguos">Más antiguos primero</option>
           <option value="codigo">Código (A→Z)</option>
@@ -1505,14 +1545,14 @@ table.mini-table {
           <table class="data-table">
             <thead>
               <tr>
-                <th>Código trazabilidad</th>
-                <th>Color de cinta</th>
-                <th style="text-align:right">Cant. obtenida</th>
-                <th>Cliente</th>
-                <th>Producto terminado</th>
-                <th>F. Corte</th>
-                <th>Materia prima</th>
-                <th>F. Entrega</th>
+                <th data-orden="codigo">Código trazabilidad</th>
+                <th data-orden="color">Color de cinta</th>
+                <th data-orden="cantidad" style="text-align:right">Cant. obtenida</th>
+                <th data-orden="cliente">Cliente</th>
+                <th data-orden="producto">Producto terminado</th>
+                <th data-orden="fcorte">F. Corte</th>
+                <th data-orden="materia">Materia prima</th>
+                <th data-orden="fentrega">F. Entrega</th>
                 <th></th>
               </tr>
             </thead>
@@ -1709,6 +1749,13 @@ function avisarFechasInvalidas(malas) {
   primera.closest('.card')?.classList.remove('collapsed');
   primera.focus();
 }
+
+// La rueda del ratón sobre un campo numérico enfocado cambiaba el valor:
+// se quita el foco antes de que el navegador lo modifique.
+document.addEventListener('wheel', e => {
+  const el = document.activeElement;
+  if (el && el.tagName === 'INPUT' && el.type === 'number' && el === e.target) el.blur();
+}, { passive: true });
 
 // Marca en rojo la fecha mientras se escribe, sin esperar a guardar
 document.addEventListener('input', e => {
@@ -2385,15 +2432,15 @@ function addMateriaRow(pref, data) {
   div.innerHTML = `
     <div class="cinta-num"></div>
     <div class="field">
-      <label>Tipo de producto *</label>
+      <label>Tipo de producto</label>
       <select class="mp-tipo" title="Tipo de materia prima" onchange="recalcularDetalle('${pref}')">${optionsHTMLCorto(LISTA_MP_TIPOS, data?.mp_tipo_producto)}</select>
     </div>
     <div class="field">
-      <label>Peso (Gr) *</label>
+      <label>Peso (Gr)</label>
       <select class="mp-peso" onchange="recalcularDetalle('${pref}')">${optionsHTML(LISTA_MP_PESOS, data?.mp_peso)}</select>
     </div>
     <div class="field">
-      <label>Cantidad empleada *</label>
+      <label>Cantidad empleada</label>
       <input class="mp-cant" type="number" min="0" step="1" placeholder="0"
              oninput="recalcularDetalle('${pref}')" value="${esc(data?.mp_cantidad_empleada ?? '')}">
     </div>
@@ -2402,7 +2449,7 @@ function addMateriaRow(pref, data) {
       <input class="mp-libras campo-calc" readonly placeholder="Calculado">
     </div>
     <div class="field">
-      <label>Lote ó L / F. Vto. *</label>
+      <label>Lote ó L / F. Vto.</label>
       <input class="mp-lote" type="date" ${RANGO_FECHA} value="${data?.mp_lote_vto || ''}">
     </div>
     <button class="btn btn-xs btn-danger" onclick="quitarFilaDetalle(this,'${pref}')" title="Quitar"
@@ -2420,20 +2467,20 @@ function addTrazaRow(pref, data) {
   div.innerHTML = `
     <div class="cinta-num"></div>
     <div class="field">
-      <label>L / F. Vto. *</label>
+      <label>L / F. Vto.</label>
       <input class="pt-lote" type="date" ${RANGO_FECHA} value="${data?.pt_lote_vto || ''}">
     </div>
     <div class="field">
-      <label>Cantidad obtenida ind. *</label>
+      <label>Cantidad obtenida ind.</label>
       <input class="pt-cant" type="number" min="0" step="1" placeholder="0"
              oninput="recalcularDetalle('${pref}')" value="${esc(data?.pt_cantidad_obtenida ?? '')}">
     </div>
     <div class="field">
-      <label>Código de trazabilidad *</label>
+      <label>Código de trazabilidad</label>
       <input class="pt-codigo mono" value="${esc(data?.pt_codigo_trazabilidad || '')}">
     </div>
     <div class="field">
-      <label>Color de cinta *</label>
+      <label>Color de cinta</label>
       <input class="pt-color" value="${esc(data?.pt_color_cinta || 'NO APLICA')}" placeholder="NO APLICA">
     </div>
     <button class="btn btn-xs btn-danger" onclick="quitarFilaDetalle(this,'${pref}')" title="Quitar"
@@ -2474,22 +2521,14 @@ function getTrazas(pref) {
   })).filter(t => t.pt_lote_vto || t.pt_cantidad_obtenida || t.pt_codigo_trazabilidad);
 }
 
-// Devuelve el texto del primer problema encontrado, o '' si todo está completo
+// Materias primas y trazabilidad son opcionales: un pedido se puede guardar
+// solo con la información general y completarse después. Lo único que se
+// revisa es que una cantidad escrita sea un número válido.
 function validarDetalle(pref) {
-  const mats = getMaterias(pref);
-  if (!mats.length) return 'Agrega al menos una materia prima.';
-  for (let i = 0; i < mats.length; i++) {
-    const m = mats[i];
-    if (!m.mp_tipo_producto || !m.mp_peso || !m.mp_cantidad_empleada || !m.mp_lote_vto)
-      return `Materia prima ${i + 1}: faltan datos (tipo, peso, cantidad y lote son obligatorios).`;
-  }
   const trz = getTrazas(pref);
-  if (!trz.length) return 'Agrega al menos un código de trazabilidad.';
   for (let i = 0; i < trz.length; i++) {
-    const t = trz[i];
-    if (!t.pt_lote_vto || t.pt_cantidad_obtenida === '' || !t.pt_codigo_trazabilidad || !t.pt_color_cinta)
-      return `Trazabilidad ${i + 1}: faltan datos (L/F. Vto., cantidad, código y color son obligatorios).`;
-    if (!(parseFloat(t.pt_cantidad_obtenida) >= 0))
+    const v = trz[i].pt_cantidad_obtenida;
+    if (v !== '' && !(parseFloat(v) >= 0))
       return `Trazabilidad ${i + 1}: la cantidad obtenida debe ser un número igual o mayor que 0.`;
   }
   return '';
@@ -2577,16 +2616,10 @@ const CAMPOS_OBLIGATORIOS = [
   ['f-menu',           'Menú'],
   ['f-operador',       'Operador'],
   ['f-responsable',    'Responsable del ingreso'],
-  ['f-mp-cantidad-oc', 'Cantidad según orden de compra'],
-  ['f-pt-tipo',        'Tipo de producto obtenido'],
-  ['f-pt-pres',        'Presentación'],
-  ['f-pt-peso',        'Peso (producto terminado)'],
-  ['f-pt-operacion',   'Operación realizada'],
-  ['f-pt-sellado',     'Tipo de sellado'],
-  ['f-pt-retal',       'Retal (libras)'],
 ];
-// Los demás campos de materia prima y trazabilidad ahora viven en filas
-// repetibles y los valida validarDetalle().
+// Solo son obligatorios los campos de "Información general". Todo lo demás
+// (materias primas, producto terminado y trazabilidad) puede completarse
+// después desde Editar.
 
 async function guardarPedido() {
   const g = id => (document.getElementById(id)?.value ?? '').trim();
@@ -2805,6 +2838,8 @@ function renderHistorial() {
   const clientes = [...new Set(pedidos.map(p => p.cliente).filter(Boolean))].sort();
   const prods    = [...new Set(pedidos.map(p => p.pt_tipo_producto).filter(Boolean))].sort();
   const pres     = [...new Set(pedidos.map(p => p.pt_presentacion).filter(Boolean))].sort();
+  const sellados = [...new Set(pedidos.map(p => p.pt_sellado).filter(Boolean))].sort();
+  const responsables = [...new Set(pedidos.map(p => p.responsable).filter(Boolean))].sort();
   const estados  = ['ABIERTO', 'CERRADO'];
 
   const filterBar = document.getElementById('hist-filter-bar');
@@ -2812,15 +2847,31 @@ function renderHistorial() {
     filterBar._built = true;
     filterBar.innerHTML = '';
 
+    // Dos filas: arriba búsqueda y selecciones, abajo fechas y responsable
+    const fila1 = document.createElement('div');
+    const fila2 = document.createElement('div');
+    fila1.className = fila2.className = 'filter-row';
+    filterBar.appendChild(fila1);
+    filterBar.appendChild(fila2);
+
+    // ── Fila superior ──
     const buscarInput = document.createElement('input');
     buscarInput.id = 'h-buscar';
-    buscarInput.placeholder = 'Buscar cliente, producto, código…';
+    buscarInput.type = 'text';
+    buscarInput.placeholder = 'Buscar código, cliente, producto…';
     buscarInput.value = histFiltros.buscar;
-    buscarInput.style.minWidth = '190px';
     buscarInput.addEventListener('input', () => { histFiltros.buscar = buscarInput.value; applyHistFilters(); });
-    filterBar.appendChild(buscarInput);
+    fila1.appendChild(buscarInput);
 
-    // Rango de fecha de CORTE (justo después de Buscar)
+    filterBar._msCliente      = buildMultiSelect('Cliente', clientes, histFiltros.clientes, applyHistFilters);
+    filterBar._msProducto     = buildMultiSelect('Producto', prods, histFiltros.productos, applyHistFilters);
+    filterBar._msPresentacion = buildMultiSelect('Presentación', pres, histFiltros.presentaciones, applyHistFilters);
+    filterBar._msSellado      = buildMultiSelect('Sellado', sellados, histFiltros.sellados, applyHistFilters);
+    filterBar._msEstado       = buildMultiSelect('Estado', estados, histFiltros.estados, applyHistFilters);
+    [filterBar._msCliente, filterBar._msProducto, filterBar._msPresentacion,
+     filterBar._msSellado, filterBar._msEstado].forEach(el => fila1.appendChild(el));
+
+    // ── Fila inferior ──
     const corteWrap = document.createElement('div');
     corteWrap.className = 'date-range-wrap';
     corteWrap.innerHTML = `
@@ -2830,16 +2881,7 @@ function renderHistorial() {
       <input type="date" id="h-corte-hasta" title="Corte hasta" value="${histFiltros.fechaCorteHasta}">`;
     corteWrap.querySelector('#h-corte-desde').addEventListener('change', e => { histFiltros.fechaCorteDesde = e.target.value; applyHistFilters(); });
     corteWrap.querySelector('#h-corte-hasta').addEventListener('change', e => { histFiltros.fechaCorteHasta = e.target.value; applyHistFilters(); });
-    filterBar.appendChild(corteWrap);
-
-    filterBar._msCliente = buildMultiSelect('Cliente', clientes, histFiltros.clientes, applyHistFilters);
-    filterBar._msProducto = buildMultiSelect('Producto', prods, histFiltros.productos, applyHistFilters);
-    filterBar._msPresentacion = buildMultiSelect('Presentación', pres, histFiltros.presentaciones, applyHistFilters);
-    filterBar._msEstado = buildMultiSelect('Estado', estados, histFiltros.estados, applyHistFilters);
-    filterBar.appendChild(filterBar._msCliente);
-    filterBar.appendChild(filterBar._msProducto);
-    filterBar.appendChild(filterBar._msPresentacion);
-    filterBar.appendChild(filterBar._msEstado);
+    fila2.appendChild(corteWrap);
 
     const dateWrap = document.createElement('div');
     dateWrap.className = 'date-range-wrap';
@@ -2850,32 +2892,85 @@ function renderHistorial() {
       <input type="date" id="h-fecha-hasta" title="Hasta" value="${histFiltros.fechaHasta}">`;
     dateWrap.querySelector('#h-fecha-desde').addEventListener('change', e => { histFiltros.fechaDesde = e.target.value; applyHistFilters(); });
     dateWrap.querySelector('#h-fecha-hasta').addEventListener('change', e => { histFiltros.fechaHasta = e.target.value; applyHistFilters(); });
-    filterBar.appendChild(dateWrap);
+    fila2.appendChild(dateWrap);
+
+    filterBar._msResponsable = buildMultiSelect('Responsable', responsables, histFiltros.responsables, applyHistFilters);
+    fila2.appendChild(filterBar._msResponsable);
 
     const btnLimpiar = document.createElement('button');
     btnLimpiar.className = 'btn btn-sm';
     btnLimpiar.textContent = 'Limpiar';
+    btnLimpiar.style.marginLeft = 'auto';
     btnLimpiar.addEventListener('click', () => {
       histFiltros.clientes = []; histFiltros.productos = []; histFiltros.presentaciones = [];
-      histFiltros.estados = []; histFiltros.fechaDesde = ''; histFiltros.fechaHasta = ''; histFiltros.buscar = '';
+      histFiltros.sellados = []; histFiltros.estados = []; histFiltros.responsables = [];
+      histFiltros.fechaDesde = ''; histFiltros.fechaHasta = ''; histFiltros.buscar = '';
       histFiltros.fechaCorteDesde = ''; histFiltros.fechaCorteHasta = '';
-      document.getElementById('h-buscar').value = '';
-      document.getElementById('h-fecha-desde').value = '';
-      document.getElementById('h-fecha-hasta').value = '';
-      document.getElementById('h-corte-desde').value = '';
-      document.getElementById('h-corte-hasta').value = '';
+      limpiarOrdenColumna('hist');
       filterBar._built = false;
       renderHistorial();
     });
-    filterBar.appendChild(btnLimpiar);
+    fila2.appendChild(btnLimpiar);
   } else {
     filterBar._msCliente?.updateOptions(clientes);
     filterBar._msProducto?.updateOptions(prods);
     filterBar._msPresentacion?.updateOptions(pres);
+    filterBar._msSellado?.updateOptions(sellados);
+    filterBar._msResponsable?.updateOptions(responsables);
   }
 
   applyHistFilters();
 }
+
+// ═══════════════════════════════════════════════════════════
+// ORDENAR TABLAS DESDE EL ENCABEZADO
+// Un clic ordena de menor a mayor (o A→Z), otro clic invierte.
+// Sin menús: solo una flecha en el encabezado activo.
+// ═══════════════════════════════════════════════════════════
+const ordenTablas = {};   // { clave: { campo, dir } }
+
+function ordenarPorColumna(clave, campo, render) {
+  const act = ordenTablas[clave];
+  if (act && act.campo === campo) act.dir = act.dir === 'asc' ? 'desc' : 'asc';
+  else ordenTablas[clave] = { campo, dir: 'asc' };
+  render();
+}
+
+function limpiarOrdenColumna(clave) { delete ordenTablas[clave]; }
+
+// getters: { campo: fila => valor }. Devuelve una copia ordenada.
+function aplicarOrden(lista, clave, getters) {
+  const o = ordenTablas[clave];
+  if (!o || !getters[o.campo]) return lista;
+  const get = getters[o.campo];
+  const signo = o.dir === 'asc' ? 1 : -1;
+  return lista.slice().sort((a, b) => {
+    const va = get(a), vb = get(b);
+    const na = typeof va === 'number', nb = typeof vb === 'number';
+    if (na && nb) return (va - vb) * signo;
+    return String(va ?? '').localeCompare(String(vb ?? ''), 'es', { numeric: true }) * signo;
+  });
+}
+
+// Prepara los encabezados marcados con data-orden y refresca las flechas
+function prepararOrden(selectorTabla, clave, render) {
+  document.querySelectorAll(selectorTabla + ' thead th[data-orden]').forEach(th => {
+    if (!th._ordenListo) {
+      th._ordenListo = true;
+      th.classList.add('th-ordenable');
+      th.insertAdjacentHTML('beforeend', '<span class="sort-arrow"></span>');
+      th.addEventListener('click', () => ordenarPorColumna(clave, th.dataset.orden, render));
+    }
+    const o = ordenTablas[clave];
+    const activa = !!(o && o.campo === th.dataset.orden);
+    th.classList.toggle('ordenada', activa);
+    th.setAttribute('aria-sort', activa ? (o.dir === 'asc' ? 'ascending' : 'descending') : 'none');
+    const flecha = th.querySelector('.sort-arrow');
+    if (flecha) flecha.textContent = activa ? (o.dir === 'asc' ? '▲' : '▼') : '⇅';
+  });
+}
+
+const num = v => parseFloat(v) || 0;
 
 // Abre/cierra el desglose de códigos de una fila del historial
 function toggleTrazas(id, btn) {
@@ -2892,7 +2987,9 @@ function applyHistFilters() {
     if (histFiltros.clientes.length       && !histFiltros.clientes.includes(p.cliente))              return false;
     if (histFiltros.productos.length      && !histFiltros.productos.includes(p.pt_tipo_producto))     return false;
     if (histFiltros.presentaciones.length && !histFiltros.presentaciones.includes(p.pt_presentacion)) return false;
+    if (histFiltros.sellados.length       && !histFiltros.sellados.includes(p.pt_sellado))            return false;
     if (histFiltros.estados.length        && !histFiltros.estados.includes(p.estado))                 return false;
+    if (histFiltros.responsables.length   && !histFiltros.responsables.includes(p.responsable))       return false;
     if (histFiltros.fechaDesde && (p.fecha_entrega||'') < histFiltros.fechaDesde) return false;
     if (histFiltros.fechaHasta && (p.fecha_entrega||'') > histFiltros.fechaHasta) return false;
     if (histFiltros.fechaCorteDesde && (p.fecha_corte||'') < histFiltros.fechaCorteDesde) return false;
@@ -2901,6 +2998,27 @@ function applyHistFilters() {
         .toLowerCase().includes(histFiltros.buscar.toLowerCase())) return false;
     return true;
   }).sort((a,b) => (b.fecha_corte||'').localeCompare(a.fecha_corte||''));
+
+  const filOrdenada = aplicarOrden(fil, 'hist', {
+    fecha_corte:            p => p.fecha_corte || '',
+    cliente:                p => p.cliente || '',
+    pt_tipo_producto:       p => p.pt_tipo_producto || '',
+    pt_presentacion:        p => p.pt_presentacion || '',
+    fecha_entrega:          p => p.fecha_entrega || '',
+    mp_cantidad_oc:         p => num(p.mp_cantidad_oc),
+    pt_operacion:           p => p.pt_operacion || '',
+    pt_sellado:             p => p.pt_sellado || '',
+    pt_cantidad_obtenida:   p => num(p.pt_cantidad_obtenida),
+    pt_libras_entregadas:   p => num(p.pt_libras_entregadas),
+    mp_libras_tajadas:      p => num(p.mp_libras_tajadas),
+    pt_retal_lb:            p => num(p.pt_retal_lb),
+    pt_pct_retal:           p => num(p.pt_pct_retal),
+    pt_diferencia:          p => num(p.pt_diferencia),
+    pt_pct_diferencia:      p => num(p.pt_pct_diferencia),
+    estado:                 p => p.estado || '',
+    pt_codigo_trazabilidad: p => p.pt_codigo_trazabilidad || '',
+    responsable:            p => p.responsable || '',
+  });
 
   const totCantObt   = fil.reduce((a,p) => a + (parseFloat(p.pt_cantidad_obtenida)||0), 0);
   const totLibrasEnt = fil.reduce((a,p) => a + (parseFloat(p.pt_libras_entregadas)||0), 0);
@@ -2929,6 +3047,8 @@ function applyHistFilters() {
       <div class="metric-sub">libras de retal</div>
     </div>`;
 
+  prepararOrden('#view-historial .data-table', 'hist', applyHistFilters);
+
   const tbody = document.getElementById('hist-body');
   if (!fil.length) {
     tbody.innerHTML = `<tr><td colspan="20" class="empty-state"><div class="empty-state-text">No hay registros con estos filtros</div></td></tr>`;
@@ -2939,7 +3059,7 @@ function applyHistFilters() {
   const trzPorPedido = {};
   trazas.forEach(t => { (trzPorPedido[t.id_pedido] = trzPorPedido[t.id_pedido] || []).push(t); });
 
-  tbody.innerHTML = fil.map(p => {
+  tbody.innerHTML = filOrdenada.map(p => {
     const bcls = presClase(p.pt_presentacion);
     const esAbierto = p.estado === 'ABIERTO';
     const esCerrado = p.estado === 'CERRADO';
@@ -3120,7 +3240,7 @@ function abrirEditar(id) {
     <div class="divider" style="margin:14px 0 10px"></div>
     <div style="${SUBT}">Información de materias primas (cortadas y/o selladas)</div>
     <div class="form-grid form-grid-2 section-gap">
-      <div class="field"><label>Cantidad según orden de compra *</label><input id="e-mp-cantidad-oc" type="number" min="0" step="1" oninput="calcularCamposEdit()" value="${esc(p.mp_cantidad_oc ?? '')}"></div>
+      <div class="field"><label>Cantidad según orden de compra</label><input id="e-mp-cantidad-oc" type="number" min="0" step="1" oninput="calcularCamposEdit()" value="${esc(p.mp_cantidad_oc ?? '')}"></div>
       <div class="field"><label>Libras tajadas <span class="lbl-auto">AUTO</span></label><input id="e-mp-libras-taj" class="campo-calc" readonly value="${fmtCalc(p.mp_libras_tajadas)}"></div>
     </div>
     <div class="subsection section-gap">
@@ -3143,17 +3263,17 @@ function abrirEditar(id) {
     <div class="divider" style="margin:14px 0 10px"></div>
     <div style="${SUBT}">Información de producto terminado (cortado y/o sellado)</div>
     <div class="form-grid form-grid-3 section-gap">
-      <div class="field"><label>Tipo de producto obtenido *</label><select id="e-pt-tipo">${optionsHTML(LISTA_PT_TIPOS, p.pt_tipo_producto)}</select></div>
-      <div class="field"><label>Presentación *</label><select id="e-pt-pres">${optionsHTML(LISTA_PRESENTACIONES, p.pt_presentacion)}</select></div>
-      <div class="field"><label>Peso (Gr) *</label><select id="e-pt-peso" onchange="calcularCamposEdit()">${optionsHTML(LISTA_PT_PESOS, p.pt_peso)}</select></div>
+      <div class="field"><label>Tipo de producto obtenido</label><select id="e-pt-tipo">${optionsHTML(LISTA_PT_TIPOS, p.pt_tipo_producto)}</select></div>
+      <div class="field"><label>Presentación</label><select id="e-pt-pres">${optionsHTML(LISTA_PRESENTACIONES, p.pt_presentacion)}</select></div>
+      <div class="field"><label>Peso (Gr)</label><select id="e-pt-peso" onchange="calcularCamposEdit()">${optionsHTML(LISTA_PT_PESOS, p.pt_peso)}</select></div>
     </div>
     <div class="form-grid form-grid-3 section-gap">
-      <div class="field"><label>Operación realizada *</label><select id="e-pt-operacion">${optionsHTML(LISTA_OPERACIONES, p.pt_operacion)}</select></div>
-      <div class="field"><label>Tipo de sellado *</label><select id="e-pt-sellado">${optionsHTML(LISTA_SELLADOS, p.pt_sellado)}</select></div>
+      <div class="field"><label>Operación realizada</label><select id="e-pt-operacion">${optionsHTML(LISTA_OPERACIONES, p.pt_operacion)}</select></div>
+      <div class="field"><label>Tipo de sellado</label><select id="e-pt-sellado">${optionsHTML(LISTA_SELLADOS, p.pt_sellado)}</select></div>
       <div class="field"><label>Cantidad obtenida <span class="lbl-auto">AUTO</span></label><input id="e-pt-cant-obt" class="campo-calc" readonly value="${esc(p.pt_cantidad_obtenida ?? '')}"></div>
     </div>
     <div class="form-grid form-grid-2 section-gap">
-      <div class="field"><label>Retal (libras) *</label><input id="e-pt-retal" type="number" min="0" step="0.01" oninput="calcularCamposEdit()" value="${esc(p.pt_retal_lb ?? '')}"></div>
+      <div class="field"><label>Retal (libras)</label><input id="e-pt-retal" type="number" min="0" step="0.01" oninput="calcularCamposEdit()" value="${esc(p.pt_retal_lb ?? '')}"></div>
       <div class="field"><label>Libras entregadas <span class="lbl-auto">AUTO</span></label><input id="e-pt-libras-ent" class="campo-calc" readonly value="${fmtCalc(p.pt_libras_entregadas)}"></div>
     </div>
     <div class="form-grid form-grid-4 section-gap">
@@ -3273,12 +3393,9 @@ async function guardarEdicion() {
   const obligatorios = [
     ['e-fecha-corte','Fecha de corte'], ['e-fecha-entrega','Fecha de entrega'],
     ['e-cliente','Cliente'], ['e-menu','Menú'], ['e-operador','Operador'],
-    ['e-responsable','Responsable'], ['e-mp-cantidad-oc','Cantidad según OC'],
-    ['e-pt-tipo','Tipo de producto obtenido'], ['e-pt-pres','Presentación'],
-    ['e-pt-peso','Peso (PT)'], ['e-pt-operacion','Operación'], ['e-pt-sellado','Sellado'],
-    ['e-pt-retal','Retal (libras)'],
+    ['e-responsable','Responsable'],
   ];
-  // Materias primas y trazabilidad viven en filas repetibles: las valida validarDetalle('e').
+  // Igual que al crear: solo "Información general" es obligatoria.
   const faltantes = obligatorios.filter(([cid]) => g(cid) === '').map(([, lbl]) => lbl);
   if (faltantes.length) {
     toast('Faltan campos obligatorios: ' + faltantes.slice(0,3).join(', ')
@@ -3744,6 +3861,22 @@ function renderResumen() {
   applyResumenFilters();
 }
 
+// El orden elegido en un encabezado se aplica a todos los grupos de cliente
+function ordenarPedidosResumen(lista) {
+  if (!ordenTablas['resumen'])
+    return lista.slice().sort((a,b) => (b.fecha_corte||'').localeCompare(a.fecha_corte||''));
+  return aplicarOrden(lista, 'resumen', {
+    fecha_corte:          p => p.fecha_corte || '',
+    pt_tipo_producto:     p => p.pt_tipo_producto || '',
+    pt_presentacion:      p => p.pt_presentacion || '',
+    fecha_entrega:        p => p.fecha_entrega || '',
+    mp_cantidad_oc:       p => num(p.mp_cantidad_oc),
+    pt_cantidad_obtenida: p => num(p.pt_cantidad_obtenida),
+    pt_retal_lb:          p => num(p.pt_retal_lb),
+    estado:               p => p.estado || '',
+  });
+}
+
 function applyResumenFilters() {
   const filtPedidos = pedidos.filter(p => {
     if (resumenFiltros.clientes.length       && !resumenFiltros.clientes.includes(p.cliente))              return false;
@@ -3791,14 +3924,17 @@ function applyResumenFilters() {
         <div class="table-wrap">
           <table class="data-table" style="font-size:12px">
             <thead><tr>
-              <th>F. Corte</th><th>Producto</th><th>Presentación</th><th>F. Entrega</th>
-              <th style="text-align:right">Cant. OC</th>
-              <th style="text-align:right">Cant. obtenida</th>
-              <th style="text-align:right">Retal (lb)</th>
-              <th>Estado</th><th></th>
+              <th data-orden="fecha_corte">F. Corte</th>
+              <th data-orden="pt_tipo_producto">Producto</th>
+              <th data-orden="pt_presentacion">Presentación</th>
+              <th data-orden="fecha_entrega">F. Entrega</th>
+              <th data-orden="mp_cantidad_oc" style="text-align:right">Cant. OC</th>
+              <th data-orden="pt_cantidad_obtenida" style="text-align:right">Cant. obtenida</th>
+              <th data-orden="pt_retal_lb" style="text-align:right">Retal (lb)</th>
+              <th data-orden="estado">Estado</th><th></th>
             </tr></thead>
             <tbody>
-              ${r.listaPedidos.sort((a,b)=>(b.fecha_corte||'').localeCompare(a.fecha_corte||'')).map(p => {
+              ${ordenarPedidosResumen(r.listaPedidos).map(p => {
                 const esAb = p.estado === 'ABIERTO'; const esCe = p.estado === 'CERRADO';
                 const retal = parseFloat(p.pt_retal_lb)||0;
                 const bcls = presClase(p.pt_presentacion);
@@ -3820,6 +3956,8 @@ function applyResumenFilters() {
           </table>
         </div>
       </div>`).join('');
+
+  prepararOrden('#view-resumen .data-table', 'resumen', applyResumenFilters);
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -3827,7 +3965,7 @@ function applyResumenFilters() {
 // ═══════════════════════════════════════════════════════════
 const dashCharts = {};
 let dashFiltros = { clientes: [], productos: [], presentaciones: [], sellados: [], anios: [], meses: [], fechaDesde: '', fechaHasta: '', fechaCorteDesde: '', fechaCorteHasta: '' };
-let histFiltros  = { clientes: [], productos: [], presentaciones: [], estados: [], fechaDesde: '', fechaHasta: '', buscar: '', fechaCorteDesde: '', fechaCorteHasta: '' };
+let histFiltros  = { clientes: [], productos: [], presentaciones: [], sellados: [], estados: [], responsables: [], fechaDesde: '', fechaHasta: '', buscar: '', fechaCorteDesde: '', fechaCorteHasta: '' };
 
 const LB_TO_KG = 0.5;
 
@@ -4444,14 +4582,29 @@ function renderCintas() {
     ].join(' ').toLowerCase().includes(buscar));
   }
 
-  lista.sort((a, b) => {
-    if (orden === 'codigo')
-      return (a.t.pt_codigo_trazabilidad || '').localeCompare(b.t.pt_codigo_trazabilidad || '');
-    const da = a.p.fecha_corte || '';
-    const db = b.p.fecha_corte || '';
-    if (orden === 'antiguos') return da.localeCompare(db);
-    return db.localeCompare(da);
-  });
+  // Si se ordenó por un encabezado manda ese orden; si no, el desplegable
+  if (ordenTablas['cintas']) {
+    lista = aplicarOrden(lista, 'cintas', {
+      codigo:   x => x.t.pt_codigo_trazabilidad || '',
+      color:    x => x.t.pt_color_cinta || '',
+      cantidad: x => num(x.t.pt_cantidad_obtenida),
+      cliente:  x => x.p.cliente || '',
+      producto: x => x.p.pt_tipo_producto || '',
+      fcorte:   x => x.p.fecha_corte || '',
+      materia:  x => x.p.mp_tipo_producto || '',
+      fentrega: x => x.p.fecha_entrega || '',
+    });
+  } else {
+    lista.sort((a, b) => {
+      if (orden === 'codigo')
+        return (a.t.pt_codigo_trazabilidad || '').localeCompare(b.t.pt_codigo_trazabilidad || '');
+      const da = a.p.fecha_corte || '';
+      const db = b.p.fecha_corte || '';
+      if (orden === 'antiguos') return da.localeCompare(db);
+      return db.localeCompare(da);
+    });
+  }
+  prepararOrden('#view-cintas .data-table', 'cintas', renderCintas);
 
   if (countEl) {
     countEl.textContent = buscar ? `${lista.length} de ${total} códigos` : `${total} códigos en total`;
@@ -4483,7 +4636,7 @@ function renderCintas() {
 function fmtFecha(d) {
   if (!d) return '—';
   try {
-    return new Date(d + 'T12:00:00').toLocaleDateString('es-CO', { day:'2-digit', month:'short', year:'2-digit' });
+    return new Date(d + 'T12:00:00').toLocaleDateString('es-CO', { day:'2-digit', month:'2-digit', year:'numeric' });
   } catch { return d; }
 }
 
