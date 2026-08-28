@@ -12,28 +12,67 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
 <style>
+/* ══════════════════════════════════════════════════════════════
+   NEOMORFISMO — Seguimiento Producción · Inversiones Peniel
+   Superficie única + relieve por doble sombra (luz / sombra).
+   Azul empresarial #1b354a conservado como color de marca.
+   ══════════════════════════════════════════════════════════════ */
 :root {
-  --bg: #F7F6F2;
-  --surface: #FFFFFF;
-  --surface2: #F0EEE8;
-  --border: #E2DED6;
-  --border2: #CCC8BF;
-  --text: #1A1814;
-  --text2: #6B6760;
-  --text3: #9E9B96;
-  --accent: #1b354a;
-  --accent-light: #e8eef3;
-  --accent-mid: #2d5a7b;
-  --danger: #9B2335;
-  --danger-light: #FDECEA;
-  --warn: #7D4F00;
-  --warn-light: #FFF3CD;
-  --info: #1B3A6B;
-  --info-light: #E8F0FE;
-  --radius: 8px;
-  --radius-lg: 12px;
-  --shadow: 0 1px 3px rgba(0,0,0,.06), 0 1px 2px rgba(0,0,0,.04);
-  --shadow-md: 0 4px 12px rgba(0,0,0,.08), 0 2px 4px rgba(0,0,0,.04);
+  /* Permite animar hacia tamanos intrinsecos (block-size: auto) */
+  interpolate-size: allow-keywords;
+
+  /* Superficie base — TODO comparte este color; el volumen nace de las sombras */
+  --bg:       #e4e9f0;
+  --surface:  #e4e9f0;
+  --surface2: #dce2ec;
+
+  /* Luz y sombra del relieve */
+  --nm-light: #ffffff;
+  --nm-dark:  #b6c1d2;
+  --nm-dark-soft: rgba(182,193,210,.55);
+
+  /* Azul empresarial */
+  --accent:       #1b354a;
+  --accent-mid:   #2d5a7b;
+  --accent-soft:  #4d7ea6;
+  --accent-light: #d3ddea;
+
+  /* Texto */
+  --text:  #1b354a;
+  --text2: #5b6f84;
+  --text3: #8a99ab;
+
+  /* Bordes (casi no se usan: el neomorfismo evita líneas duras) */
+  --border:  rgba(182,193,210,.55);
+  --border2: rgba(182,193,210,.85);
+
+  /* Semánticos */
+  --danger: #9B2335;  --danger-light: #f0dade;
+  --warn:   #7D4F00;  --warn-light:   #eee2c8;
+  --info:   #1B3A6B;  --info-light:   #d6dfec;
+  --ok:     #2f7d5c;  --ok-light:     #d5e6de;
+
+  /* Radios amplios */
+  --radius-xs: 10px;
+  --radius:    16px;
+  --radius-campo: 11px;   /* campos de formulario: menos curvatura que las tarjetas */
+  --radius-lg: 26px;
+  --radius-xl: 34px;
+  --pill: 999px;
+
+  /* Relieve saliente (extruido) */
+  --nm-out:    9px 9px 20px var(--nm-dark), -9px -9px 20px var(--nm-light);
+  --nm-out-md: 6px 6px 14px var(--nm-dark), -6px -6px 14px var(--nm-light);
+  --nm-out-sm: 4px 4px 9px  var(--nm-dark), -4px -4px 9px  var(--nm-light);
+  --nm-out-xs: 2px 2px 5px  var(--nm-dark), -2px -2px 5px  var(--nm-light);
+  /* Relieve hundido (grabado) */
+  --nm-in:     inset 6px 6px 12px var(--nm-dark), inset -6px -6px 12px var(--nm-light);
+  --nm-in-sm:  inset 4px 4px 8px  var(--nm-dark), inset -4px -4px 8px  var(--nm-light);
+  --nm-in-xs:  inset 2px 2px 5px  var(--nm-dark), inset -2px -2px 5px  var(--nm-light);
+
+  /* Compatibilidad con reglas heredadas */
+  --shadow:    var(--nm-out-sm);
+  --shadow-md: var(--nm-out);
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -43,577 +82,1016 @@ body {
   background: var(--bg);
   color: var(--text);
   font-size: 14px;
-  line-height: 1.5;
+  line-height: 1.55;
   min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Barras de scroll con relieve */
+::-webkit-scrollbar { width: 12px; height: 12px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb {
+  background: var(--bg); border-radius: var(--pill);
+  border: 3px solid var(--bg);
+  box-shadow: var(--nm-in-xs);
+}
+::-webkit-scrollbar-thumb:hover { box-shadow: var(--nm-in-sm); }
+
+/* Ranura tallada: separador propio del neomorfismo */
+.nm-groove::after {
+  content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 2px;
+  background: linear-gradient(180deg, var(--nm-dark-soft), var(--nm-light));
+  border-radius: 2px; pointer-events: none;
 }
 
 /* ── Layout ── */
-.app { display: flex; height: 100vh; overflow: hidden; }
+.app { display: flex; height: 100vh; overflow: hidden; background: var(--bg); }
 
 .sidebar {
-  width: 240px; min-width: 240px;
-  background: var(--accent);
+  width: 278px; min-width: 278px;
+  background: var(--bg);
   display: flex; flex-direction: column;
   padding: 0;
-  overflow: hidden;
+  overflow-y: auto; overflow-x: hidden;
+  box-shadow: 10px 0 24px -14px var(--nm-dark);
+  z-index: 3;
 }
 
 .sidebar-logo {
-  padding: 20px 20px 16px;
-  border-bottom: 1px solid rgba(255,255,255,.1);
+  padding: 22px 20px 20px;
+  position: relative;
+}
+.sidebar-logo::after {
+  content: ''; position: absolute; left: 20px; right: 20px; bottom: 0; height: 2px;
+  background: linear-gradient(180deg, var(--nm-dark-soft), var(--nm-light));
+  border-radius: 2px;
 }
 .sidebar-logo-title {
-  font-size: 13px; font-weight: 600;
-  color: #fff; letter-spacing: .02em;
+  font-size: 13.5px; font-weight: 700;
+  color: var(--accent); letter-spacing: -.005em;
   line-height: 1.3;
 }
 .sidebar-logo-sub {
-  font-size: 11px; color: rgba(255,255,255,.5);
-  margin-top: 2px;
+  font-size: 10.5px; color: var(--text3);
+  margin-top: 3px; letter-spacing: .02em;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 
-.sidebar-section { padding: 16px 12px 8px; }
+.sidebar-section { padding: 20px 16px 6px; }
 .sidebar-section-label {
-  font-size: 10px; font-weight: 600;
-  color: rgba(255,255,255,.4);
-  letter-spacing: .1em; text-transform: uppercase;
-  padding: 0 8px; margin-bottom: 4px;
+  font-size: 10px; font-weight: 700;
+  color: var(--text3);
+  letter-spacing: .14em; text-transform: uppercase;
+  padding: 0 12px; margin-bottom: 10px;
 }
 
 .nav-item {
-  display: flex; align-items: center; gap: 10px;
-  padding: 9px 12px; border-radius: var(--radius);
-  cursor: pointer; color: rgba(255,255,255,.65);
-  font-size: 13px; font-weight: 400;
-  transition: all .15s; border: none; background: none;
-  width: 100%; text-align: left; font-family: 'Plus Jakarta Sans', sans-serif;
+  display: flex; align-items: center; gap: 13px;
+  padding: 9px 13px; border-radius: var(--radius);
+  cursor: pointer; color: var(--text2);
+  font-size: 13.5px; font-weight: 500;
+  transition: box-shadow .22s ease, color .22s ease;
+  border: none; background: var(--bg);
+  width: 100%; text-align: left;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  margin-bottom: 9px;
+  box-shadow: none;
 }
-.nav-item:hover { background: rgba(255,255,255,.08); color: #fff; }
-.nav-item.active { background: rgba(255,255,255,.15); color: #fff; font-weight: 500; }
-.nav-icon { font-size: 15px; width: 18px; text-align: center; flex-shrink: 0; }
+.nav-item:hover { box-shadow: var(--nm-out-sm); color: var(--accent); }
+.nav-item.active {
+  box-shadow: var(--nm-in-sm);
+  color: var(--accent); font-weight: 700;
+}
+
+/* Chip del icono: siempre en relieve, contrasta contra el item hundido */
+.nav-icon {
+  width: 34px; height: 34px; flex-shrink: 0;
+  border-radius: 12px;
+  background: var(--bg);
+  box-shadow: var(--nm-out-xs);
+  display: inline-flex; align-items: center; justify-content: center;
+  color: var(--text3);
+  transition: box-shadow .22s ease, color .22s ease;
+}
+.nav-icon svg { width: 18px; height: 18px; display: block; }
+.nav-item:hover .nav-icon { color: var(--accent-mid); }
+.nav-item.active .nav-icon {
+  box-shadow: var(--nm-out-sm);
+  color: var(--accent-mid);
+}
 
 .sidebar-bottom {
   margin-top: auto;
-  padding: 16px;
-  border-top: 1px solid rgba(255,255,255,.1);
+  padding: 20px 16px 22px;
+  position: relative;
+}
+.sidebar-bottom::before {
+  content: ''; position: absolute; left: 24px; right: 24px; top: 0; height: 2px;
+  background: linear-gradient(180deg, var(--nm-dark-soft), var(--nm-light));
+  border-radius: 2px;
 }
 .user-chip {
-  display: flex; align-items: center; gap: 10px;
-  padding: 8px 10px; border-radius: var(--radius);
-  background: rgba(255,255,255,.08);
+  display: flex; align-items: center; gap: 12px;
+  padding: 12px 14px; border-radius: var(--radius);
+  background: var(--bg);
+  box-shadow: var(--nm-in-xs);
 }
 .user-avatar {
-  width: 28px; height: 28px; border-radius: 50%;
-  background: rgba(255,255,255,.2);
+  width: 36px; height: 36px; border-radius: 50%;
+  background: var(--bg);
+  box-shadow: var(--nm-out-xs);
   display: flex; align-items: center; justify-content: center;
-  font-size: 11px; font-weight: 600; color: #fff; flex-shrink: 0;
+  font-size: 12px; font-weight: 700; color: var(--accent-mid); flex-shrink: 0;
 }
-.user-name { font-size: 12px; color: rgba(255,255,255,.7); line-height: 1.3; }
-.user-role { font-size: 10px; color: rgba(255,255,255,.4); letter-spacing: .04em; line-height: 1.3; }
+.user-name { font-size: 12.5px; color: var(--text); font-weight: 600; line-height: 1.35; }
+.user-role { font-size: 10px; color: var(--text3); letter-spacing: .08em; line-height: 1.35; text-transform: uppercase; }
 
 /* ── Main ── */
-.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: var(--bg); }
 
 .topbar {
-  background: var(--surface);
-  border-bottom: 1px solid var(--border);
-  padding: 0 24px;
-  height: 56px;
+  background: var(--bg);
+  padding: 0 36px;
+  height: 78px;
   display: flex; align-items: center; justify-content: space-between;
-  flex-shrink: 0;
+  flex-shrink: 0; position: relative;
 }
-.topbar-left { display: flex; align-items: center; gap: 12px; }
-.topbar-title { font-size: 15px; font-weight: 600; color: var(--text); }
-.topbar-date { font-size: 12px; color: var(--text3); }
-.topbar-right { display: flex; align-items: center; gap: 8px; }
+.topbar::after {
+  content: ''; position: absolute; left: 36px; right: 36px; bottom: 0; height: 2px;
+  background: linear-gradient(180deg, var(--nm-dark-soft), var(--nm-light));
+  border-radius: 2px;
+}
+.topbar-left { display: flex; align-items: baseline; gap: 14px; }
+.topbar-title { font-size: 19px; font-weight: 700; color: var(--accent); letter-spacing: -.01em; }
+.topbar-date { font-size: 12px; color: var(--text3); text-transform: capitalize; }
+.topbar-right { display: flex; align-items: center; gap: 12px; }
 
-/* ── Buttons ── */
+/* ── Botones ── */
 .btn {
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 7px 14px; border-radius: var(--radius);
-  border: 1px solid var(--border2);
-  background: var(--surface); cursor: pointer;
-  font-size: 13px; color: var(--text);
-  font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 500;
-  transition: all .15s; white-space: nowrap;
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 11px 20px; border-radius: var(--radius);
+  border: none;
+  background: var(--bg); cursor: pointer;
+  font-size: 13px; color: var(--text2);
+  font-family: 'Plus Jakarta Sans', sans-serif; font-weight: 600;
+  box-shadow: var(--nm-out-sm);
+  transition: box-shadow .18s ease, color .18s ease, transform .18s ease;
+  white-space: nowrap; letter-spacing: .01em;
 }
-.btn:hover { background: var(--surface2); border-color: var(--border2); }
-.btn:active { transform: scale(.98); }
+.btn:hover { box-shadow: var(--nm-out-md); color: var(--accent); }
+.btn:active { box-shadow: var(--nm-in-xs); transform: translateY(1px); color: var(--accent); }
 
 .btn-primary {
-  background: var(--accent); color: #fff;
-  border-color: var(--accent);
+  background: linear-gradient(145deg, #24425c, #16293a);
+  color: #fff;
+  box-shadow: 5px 5px 12px var(--nm-dark), -5px -5px 12px var(--nm-light);
 }
-.btn-primary:hover { background: #122438; border-color: #122438; }
+.btn-primary:hover {
+  background: linear-gradient(145deg, #2b4d6a, #1a3145);
+  color: #fff;
+  box-shadow: 7px 7px 16px var(--nm-dark), -7px -7px 16px var(--nm-light);
+}
+.btn-primary:active {
+  background: linear-gradient(145deg, #16293a, #24425c);
+  color: #fff;
+  box-shadow: inset 3px 3px 7px rgba(0,0,0,.35), inset -2px -2px 6px rgba(255,255,255,.10);
+}
 
-.btn-danger { background: var(--danger-light); color: var(--danger); border-color: #f5c6cb; }
-.btn-danger:hover { background: #f9d2d6; }
+.btn-danger { color: var(--danger); }
+.btn-danger:hover { color: var(--danger); box-shadow: var(--nm-out-md); }
 
-.btn-sm { padding: 5px 10px; font-size: 12px; }
-.btn-xs { padding: 3px 8px; font-size: 11px; }
+.btn-sm { padding: 8px 15px; font-size: 12px; border-radius: 13px; }
+.btn-xs { padding: 6px 12px; font-size: 11px; border-radius: 11px; }
 
 .btn-icon {
-  width: 30px; height: 30px; padding: 0;
+  width: 40px; height: 40px; padding: 0;
   display: inline-flex; align-items: center; justify-content: center;
-  border-radius: var(--radius); border: 1px solid var(--border);
-  background: var(--surface); cursor: pointer; font-size: 15px;
-  transition: all .15s;
+  border-radius: 50%; border: none;
+  background: var(--bg); cursor: pointer; font-size: 15px;
+  color: var(--text2);
+  box-shadow: var(--nm-out-sm);
+  transition: box-shadow .18s ease, color .18s ease;
 }
-.btn-icon:hover { background: var(--surface2); }
+.btn-icon:hover { box-shadow: var(--nm-out-md); color: var(--accent); }
+.btn-icon:active { box-shadow: var(--nm-in-xs); }
 
-/* ── Views ── */
-.view { flex: 1; overflow-y: auto; display: none; padding: 24px; }
+button:disabled, .btn:disabled { opacity: .5; cursor: not-allowed; box-shadow: var(--nm-in-xs); }
+
+/* ── Vistas ── */
+.view { flex: 1; overflow-y: auto; display: none; padding: 34px 36px 48px; }
 .view.active { display: block; }
 
-/* ── Cards ── */
+/* ── Tarjetas ── */
 .card {
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: var(--bg);
+  border: none;
   border-radius: var(--radius-lg);
-  margin-bottom: 16px;
+  margin-bottom: 28px;
+  box-shadow: var(--nm-out);
 }
 .card-header {
-  padding: 14px 20px;
-  border-bottom: 1px solid var(--border);
+  padding: 22px 30px;
   display: flex; align-items: center; justify-content: space-between;
+  position: relative; border-radius: var(--radius-lg) var(--radius-lg) 0 0;
 }
-.card-title { font-size: 13px; font-weight: 600; color: var(--text); }
-.card-header-right { display: flex; align-items: center; gap: 10px; }
+.card-header::after {
+  content: ''; position: absolute; left: 30px; right: 30px; bottom: 0; height: 2px;
+  background: linear-gradient(180deg, var(--nm-dark-soft), var(--nm-light));
+  border-radius: 2px;
+}
+.card-title { font-size: 15px; font-weight: 700; color: var(--accent); letter-spacing: -.005em; }
+.card-header-right { display: flex; align-items: center; gap: 12px; }
 .card-header.collapsible { cursor: pointer; user-select: none; }
-.card-header.collapsible:hover { background: var(--surface2); }
-.card-chevron { font-size: 11px; color: var(--text3); transition: transform .2s; }
+.card-header.collapsible:hover .card-title { color: var(--accent-mid); }
+.card-chevron { font-size: 12px; color: var(--text3); transition: transform .25s ease; }
 .card.collapsed .card-chevron { transform: rotate(-90deg); }
-.card.collapsed .card-body { display: none; }
-.card.collapsed .card-header { border-bottom: none; }
+.card.collapsed .card-header::after { opacity: 0; }
+.card-sub { font-size: 12px; color: var(--text3); }
+.card-body { padding: 28px 30px 30px; }
+
 .subsection {
-  border: 1px dashed var(--border2); border-radius: var(--radius);
-  padding: 14px; margin-top: 4px; background: var(--bg);
+  border: none; border-radius: var(--radius);
+  padding: 22px 24px; margin-top: 10px;
+  background: var(--bg);
+  box-shadow: var(--nm-in-xs);
 }
 .subsection-title {
-  font-size: 11px; font-weight: 600; color: var(--text2);
-  text-transform: uppercase; letter-spacing: .05em; margin-bottom: 10px;
+  font-size: 11px; font-weight: 700; color: var(--text2);
+  text-transform: uppercase; letter-spacing: .1em; margin-bottom: 18px;
 }
-.card-sub { font-size: 12px; color: var(--text3); }
-.card-body { padding: 20px; }
 
-/* ── Forms ── */
-.form-grid { display: grid; gap: 14px; }
+/* ── Formularios ── */
+.form-grid { display: grid; gap: 22px; align-items: end; }
 .form-grid-2 { grid-template-columns: 1fr 1fr; }
 .form-grid-3 { grid-template-columns: 1fr 1fr 1fr; }
-.form-grid-4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+.form-grid-4 { grid-template-columns: repeat(4, 1fr); }
 
-.field { display: flex; flex-direction: column; gap: 5px; }
+.field { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
 .field label {
-  font-size: 11px; font-weight: 600;
-  color: var(--text2); letter-spacing: .03em; text-transform: uppercase;
+  font-size: 10.5px; font-weight: 700;
+  color: var(--text2); letter-spacing: .09em; text-transform: uppercase;
+  padding-left: 4px;
 }
 .field input, .field select, .field textarea {
-  padding: 8px 11px;
-  border: 1px solid var(--border2);
+  padding: 13px 17px;
+  border: none;
   border-radius: var(--radius);
-  background: var(--surface);
+  background: var(--bg);
   color: var(--text);
   font-family: 'Plus Jakarta Sans', sans-serif;
-  font-size: 13px;
-  transition: border-color .15s, box-shadow .15s;
+  font-size: 13px; font-weight: 500;
+  box-shadow: var(--nm-in-sm);
+  transition: box-shadow .2s ease;
   text-transform: uppercase;
+  width: 100%;
 }
 .field input[type="date"],
 .field input[type="number"],
-.field input[readonly] {
-  text-transform: none;
-}
-.field select option {
-  text-transform: uppercase;
-}
+.field input[readonly] { text-transform: none; }
+.field select option { text-transform: uppercase; background: #eef1f6; color: var(--text); }
 .field input:focus, .field select:focus, .field textarea:focus {
   outline: none;
-  border-color: var(--accent-mid);
-  box-shadow: 0 0 0 3px rgba(64,145,108,.12);
+  box-shadow: var(--nm-in-sm), 0 0 0 2px var(--accent-soft);
 }
 .field input::placeholder { color: var(--text3); }
-.field select { cursor: pointer; }
+.field select { cursor: pointer; appearance: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%238a99ab' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E");
+  background-repeat: no-repeat; background-position: right 16px center;
+  padding-right: 40px;
+}
+.field input[readonly] { color: var(--text2); box-shadow: var(--nm-in-xs); }
 
-/* ── Cinta rows ── */
-.cintas-list { display: flex; flex-direction: column; gap: 8px; }
+/* ── Filas de reempaque / cintas ── */
+.cintas-list { display: flex; flex-direction: column; gap: 16px; }
 
 .cinta-item {
   display: grid;
-  grid-template-columns: 28px 1fr 1fr 1fr 32px;
-  gap: 10px; align-items: end;
+  grid-template-columns: 40px 1fr 1fr 1fr 44px;
+  gap: 16px; align-items: end;
   background: var(--bg);
-  border: 1px solid var(--border);
+  border: none;
   border-radius: var(--radius);
-  padding: 12px 14px;
+  padding: 20px 22px;
   position: relative;
+  box-shadow: var(--nm-out-xs);
 }
 .cinta-item .field { min-width: 0; }
 .cinta-item .field input, .cinta-item .field select { width: 100%; min-width: 0; }
 .cinta-num {
-  font-size: 11px; font-weight: 600;
-  color: var(--text3);
+  font-size: 12px; font-weight: 700;
+  color: var(--accent-mid);
   display: flex; align-items: center; justify-content: center;
-  width: 28px; height: 28px;
-  background: var(--surface);
-  border: 1px solid var(--border);
+  width: 36px; height: 36px;
+  background: var(--bg);
+  border: none;
+  box-shadow: var(--nm-in-xs);
   border-radius: 50%;
   flex-shrink: 0;
   align-self: flex-end;
-  margin-bottom: 1px;
+  margin-bottom: 3px;
 }
 
 .add-cinta {
   display: flex; align-items: center; justify-content: center;
-  gap: 8px; padding: 10px;
-  border: 1px dashed var(--border2);
+  gap: 10px; padding: 16px;
+  border: none;
   border-radius: var(--radius);
   cursor: pointer; color: var(--text2);
-  font-size: 12px; font-weight: 500;
-  background: none; font-family: 'Plus Jakarta Sans', sans-serif;
-  width: 100%; transition: all .15s;
+  font-size: 12.5px; font-weight: 600;
+  background: var(--bg); font-family: 'Plus Jakarta Sans', sans-serif;
+  width: 100%;
+  box-shadow: var(--nm-in-xs);
+  transition: box-shadow .2s ease, color .2s ease;
+  margin-top: 4px;
 }
-.add-cinta:hover { border-color: var(--accent-mid); color: var(--accent); background: var(--accent-light); }
+.add-cinta:hover { box-shadow: var(--nm-out-sm); color: var(--accent); }
+.add-cinta:active { box-shadow: var(--nm-in-sm); }
 
-/* ── Table ── */
-.table-wrap { overflow-x: auto; }
+/* ── Tablas ── */
+.table-wrap {
+  overflow-x: auto;
+  border-radius: var(--radius);
+  background: var(--bg);
+  box-shadow: var(--nm-in-xs);
+  padding: 6px 4px;
+}
 table.data-table {
-  width: 100%; border-collapse: collapse;
+  width: 100%; border-collapse: separate; border-spacing: 0;
   font-size: 13px;
 }
 .data-table th {
-  background: var(--surface2);
-  font-size: 10px; font-weight: 600;
-  color: var(--text2); text-transform: uppercase; letter-spacing: .07em;
-  padding: 9px 14px; text-align: left;
-  border-bottom: 1px solid var(--border);
+  background: transparent;
+  font-size: 10px; font-weight: 700;
+  color: var(--text3); text-transform: uppercase; letter-spacing: .1em;
+  padding: 14px 16px; text-align: left;
+  border-bottom: 2px solid var(--nm-dark-soft);
   white-space: nowrap;
+  position: sticky; top: 0; z-index: 2;
+  background: var(--bg);
 }
 .data-table td {
-  padding: 10px 14px;
-  border-bottom: 1px solid var(--border);
+  padding: 12px 16px;
+  border-bottom: 1px solid rgba(182,193,210,.4);
   color: var(--text); vertical-align: middle;
+  line-height: 1.45;
 }
 .data-table tbody tr:last-child td { border-bottom: none; }
-.data-table tbody tr:hover td { background: var(--bg); }
+.data-table tbody tr:hover td { background: rgba(255,255,255,.5); }
 
-.row-pedido td { background: var(--surface); }
+.row-pedido td { background: transparent; font-weight: 500; }
 .row-cinta td {
-  background: #FAFAF8;
+  background: rgba(182,193,210,.16);
   font-size: 12px; color: var(--text2);
-  border-bottom: 1px solid var(--border);
+  border-bottom: 1px solid rgba(182,193,210,.35);
 }
-.row-cinta td:first-child { padding-left: 36px; }
-.row-cinta-last td { border-bottom: 2px solid var(--border2); }
+.row-cinta:hover td { background: rgba(182,193,210,.26); }
+.row-cinta td:first-child { padding-left: 44px; }
+.row-cinta-last td { border-bottom: 2px solid var(--nm-dark-soft); }
 
-/* ── Badges ── */
+/* ── Insignias ── */
 .badge {
-  display: inline-block; padding: 2px 8px;
-  border-radius: 4px; font-size: 11px; font-weight: 600;
-  letter-spacing: .03em;
+  display: inline-block; padding: 5px 13px;
+  border-radius: 12px; font-size: 11px; font-weight: 700;
+  line-height: 1.4;
+  letter-spacing: .04em;
+  background: var(--bg);
+  box-shadow: var(--nm-out-xs);
 }
-.badge-green { background: var(--accent-light); color: var(--accent); }
-.badge-blue { background: var(--info-light); color: var(--info); }
-.badge-amber { background: var(--warn-light); color: var(--warn); }
-.badge-red { background: var(--danger-light); color: var(--danger); }
-.badge-gray { background: var(--surface2); color: var(--text2); }
+.badge-green { color: var(--ok); }
+.badge-blue  { color: var(--accent-mid); }
+.badge-amber { color: var(--warn); }
+.badge-red   { color: var(--danger); }
+.badge-gray  { color: var(--text3); }
 
 .estado-badge {
-  display: inline-flex; align-items: center; gap: 5px;
-  padding: 3px 9px; border-radius: 20px; font-size: 11px; font-weight: 600;
+  display: inline-flex; align-items: center; gap: 7px;
+  padding: 6px 14px; border-radius: var(--pill); font-size: 11px; font-weight: 700;
+  background: var(--bg); border: none;
+  box-shadow: var(--nm-out-xs);
+  letter-spacing: .03em;
 }
-.estado-abierto { background: #FFF9E6; color: #8B6000; border: 1px solid #FFE08A; }
-.estado-cerrado { background: var(--accent-light); color: var(--accent); border: 1px solid #B7E4C7; }
-.dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
-.dot-abierto { background: #F59F00; }
-.dot-cerrado { background: var(--accent-mid); }
+.estado-abierto { color: #8B6000; }
+.estado-cerrado { color: var(--ok); }
+.dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0;
+  box-shadow: 0 0 0 2px rgba(255,255,255,.7); }
+.dot-abierto { background: #E8A317; }
+.dot-cerrado { background: #3d9970; }
 
-/* ── Metrics ── */
+/* ── Métricas ── */
 .metrics-grid {
   display: grid; grid-template-columns: repeat(4, 1fr);
-  gap: 12px; margin-bottom: 20px;
+  gap: 22px; margin-bottom: 30px;
 }
 .metric-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: var(--bg);
+  border: none;
   border-radius: var(--radius-lg);
-  padding: 16px 18px;
+  padding: 26px 28px;
+  box-shadow: var(--nm-out-md);
+  transition: box-shadow .22s ease;
 }
-.metric-label { font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
-.metric-value { font-size: 22px; font-weight: 600; color: var(--text); line-height: 1; }
-.metric-sub { font-size: 11px; color: var(--text3); margin-top: 4px; }
+.metric-card:hover { box-shadow: var(--nm-out); }
+.metric-label { font-size: 10.5px; font-weight: 700; color: var(--text3); text-transform: uppercase; letter-spacing: .1em; margin-bottom: 12px; }
+.metric-value { font-size: 30px; font-weight: 700; color: var(--accent); line-height: 1.05; letter-spacing: -.02em; }
+.metric-sub { font-size: 11.5px; color: var(--text3); margin-top: 8px; }
 
-/* ── Filters ── */
-.filter-bar {
-  display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; align-items: center;
+/* ── Barras de filtros ── */
+.filter-bar, .dash-filter-bar {
+  display: flex; gap: 12px; margin-bottom: 26px; flex-wrap: wrap; align-items: center;
+  padding: 18px 20px; border-radius: var(--radius-lg);
+  background: var(--bg); box-shadow: var(--nm-out-sm);
 }
-.filter-bar input, .filter-bar select {
-  padding: 7px 11px;
-  border: 1px solid var(--border2);
+.filter-bar input, .filter-bar select,
+.dash-filter-bar select, .dash-filter-bar input {
+  padding: 11px 16px;
+  border: none;
   border-radius: var(--radius);
-  background: var(--surface);
-  color: var(--text); font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13px;
+  background: var(--bg);
+  color: var(--text); font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 13px; font-weight: 500;
+  box-shadow: var(--nm-in-xs);
+  transition: box-shadow .2s ease;
 }
-.filter-bar input { min-width: 200px; }
-.filter-bar input:focus, .filter-bar select:focus { outline: none; border-color: var(--accent-mid); }
+.filter-bar input { min-width: 240px; }
+.filter-bar input:focus, .filter-bar select:focus,
+.dash-filter-bar select:focus, .dash-filter-bar input:focus {
+  outline: none; box-shadow: var(--nm-in-sm), 0 0 0 2px var(--accent-soft);
+}
 
 /* ── Modal ── */
 .modal-bg {
   position: fixed; inset: 0;
-  background: rgba(0,0,0,.35);
+  background: rgba(160,173,192,.45);
+  backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
   display: none; align-items: center; justify-content: center;
-  z-index: 100; padding: 20px;
+  z-index: 100; padding: 28px;
 }
 .modal-bg.open { display: flex; }
 .modal {
-  background: var(--surface);
-  border-radius: var(--radius-lg);
+  background: var(--bg);
+  border-radius: var(--radius-xl);
   width: 100%; max-width: 1050px;
   max-height: 90vh; overflow-y: auto;
-  box-shadow: var(--shadow-md);
+  box-shadow: 16px 16px 40px rgba(120,134,155,.55), -12px -12px 34px rgba(255,255,255,.9);
 }
 .modal-header {
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--border);
+  padding: 26px 32px;
   display: flex; align-items: center; justify-content: space-between;
-  position: sticky; top: 0; background: var(--surface); z-index: 1;
+  position: sticky; top: 0; background: var(--bg); z-index: 3;
+  border-radius: var(--radius-xl) var(--radius-xl) 0 0;
 }
-.modal-title { font-size: 14px; font-weight: 600; }
-.modal-body { padding: 20px; }
+.modal-header::after {
+  content: ''; position: absolute; left: 32px; right: 32px; bottom: 0; height: 2px;
+  background: linear-gradient(180deg, var(--nm-dark-soft), var(--nm-light));
+  border-radius: 2px;
+}
+.modal-title { font-size: 16px; font-weight: 700; color: var(--accent); }
+.modal-body { padding: 30px 32px; }
 .modal-footer {
-  padding: 14px 20px;
-  border-top: 1px solid var(--border);
-  display: flex; justify-content: flex-end; gap: 8px;
-  position: sticky; bottom: 0; background: var(--surface);
+  padding: 22px 32px;
+  display: flex; justify-content: flex-end; gap: 12px;
+  position: sticky; bottom: 0; background: var(--bg);
+  border-radius: 0 0 var(--radius-xl) var(--radius-xl);
 }
+.modal-footer::before {
+  content: ''; position: absolute; left: 32px; right: 32px; top: 0; height: 2px;
+  background: linear-gradient(180deg, var(--nm-dark-soft), var(--nm-light));
+  border-radius: 2px;
+}
+.modal-footer { position: sticky; }
 
 /* ── Toast ── */
 .toast {
-  position: fixed; bottom: 24px; right: 24px;
-  padding: 12px 18px; border-radius: var(--radius-lg);
-  font-size: 13px; font-weight: 500;
-  box-shadow: var(--shadow-md);
-  transform: translateY(80px); opacity: 0;
-  transition: all .25s ease;
-  z-index: 200; max-width: 320px;
+  position: fixed; bottom: 32px; right: 32px;
+  padding: 17px 26px; border-radius: var(--radius-lg);
+  font-size: 13px; font-weight: 600;
+  box-shadow: 12px 12px 28px rgba(120,134,155,.5), -8px -8px 22px rgba(255,255,255,.85);
+  transform: translateY(90px); opacity: 0;
+  transition: all .28s cubic-bezier(.22,1,.36,1);
+  z-index: 200; max-width: 340px;
 }
 .toast.show { transform: translateY(0); opacity: 1; }
-.toast-success { background: var(--accent); color: #fff; }
-.toast-error { background: var(--danger); color: #fff; }
-.toast-info { background: var(--info); color: #fff; }
+.toast-success { background: linear-gradient(145deg, #24425c, #16293a); color: #fff; }
+.toast-error   { background: linear-gradient(145deg, #a92b3e, #7d1a29); color: #fff; }
+.toast-info    { background: linear-gradient(145deg, #234878, #14284d); color: #fff; }
 
-/* ── Loading ── */
+/* ── Carga ── */
 .loading-overlay {
   position: fixed; inset: 0;
   background: var(--bg);
   display: flex; align-items: center; justify-content: center;
-  flex-direction: column; gap: 12px;
+  flex-direction: column; gap: 20px;
   z-index: 300;
 }
 .spinner {
-  width: 32px; height: 32px;
-  border: 2px solid var(--border);
-  border-top-color: var(--accent);
+  width: 56px; height: 56px;
+  border: 6px solid var(--bg);
+  border-top-color: var(--accent-soft);
   border-radius: 50%;
-  animation: spin .7s linear infinite;
+  box-shadow: var(--nm-out-sm), var(--nm-in-xs);
+  animation: spin .8s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
-.loading-text { font-size: 13px; color: var(--text3); }
+.loading-text { font-size: 13px; color: var(--text3); font-weight: 600; letter-spacing: .04em; }
 
-/* ── Auth screen ── */
+/* ── Pantalla de acceso ── */
 .auth-screen {
   min-height: 100vh;
   display: flex; align-items: center; justify-content: center;
-  background: var(--bg);
+  background: var(--bg); padding: 24px;
 }
 .auth-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-lg);
-  padding: 48px 40px; text-align: center;
-  max-width: 380px; width: 100%;
-  box-shadow: var(--shadow-md);
+  background: var(--bg);
+  border: none;
+  border-radius: var(--radius-xl);
+  padding: 52px 46px 46px; text-align: center;
+  max-width: 420px; width: 100%;
+  box-shadow: 18px 18px 42px var(--nm-dark), -18px -18px 42px var(--nm-light);
 }
 .auth-logo {
-  width: 220px; height: 220px; border-radius: 18px;
-  background: #000;
+  width: 200px; height: 200px; border-radius: 40px;
+  background: linear-gradient(145deg, #24425c, #142838);
   display: flex; align-items: center; justify-content: center;
-  margin: 0 auto 24px;
-  padding: 12px;
-  box-shadow: var(--shadow-md);
+  margin: 0 auto 30px;
+  padding: 26px;
+  box-shadow: 12px 12px 26px var(--nm-dark), -12px -12px 26px var(--nm-light);
   overflow: hidden;
 }
 .auth-logo img,
 .auth-logo svg { width: 100%; height: 100%; object-fit: contain; display: block; }
-.auth-title { font-size: 20px; font-weight: 600; margin-bottom: 6px; }
-.auth-sub { font-size: 13px; color: var(--text2); margin-bottom: 28px; line-height: 1.6; }
+.auth-title { font-size: 23px; font-weight: 700; margin-bottom: 10px; color: var(--accent); letter-spacing: -.015em; }
+.auth-sub { font-size: 13px; color: var(--text2); margin-bottom: 32px; line-height: 1.7; }
 
-/* ── Utils ── */
-.mono { font-family: 'DM Mono', monospace; font-size: 12px; }
+/* ── Utilidades ── */
+.mono { font-family: 'DM Mono', monospace; font-size: 12px; letter-spacing: -.01em; }
 .text-muted { color: var(--text3); }
 .text-danger { color: var(--danger); }
-.text-success { color: var(--accent-mid); }
-.divider { height: 1px; background: var(--border); margin: 16px 0; }
-.empty-state { padding: 60px 20px; text-align: center; color: var(--text3); }
-.empty-state-icon { font-size: 32px; margin-bottom: 12px; }
-.empty-state-text { font-size: 13px; }
-.section-gap { margin-bottom: 20px; }
+.text-success { color: var(--ok); }
+.divider {
+  height: 2px; margin: 26px 0; border-radius: 2px;
+  background: linear-gradient(180deg, var(--nm-dark-soft), var(--nm-light));
+}
+.empty-state { padding: 80px 24px; text-align: center; color: var(--text3); }
+.empty-state-icon { font-size: 40px; margin-bottom: 18px; opacity: .5; }
+.empty-state-text { font-size: 13.5px; font-weight: 500; }
+.section-gap { margin-bottom: 28px; }
 
 .toggle-cintas-btn {
-  background: none; border: none; cursor: pointer;
-  color: var(--accent-mid); font-size: 12px; font-weight: 500;
-  font-family: 'Plus Jakarta Sans', sans-serif; padding: 0;
-  text-decoration: underline; text-underline-offset: 2px;
+  background: var(--bg); border: none; cursor: pointer;
+  color: var(--accent-mid); font-size: 11.5px; font-weight: 700;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  padding: 5px 12px; border-radius: var(--pill);
+  box-shadow: var(--nm-out-xs);
+  text-decoration: none;
+  transition: box-shadow .18s ease;
 }
+.toggle-cintas-btn:hover { box-shadow: var(--nm-out-sm); }
+.toggle-cintas-btn:active { box-shadow: var(--nm-in-xs); }
 
 .inline-tag {
-  display: inline-block; background: var(--surface2);
-  border: 1px solid var(--border); border-radius: 4px;
-  padding: 1px 6px; font-size: 11px; color: var(--text2);
+  display: inline-block; background: var(--bg);
+  border: none; border-radius: var(--pill);
+  padding: 4px 11px; font-size: 11px; color: var(--text2);
   font-family: 'DM Mono', monospace;
+  box-shadow: var(--nm-in-xs);
 }
 
 /* ── Dashboard ── */
 .dash-metrics {
   display: grid; grid-template-columns: repeat(4, 1fr);
-  gap: 12px; margin-bottom: 20px;
+  gap: 22px; margin-bottom: 30px;
 }
 .dash-grid {
-  display: grid; grid-template-columns: 1fr 1fr; gap: 16px;
-  margin-bottom: 16px;
+  display: grid; grid-template-columns: 1fr 1fr; gap: 26px;
+  margin-bottom: 26px;
 }
 .dash-grid-full { grid-template-columns: 1fr; }
 .dash-card {
-  background: var(--surface);
-  border: 1px solid var(--border);
+  background: var(--bg);
+  border: none;
   border-radius: var(--radius-lg);
   padding: 0; display: flex; flex-direction: column;
+  box-shadow: var(--nm-out);
 }
 .dash-card-header {
-  padding: 14px 18px;
-  border-bottom: 1px solid var(--border);
+  padding: 22px 28px;
   display: flex; align-items: center; justify-content: space-between;
+  position: relative;
 }
-.dash-card-title { font-size: 13px; font-weight: 600; color: var(--text); }
+.dash-card-header::after {
+  content: ''; position: absolute; left: 28px; right: 28px; bottom: 0; height: 2px;
+  background: linear-gradient(180deg, var(--nm-dark-soft), var(--nm-light));
+  border-radius: 2px;
+}
+.dash-card-title { font-size: 14px; font-weight: 700; color: var(--accent); }
 .dash-card-sub { font-size: 11px; color: var(--text3); }
-.dash-card-body { padding: 16px 18px; flex: 1; min-height: 0; }
-.chart-wrap { position: relative; width: 100%; height: 280px; }
-.chart-wrap-tall { height: 360px; }
+.dash-card-body { padding: 26px 28px 28px; flex: 1; min-height: 0; }
+.chart-wrap { position: relative; width: 100%; height: 300px; }
+.chart-wrap-tall { height: 380px; }
 
-.dash-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+.dash-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 12.5px; }
 .dash-table th {
-  font-size: 10px; font-weight: 600; color: var(--text3);
-  text-transform: uppercase; letter-spacing: .06em;
-  padding: 6px 8px; text-align: left; border-bottom: 1px solid var(--border);
+  font-size: 10px; font-weight: 700; color: var(--text3);
+  text-transform: uppercase; letter-spacing: .08em;
+  padding: 12px 12px; text-align: left;
+  border-bottom: 2px solid var(--nm-dark-soft);
+  white-space: nowrap;
 }
 .dash-table td {
-  padding: 7px 8px; border-bottom: 1px solid var(--border);
+  padding: 12px 12px; border-bottom: 1px solid rgba(182,193,210,.4);
+  color: var(--text);
 }
 .dash-table tbody tr:last-child td { border-bottom: none; }
+.dash-table tbody tr:hover td { background: rgba(255,255,255,.5); }
 .dash-table .num { text-align: right; font-family: 'DM Mono', monospace; }
 
-.dash-filter-bar {
-  display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; align-items: center;
-}
-.dash-filter-bar select, .dash-filter-bar input {
-  padding: 7px 11px; border: 1px solid var(--border2);
-  border-radius: var(--radius); background: var(--surface);
-  color: var(--text); font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13px;
-}
-
-/* ── Multi-Select Dropdown ── */
+/* ── Multi-Select ── */
 .ms-wrap { position: relative; display: inline-flex; }
 .ms-btn {
-  display: flex; align-items: center; gap: 6px;
-  padding: 7px 12px; border: 1px solid var(--border2);
-  border-radius: var(--radius); background: var(--surface);
-  color: var(--text); font-size: 13px; font-family: 'Plus Jakarta Sans', sans-serif;
+  display: flex; align-items: center; gap: 9px;
+  padding: 11px 18px; border: none;
+  border-radius: var(--radius); background: var(--bg);
+  color: var(--text2); font-size: 13px; font-weight: 600;
+  font-family: 'Plus Jakarta Sans', sans-serif;
   cursor: pointer; white-space: nowrap; user-select: none; line-height: 1.4;
+  box-shadow: var(--nm-out-xs);
+  transition: box-shadow .18s ease, color .18s ease;
 }
-.ms-btn:hover { border-color: var(--accent-mid); }
-.ms-btn.ms-active { border-color: var(--accent); background: var(--surface2); }
+.ms-btn:hover { box-shadow: var(--nm-out-sm); color: var(--accent); }
+.ms-btn.ms-active { box-shadow: var(--nm-in-xs); color: var(--accent); }
 .ms-count {
-  background: var(--accent); color: #fff;
-  border-radius: 10px; padding: 1px 7px; font-size: 11px; font-weight: 600; line-height: 1.5;
+  background: linear-gradient(145deg, #24425c, #16293a); color: #fff;
+  border-radius: var(--pill); padding: 2px 9px; font-size: 11px; font-weight: 700; line-height: 1.6;
 }
 .ms-arrow { font-size: 10px; opacity: .5; }
 .ms-panel {
-  position: absolute; top: calc(100% + 4px); left: 0; z-index: 500;
-  background: var(--surface); border: 1px solid var(--border2);
-  border-radius: var(--radius); box-shadow: 0 6px 20px rgba(0,0,0,.22);
-  min-width: 210px; max-height: 270px; overflow-y: auto; padding: 4px 0;
+  position: absolute; top: calc(100% + 10px); left: 0; z-index: 500;
+  background: var(--bg); border: none;
+  border-radius: var(--radius);
+  box-shadow: 12px 12px 28px rgba(120,134,155,.5), -8px -8px 22px rgba(255,255,255,.9);
+  min-width: 240px; max-height: 300px; overflow-y: auto; padding: 10px 8px;
   display: none;
 }
 .ms-item {
-  display: flex; align-items: center; gap: 9px;
-  padding: 7px 13px; cursor: pointer; font-size: 13px;
+  display: flex; align-items: center; gap: 11px;
+  padding: 10px 14px; cursor: pointer; font-size: 13px;
   font-family: 'Plus Jakarta Sans', sans-serif; white-space: nowrap;
-  color: var(--text); user-select: none;
+  color: var(--text2); user-select: none; border-radius: var(--radius-xs);
+  font-weight: 500;
 }
-.ms-item:hover { background: var(--surface2); }
-.ms-item input[type=checkbox] { accent-color: var(--accent); width: 14px; height: 14px; cursor: pointer; flex-shrink: 0; }
-.ms-separator { border: none; border-top: 1px solid var(--border); margin: 3px 0; }
-.date-range-wrap { display: flex; align-items: center; gap: 4px; }
+.ms-item:hover { box-shadow: var(--nm-in-xs); color: var(--accent); }
+.ms-item input[type=checkbox] { accent-color: var(--accent-mid); width: 15px; height: 15px; cursor: pointer; flex-shrink: 0; }
+.ms-separator {
+  border: none; height: 2px; margin: 8px 6px;
+  background: linear-gradient(180deg, var(--nm-dark-soft), var(--nm-light));
+  border-radius: 2px;
+}
+.date-range-wrap { display: flex; align-items: center; gap: 7px; }
 .date-range-wrap input[type=date] {
-  padding: 7px 9px; border: 1px solid var(--border2);
-  border-radius: var(--radius); background: var(--surface);
-  color: var(--text); font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13px;
+  padding: 11px 14px; border: none;
+  border-radius: var(--radius); background: var(--bg);
+  color: var(--text); font-family: 'Plus Jakarta Sans', sans-serif;
+  font-size: 13px; font-weight: 500;
+  box-shadow: var(--nm-in-xs);
 }
-.date-range-wrap input[type=date]:focus { outline: none; border-color: var(--accent-mid); }
-.date-range-label { font-size: 12px; color: var(--text3); white-space: nowrap; }
+.date-range-wrap input[type=date]:focus { outline: none; box-shadow: var(--nm-in-sm), 0 0 0 2px var(--accent-soft); }
+.date-range-label { font-size: 12px; color: var(--text3); white-space: nowrap; font-weight: 600; }
 
-@media (max-width: 1100px) {
-  .dash-metrics { grid-template-columns: repeat(2, 1fr); }
-  .dash-grid { grid-template-columns: 1fr; }
-}
-
-/* ── Modal Informe ── */
-.informe-radio-group {
-  display: flex; flex-direction: column; gap: 10px;
-}
+/* ── Modal de informe ── */
+.informe-radio-group { display: flex; flex-direction: column; gap: 14px; }
 .informe-radio-item {
-  display: flex; align-items: center; gap: 10px;
-  padding: 10px 14px; border-radius: var(--radius);
-  border: 1.5px solid var(--border2); cursor: pointer;
-  transition: all .15s; background: var(--surface);
+  display: flex; align-items: center; gap: 13px;
+  padding: 17px 20px; border-radius: var(--radius);
+  border: none; cursor: pointer;
+  transition: box-shadow .2s ease, color .2s ease;
+  background: var(--bg);
+  box-shadow: var(--nm-out-xs);
 }
-.informe-radio-item:hover { border-color: var(--accent-mid); background: var(--accent-light); }
-.informe-radio-item.selected { border-color: var(--accent); background: var(--accent-light); }
-.informe-radio-item input[type=radio] { accent-color: var(--accent); width: 15px; height: 15px; cursor: pointer; }
-.informe-radio-label { font-size: 13px; font-weight: 500; color: var(--text); }
-.informe-radio-sub { font-size: 11px; color: var(--text3); margin-top: 1px; }
+.informe-radio-item:hover { box-shadow: var(--nm-out-sm); }
+.informe-radio-item.selected { box-shadow: var(--nm-in-sm); }
+.informe-radio-item.selected .informe-radio-label { color: var(--accent); }
+.informe-radio-item input[type=radio] { accent-color: var(--accent-mid); width: 16px; height: 16px; cursor: pointer; }
+.informe-radio-label { font-size: 13.5px; font-weight: 600; color: var(--text2); }
+.informe-radio-sub { font-size: 11.5px; color: var(--text3); margin-top: 2px; font-weight: 400; }
 
-.destinatarios-list { display: flex; flex-direction: column; gap: 8px; }
-.destinatario-row { display: flex; align-items: center; gap: 8px; }
+.destinatarios-list { display: flex; flex-direction: column; gap: 12px; }
+.destinatario-row { display: flex; align-items: center; gap: 10px; }
 .destinatario-row input {
-  flex: 1; padding: 8px 11px;
-  border: 1px solid var(--border2); border-radius: var(--radius);
-  background: var(--surface); color: var(--text);
-  font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13px;
+  flex: 1; padding: 13px 17px;
+  border: none; border-radius: var(--radius);
+  background: var(--bg); color: var(--text);
+  font-family: 'Plus Jakarta Sans', sans-serif; font-size: 13px; font-weight: 500;
+  box-shadow: var(--nm-in-sm);
+  transition: box-shadow .2s ease;
 }
-.destinatario-row input:focus { outline: none; border-color: var(--accent-mid); box-shadow: 0 0 0 3px rgba(64,145,108,.12); }
+.destinatario-row input:focus { outline: none; box-shadow: var(--nm-in-sm), 0 0 0 2px var(--accent-soft); }
 
 .add-destinatario {
-  display: flex; align-items: center; gap: 8px; padding: 8px 12px;
-  border: 1px dashed var(--border2); border-radius: var(--radius);
-  cursor: pointer; color: var(--text2); font-size: 12px; font-weight: 500;
-  background: none; font-family: 'Plus Jakarta Sans', sans-serif; width: 100%;
-  transition: all .15s; margin-top: 4px;
+  display: flex; align-items: center; gap: 10px; padding: 13px 18px;
+  border: none; border-radius: var(--radius);
+  cursor: pointer; color: var(--text2); font-size: 12.5px; font-weight: 600;
+  background: var(--bg); font-family: 'Plus Jakarta Sans', sans-serif; width: 100%;
+  box-shadow: var(--nm-in-xs);
+  transition: box-shadow .2s ease, color .2s ease; margin-top: 6px;
+  justify-content: center;
 }
-.add-destinatario:hover { border-color: var(--accent-mid); color: var(--accent); background: var(--accent-light); }
+.add-destinatario:hover { box-shadow: var(--nm-out-sm); color: var(--accent); }
 
 .informe-section-title {
-  font-size: 11px; font-weight: 600; color: var(--text2);
-  text-transform: uppercase; letter-spacing: .06em;
-  margin-bottom: 10px;
+  font-size: 11px; font-weight: 700; color: var(--text2);
+  text-transform: uppercase; letter-spacing: .1em;
+  margin-bottom: 16px;
 }
 
 .btn-send-informe {
-  background: var(--accent); color: #fff;
-  border-color: var(--accent); font-weight: 600;
-  min-width: 140px; justify-content: center;
+  background: linear-gradient(145deg, #24425c, #16293a); color: #fff;
+  border: none; font-weight: 700;
+  min-width: 160px; justify-content: center;
+  box-shadow: 5px 5px 12px var(--nm-dark), -5px -5px 12px var(--nm-light);
 }
-.btn-send-informe:hover { background: #122438; border-color: #122438; }
-.btn-send-informe:disabled { opacity: .6; cursor: not-allowed; }
+.btn-send-informe:hover { background: linear-gradient(145deg, #2b4d6a, #1a3145); color: #fff; box-shadow: 7px 7px 16px var(--nm-dark), -7px -7px 16px var(--nm-light); }
+.btn-send-informe:disabled { opacity: .55; cursor: not-allowed; }
+
+/* ── Responsive ── */
+@media (max-width: 1500px) {
+  .metrics-grid, .dash-metrics { gap: 18px; }
+  .view { padding: 28px 26px 40px; }
+  /* En pantallas de portatil las tablas se compactan para no perder filas visibles */
+  .data-table th { padding: 12px 11px; }
+  .data-table td { padding: 10px 11px; font-size: 12.5px; }
+  .card-body { padding: 22px 22px 24px; }
+  .metric-card { padding: 20px 22px; }
+  .metric-value { font-size: 26px; }
+}
+@media (max-width: 1200px) {
+  .dash-metrics, .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+  .dash-grid { grid-template-columns: 1fr; }
+  .form-grid-4 { grid-template-columns: 1fr 1fr; }
+}
+@media (max-width: 900px) {
+  .sidebar { width: 224px; min-width: 224px; }
+  .form-grid-3, .form-grid-2 { grid-template-columns: 1fr; }
+  .cinta-item { grid-template-columns: 40px 1fr 44px; }
+  .view { padding: 22px 18px 36px; }
+  .card-body { padding: 22px 20px; }
+  .card-header { padding: 18px 20px; }
+  .card-header::after { left: 20px; right: 20px; }
+  .topbar { padding: 0 20px; height: 68px; }
+  .topbar::after { left: 20px; right: 20px; }
+}
+
+
+/* ══════════════════════════════════════════════════════════
+   BARRA LATERAL CONTRAIBLE
+   ══════════════════════════════════════════════════════════ */
+.sidebar {
+  transition: width .34s cubic-bezier(.4,0,.2,1),
+              min-width .34s cubic-bezier(.4,0,.2,1);
+}
+
+/* Marca: logo sobre chip azul (el logo original es azul muy claro
+   y desaparece sobre fondo claro) + boton de contraer */
+.sidebar-logo {
+  display: flex; align-items: center; gap: 12px;
+  flex-wrap: wrap; justify-content: flex-start;
+}
+.brand-mark {
+  width: 42px; height: 42px; flex-shrink: 0;
+  border-radius: 13px;
+  background: linear-gradient(145deg, #24425c, #142838);
+  box-shadow: var(--nm-out-xs);
+  display: flex; align-items: center; justify-content: center;
+  padding: 6px;
+}
+.brand-mark img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.brand-text { flex: 1; min-width: 0; overflow: hidden; }
+
+.sidebar-toggle {
+  width: 32px; height: 32px; flex-shrink: 0; padding: 0;
+  border: none; border-radius: 50%;
+  background: var(--bg); cursor: pointer;
+  color: var(--text3);
+  box-shadow: var(--nm-out-xs);
+  display: inline-flex; align-items: center; justify-content: center;
+  transition: box-shadow .2s ease, color .2s ease;
+}
+.sidebar-toggle:hover { box-shadow: var(--nm-out-sm); color: var(--accent); }
+.sidebar-toggle:active { box-shadow: var(--nm-in-xs); }
+.sidebar-toggle svg {
+  width: 16px; height: 16px; display: block;
+  transition: transform .34s cubic-bezier(.4,0,.2,1);
+}
+
+/* Texto del menu: se desvanece al contraer */
+.nav-label {
+  flex: 1; min-width: 0; overflow: hidden;
+  white-space: nowrap; text-overflow: ellipsis;
+  transition: opacity .18s ease;
+}
+
+/* ── Estado contraido ── */
+.app.sidebar-collapsed .sidebar { width: 88px; min-width: 88px; }
+.app.sidebar-collapsed .sidebar-logo { justify-content: center; gap: 10px; padding: 22px 12px 18px; }
+.app.sidebar-collapsed .sidebar-logo::after { left: 14px; right: 14px; }
+.app.sidebar-collapsed .brand-text,
+.app.sidebar-collapsed .nav-label,
+.app.sidebar-collapsed .sidebar-section-label,
+.app.sidebar-collapsed .user-chip > div:not(.user-avatar) {
+  display: none;
+}
+.app.sidebar-collapsed .sidebar-toggle svg { transform: rotate(180deg); }
+.app.sidebar-collapsed .sidebar-section { padding: 16px 12px 4px; }
+.app.sidebar-collapsed .nav-item { padding: 9px; justify-content: center; gap: 0; }
+.app.sidebar-collapsed .sidebar-bottom { padding: 18px 12px 20px; }
+.app.sidebar-collapsed .sidebar-bottom::before { left: 14px; right: 14px; }
+.app.sidebar-collapsed .user-chip { justify-content: center; padding: 10px; gap: 0; }
+
+/* ══════════════════════════════════════════════════════════
+   ANIMACION DE CONTRAER SECCIONES
+   (interpolate-size permite animar hacia block-size:auto;
+    donde no exista, el cambio es instantaneo pero funcional)
+   ══════════════════════════════════════════════════════════ */
+.card-body {
+  overflow: hidden;
+  block-size: auto;
+  opacity: 1;
+  transition: block-size .36s cubic-bezier(.4,0,.2,1),
+              padding-block .36s cubic-bezier(.4,0,.2,1),
+              opacity .22s ease .06s;
+}
+.card.collapsed .card-body {
+  block-size: 0;
+  padding-block: 0;
+  opacity: 0;
+  visibility: hidden;
+  transition: block-size .36s cubic-bezier(.4,0,.2,1),
+              padding-block .36s cubic-bezier(.4,0,.2,1),
+              opacity .18s ease,
+              visibility 0s .36s;
+}
+.card-header::after { transition: opacity .28s ease; }
+
+/* ══════════════════════════════════════════════════════════
+   COLORES POR PRESENTACION Y POR ESTADO
+   ══════════════════════════════════════════════════════════ */
+.badge-pres { color: #1b354a; }
+.pres-bloque       { background: #cfe0f2; color: #16436e; }
+.pres-campesino    { background: #dbd8f2; color: #3b3384; }
+.pres-dedo         { background: #f4e5c2; color: #79520a; }
+.pres-matrimonio   { background: #f5d9e5; color: #83294f; }
+.pres-porcion      { background: #d2e9d8; color: #1c5e3a; }
+.pres-porcion-pera { background: #c9e6e8; color: #0f555d; }
+.pres-rueda        { background: #f6ddcd; color: #7f4022; }
+.pres-tajado       { background: #e2ead0; color: #4f5f1c; }
+.pres-otro         { background: #dde3ec; color: #5b6f84; }
+
+/* El estado tambien con fondo propio */
+.estado-abierto  { background: #f7e6c0; color: #7a5205; }
+.estado-cerrado  { background: #d2e9d8; color: #1c5e3a; }
+.estado-sin      { background: #e0e5ee; color: #7b8899; }
+
+
+/* ══════════════════════════════════════════════════════════
+   CAMPOS DE FORMULARIO Y CAMPOS CALCULADOS
+   ══════════════════════════════════════════════════════════ */
+
+/* Esquinas menos redondeadas en todo lo que se llena a mano */
+.field input, .field select, .field textarea,
+.filter-bar input, .filter-bar select,
+.dash-filter-bar input, .dash-filter-bar select,
+.date-range-wrap input[type=date],
+.destinatario-row input,
+.ms-btn {
+  border-radius: var(--radius-campo);
+}
+
+/* La palabra AUTO junto a la etiqueta: verde, para que se lea de un vistazo
+   que ese campo no se escribe */
+.lbl-auto {
+  font-size: 9.5px; font-weight: 800; letter-spacing: .1em;
+  color: #2f7d5c; margin-left: 4px;
+}
+.lbl-nota {
+  font-size: 9.5px; font-weight: 500; letter-spacing: .02em;
+  color: var(--text3); text-transform: none; margin-left: 3px;
+}
+
+/* Campo calculado: fondo verde suave, hundido y no editable */
+.field input.campo-calc,
+input.campo-calc {
+  background: #dceee4;
+  color: #1c5e3a;
+  font-weight: 700;
+  font-family: 'DM Mono', monospace;
+  font-size: 13px;
+  box-shadow: inset 4px 4px 8px #b9cfc3, inset -4px -4px 8px #f4fff9;
+  cursor: default;
+}
+.field input.campo-calc::placeholder { color: #8ab09b; font-weight: 400; }
+.field input.campo-calc.calc-danger { color: var(--danger); }
+.field input.campo-calc.calc-muted  { color: #3f6b57; }
+.field input.campo-calc:focus { outline: none; box-shadow: inset 4px 4px 8px #b9cfc3, inset -4px -4px 8px #f4fff9; }
+
+/* ══════════════════════════════════════════════════════════
+   FILAS DE DETALLE: materias primas y trazabilidad
+   ══════════════════════════════════════════════════════════ */
+.mp-item {
+  grid-template-columns: 34px minmax(0, 2.2fr) minmax(0, 1fr) minmax(0, 1.05fr)
+                         minmax(0, 1.05fr) minmax(0, 1.25fr) 40px;
+}
+.pt-item {
+  grid-template-columns: 34px minmax(0, 1.2fr) minmax(0, 1fr)
+                         minmax(0, 1.3fr) minmax(0, 1.1fr) 40px;
+}
+.mp-item .cinta-num, .pt-item .cinta-num { width: 32px; height: 32px; }
+
+@media (max-width: 1250px) {
+  .mp-item { grid-template-columns: 34px 1fr 1fr 1fr 40px; }
+  .pt-item { grid-template-columns: 34px 1fr 1fr 40px; }
+}
+
+
+/* ══════════════════════════════════════════════════════════
+   DESGLOSE POR CÓDIGO DE TRAZABILIDAD (Historial diario)
+   La fila siempre existe; lo que se anima es el bloque interior,
+   porque la altura de un <tr> no se puede transicionar.
+   ══════════════════════════════════════════════════════════ */
+.row-detalle > td {
+  padding: 0 !important;
+  border: none !important;
+  background: rgba(182,193,210,.18);
+}
+.detalle-traza {
+  block-size: 0;
+  overflow: hidden;
+  opacity: 0;
+  transition: block-size .3s cubic-bezier(.4,0,.2,1), opacity .2s ease;
+}
+.row-detalle.abierta .detalle-traza { block-size: auto; opacity: 1; }
+/* La fila ocupa las 20 columnas, así que su contenido se queda pegado a la
+   izquierda del área visible: sin esto, al desplazar la tabla hasta la columna
+   de trazabilidad el desglose quedaba fuera de pantalla.
+   El sticky va por FUERA del bloque con overflow:hidden — dentro se anclaría a
+   ese bloque en vez de al área que se desplaza. */
+.detalle-sticky {
+  position: sticky; left: 0;
+  inline-size: max-content; max-inline-size: 100%;
+}
+.detalle-traza-inner { padding: 20px 28px 22px 44px; }
+.detalle-traza-titulo {
+  font-size: 10px; font-weight: 700; letter-spacing: .1em;
+  text-transform: uppercase; color: var(--text3); margin-bottom: 14px;
+}
+table.mini-table {
+  border-collapse: separate; border-spacing: 0;
+  font-size: 12.5px; min-width: 620px;
+}
+.mini-table th {
+  font-size: 9.5px; font-weight: 700; letter-spacing: .09em;
+  text-transform: uppercase; color: var(--text3);
+  padding: 8px 26px 8px 0; text-align: left;
+  border-bottom: 2px solid var(--nm-dark-soft); white-space: nowrap;
+}
+.mini-table td {
+  padding: 10px 26px 10px 0;
+  border-bottom: 1px solid rgba(182,193,210,.45);
+  color: var(--text); white-space: nowrap;
+}
+.mini-table tbody tr:last-child td { border-bottom: none; }
+.mini-table .num { text-align: right; font-family: 'DM Mono', monospace; }
+.mini-table tfoot td {
+  padding-top: 11px; font-weight: 700; color: var(--accent);
+  border-top: 2px solid var(--nm-dark-soft); border-bottom: none;
+}
+.chip-cinta {
+  display: inline-block; padding: 3px 12px; border-radius: 12px;
+  font-size: 11px; font-weight: 700; color: var(--text2);
+  background: var(--bg); box-shadow: var(--nm-out-xs);
+}
+.toggle-cintas-btn .chev {
+  display: inline-block; font-size: 9px; margin-left: 3px;
+  transition: transform .25s ease;
+}
+
+/* Fecha con año fuera de 2025-2027: se marca en rojo al escribirla */
+
+.fecha-invalida,
+.field input[type="date"].fecha-invalida {
+  box-shadow: var(--nm-in-sm), 0 0 0 2px var(--danger) !important;
+  color: var(--danger);
+}
+
+/* ══════════════════════════════════════════════════════════
+   ACCESIBILIDAD: respetar la preferencia de menos movimiento
+   ══════════════════════════════════════════════════════════ */
+@media (prefers-reduced-motion: reduce) {
+  .sidebar, .sidebar-toggle svg, .card-body, .card.collapsed .card-body,
+  .nav-label, .card-header::after, .toast, .btn, .nav-item,
+  .detalle-traza, .toggle-cintas-btn .chev {
+    transition: none !important;
+  }
+}
+
 </style>
 </head>
 <body>
@@ -645,37 +1123,53 @@ table.data-table {
   <!-- Sidebar -->
   <div class="sidebar">
     <div class="sidebar-logo">
-      <div class="sidebar-logo-title">Seguimiento Producción</div>
-      <div class="sidebar-logo-sub">Planta Mosquera · 2026</div>
+      <span class="brand-mark"><img src="logo-marca.png" alt="Inversiones Peniel"></span>
+      <div class="brand-text">
+        <div class="sidebar-logo-title">Seguimiento Producción</div>
+        <div class="sidebar-logo-sub">Planta Mosquera · 2026</div>
+      </div>
+      <button class="sidebar-toggle" id="btn-sidebar" onclick="toggleSidebar()"
+              aria-expanded="true" aria-controls="sidebar-nav" title="Contraer el menú">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M14 6l-6 6 6 6"/>
+        </svg>
+      </button>
     </div>
 
     <div class="sidebar-section">
       <div class="sidebar-section-label">Producción</div>
       <button class="nav-item active" onclick="showView('nuevo')" id="nav-nuevo">
-        Nuevo pedido
+        <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 3h6a1 1 0 0 1 1 1v1H8V4a1 1 0 0 1 1-1Z"/><path d="M16 5h2a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2"/><path d="M12 11v6"/><path d="M9 14h6"/></svg></span>
+        <span class="nav-label">Nuevo pedido</span>
       </button>
       <button class="nav-item" onclick="showView('historial')" id="nav-historial">
-        Historial diario
+        <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2.5"/><path d="M3 10h18"/><path d="M8 3v4"/><path d="M16 3v4"/><circle cx="12" cy="15.5" r="2.8"/><path d="M12 14.2v1.5l1 .7"/></svg></span>
+        <span class="nav-label">Historial diario</span>
       </button>
     </div>
 
     <div class="sidebar-section">
       <div class="sidebar-section-label">Reportes</div>
       <button class="nav-item" onclick="showView('dashboard')" id="nav-dashboard">
-        Dashboard
+        <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20V10"/><path d="M10 20V4"/><path d="M16 20v-7"/><path d="M22 20H2"/></svg></span>
+        <span class="nav-label">Dashboard</span>
       </button>
       <button class="nav-item" onclick="showView('resumen')" id="nav-resumen">
-        Por cliente
+        <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3.4"/><path d="M3 20a6 6 0 0 1 12 0"/><path d="M16.5 5.4a3.4 3.4 0 0 1 0 6.6"/><path d="M18 14.6A5.6 5.6 0 0 1 21.5 20"/></svg></span>
+        <span class="nav-label">Por cliente</span>
       </button>
       <button class="nav-item" onclick="showView('cintas')" id="nav-cintas">
-        Búsqueda de códigos
+        <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="M20 20l-4.7-4.7"/></svg></span>
+        <span class="nav-label">Búsqueda de códigos</span>
       </button>
     </div>
 
     <div class="sidebar-section">
       <div class="sidebar-section-label">Sesión</div>
       <button class="nav-item" onclick="cerrarSesion()" id="nav-logout">
-        Cerrar sesión
+        <span class="nav-icon"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M15 4h3a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2h-3"/><path d="M10 17l-5-5 5-5"/><path d="M5 12h11"/></svg></span>
+        <span class="nav-label">Cerrar sesión</span>
       </button>
     </div>
 
@@ -769,54 +1263,23 @@ table.data-table {
           <span class="card-header-right"><span class="card-chevron">▾</span></span>
         </div>
         <div class="card-body">
-          <div class="form-grid form-grid-3 section-gap">
+          <div class="form-grid form-grid-2 section-gap">
             <div class="field">
               <label>Cantidad de producto según orden de compra *</label>
-              <input id="f-mp-cantidad-oc" type="number" min="0" step="1" placeholder="0">
+              <input id="f-mp-cantidad-oc" type="number" min="0" step="1" oninput="calcularCampos()" placeholder="0">
             </div>
             <div class="field">
-              <label>Tipo de producto *</label>
-              <select id="f-mp-tipo" onchange="onTipoMPChange()">
-                <option value="">Seleccionar...</option>
-                <option>QUESO FRESCO VARIEDADES: SEMIGRASO SEMIBLANDO DOBLE CREMA</option>
-                <option>QUESO FRESCO VARIEDADES: SEMIGRASO SEMIBLANDO CAMPESINO</option>
-                <option>QUESO FRESCO VARIEDADES: SEMIGRASO SEMIDURO MOZARELLA</option>
-                <option>QUESO FRESCO VARIEDADES: SEMIGRASO SEMIDURO PERA</option>
-                <option>BOCADILLO DE FRUTAS VARIEDAD GUAYABA</option>
-              </select>
-            </div>
-            <div class="field">
-              <label>Peso del producto (Gr) *</label>
-              <select id="f-mp-peso" onchange="calcularCampos()">
-                <option value="">Seleccionar...</option>
-                <option>10</option>
-                <option>20</option>
-                <option>30</option>
-                <option>45</option>
-                <option>300</option>
-                <option>350</option>
-                <option>1800</option>
-                <option>2000</option>
-                <option>2100</option>
-                <option>2200</option>
-                <option>2400</option>
-                <option>2500</option>
-              </select>
+              <label>Libras tajadas <span class="lbl-auto">AUTO</span> <span class="lbl-nota">total de las individuales</span></label>
+              <input id="f-mp-libras-taj" class="campo-calc" readonly placeholder="Calculado">
             </div>
           </div>
-          <div class="form-grid form-grid-3">
-            <div class="field">
-              <label>Cantidad de producto empleada *</label>
-              <input id="f-mp-cant-emp" type="number" min="0" step="1" oninput="calcularCampos()" placeholder="0">
-            </div>
-            <div class="field">
-              <label>Libras tajadas <span style="color:var(--accent-mid);font-size:10px">AUTO</span></label>
-              <input id="f-mp-libras-taj" readonly style="background:var(--surface2);color:var(--accent);font-weight:600;font-family:'DM Mono',monospace;font-size:13px" placeholder="Calculado">
-            </div>
-            <div class="field">
-              <label>Lote ó L / F. Vto. del producto cortado y/o sellado *</label>
-              <input id="f-mp-lote" type="date" min="2025-01-01" max="2027-12-31">
-            </div>
+
+          <div class="subsection">
+            <div class="subsection-title">Materias primas empleadas</div>
+            <div class="cintas-list" id="f-mp-container"></div>
+            <button class="add-cinta" onclick="addMateriaRow('f')" style="margin-top:12px">
+              <span style="font-size:16px;font-weight:300">+</span> Agregar materia prima
+            </button>
           </div>
 
           <!-- Sub-sección condicional: unidades no conformes a reempacar -->
@@ -909,8 +1372,8 @@ table.data-table {
               </select>
             </div>
             <div class="field">
-              <label>Cantidad obtenida *</label>
-              <input id="f-pt-cant-obt" type="number" min="0" step="1" oninput="calcularCampos()" placeholder="0">
+              <label>Cantidad obtenida <span class="lbl-auto">AUTO</span> <span class="lbl-nota">suma de las individuales</span></label>
+              <input id="f-pt-cant-obt" class="campo-calc" readonly placeholder="Calculado">
             </div>
           </div>
           <div class="form-grid form-grid-2 section-gap">
@@ -919,43 +1382,41 @@ table.data-table {
               <input id="f-pt-retal" type="number" min="0" step="0.01" oninput="calcularCampos()" placeholder="0.00">
             </div>
             <div class="field">
-              <label>Libras entregadas <span style="color:var(--accent-mid);font-size:10px">AUTO</span></label>
-              <input id="f-pt-libras-ent" readonly style="background:var(--surface2);color:var(--accent);font-weight:600;font-family:'DM Mono',monospace;font-size:13px" placeholder="Calculado">
+              <label>Libras entregadas <span class="lbl-auto">AUTO</span></label>
+              <input id="f-pt-libras-ent" class="campo-calc" readonly placeholder="Calculado">
             </div>
           </div>
 
           <div style="display:flex;align-items:center;gap:8px;margin:16px 0 10px">
-            <div style="flex:1;height:1px;background:var(--border)"></div>
+            <div style="flex:1;height:2px;border-radius:2px;background:linear-gradient(180deg,var(--nm-dark-soft),var(--nm-light))"></div>
             <span style="font-size:10px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;white-space:nowrap">Calculado automáticamente</span>
-            <div style="flex:1;height:1px;background:var(--border)"></div>
+            <div style="flex:1;height:2px;border-radius:2px;background:linear-gradient(180deg,var(--nm-dark-soft),var(--nm-light))"></div>
           </div>
-          <div class="form-grid form-grid-3 section-gap">
+          <div class="form-grid form-grid-4 section-gap">
             <div class="field">
-              <label>% de retal <span style="color:var(--accent-mid);font-size:10px">AUTO</span></label>
-              <input id="f-pt-pct-retal" readonly style="background:var(--danger-light);color:var(--danger);font-weight:600;font-family:'DM Mono',monospace;font-size:13px" placeholder="Calculado">
+              <label>% de retal <span class="lbl-auto">AUTO</span></label>
+              <input id="f-pt-pct-retal" class="campo-calc calc-danger" readonly placeholder="Calculado">
             </div>
             <div class="field">
-              <label>Diferencia (libras) <span style="color:var(--accent-mid);font-size:10px">AUTO</span></label>
-              <input id="f-pt-dif" readonly style="background:var(--surface2);color:var(--text2);font-weight:600;font-family:'DM Mono',monospace;font-size:13px" placeholder="Calculado">
+              <label>Diferencia (libras) <span class="lbl-auto">AUTO</span></label>
+              <input id="f-pt-dif" class="campo-calc calc-muted" readonly placeholder="Calculado">
             </div>
             <div class="field">
-              <label>% de diferencia <span style="color:var(--accent-mid);font-size:10px">AUTO</span></label>
-              <input id="f-pt-pct-dif" readonly style="background:var(--surface2);color:var(--text2);font-weight:600;font-family:'DM Mono',monospace;font-size:13px" placeholder="Calculado">
+              <label>% de diferencia <span class="lbl-auto">AUTO</span></label>
+              <input id="f-pt-pct-dif" class="campo-calc calc-muted" readonly placeholder="Calculado">
+            </div>
+            <div class="field">
+              <label>Cantidad sobrante <span class="lbl-auto">AUTO</span> <span class="lbl-nota">obtenida − orden de compra</span></label>
+              <input id="f-pt-sobrante" class="campo-calc" readonly placeholder="Calculado">
             </div>
           </div>
-          <div class="form-grid form-grid-3">
-            <div class="field">
-              <label>L / F. Vto. *</label>
-              <input id="f-pt-lote" type="date" min="2025-01-01" max="2027-12-31">
-            </div>
-            <div class="field">
-              <label>Código de trazabilidad *</label>
-              <input id="f-pt-codigo" class="mono" placeholder="CALENDARIO JULIANO - AÑO (DOS DÍGITOS) - MÁQUINA - TURNO - LETRA DE A a Z">
-            </div>
-            <div class="field">
-              <label>Color de cinta *</label>
-              <input id="f-pt-color-cinta" value="NO APLICA" placeholder="NO APLICA">
-            </div>
+
+          <div class="subsection">
+            <div class="subsection-title">Trazabilidad · lotes y códigos</div>
+            <div class="cintas-list" id="f-pt-container"></div>
+            <button class="add-cinta" onclick="addTrazaRow('f')" style="margin-top:12px">
+              <span style="font-size:16px;font-weight:300">+</span> Agregar código de trazabilidad
+            </button>
           </div>
         </div>
       </div>
@@ -1127,11 +1588,11 @@ table.data-table {
                 <div style="display:flex;align-items:center;gap:10px">
                   <div class="field" style="flex:1">
                     <label>Desde</label>
-                    <input type="date" id="informe-fecha-desde">
+                    <input type="date" id="informe-fecha-desde" style="padding:11px 14px;border:none;border-radius:var(--radius);background:var(--bg);color:var(--text);font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:500;box-shadow:var(--nm-in-xs)">
                   </div>
                   <div class="field" style="flex:1">
                     <label>Hasta</label>
-                    <input type="date" id="informe-fecha-hasta">
+                    <input type="date" id="informe-fecha-hasta" style="padding:11px 14px;border:none;border-radius:var(--radius);background:var(--bg);color:var(--text);font-family:'Plus Jakarta Sans',sans-serif;font-size:13px;font-weight:500;box-shadow:var(--nm-in-xs)">
                   </div>
                 </div>
               </div>
@@ -1144,7 +1605,7 @@ table.data-table {
       <div>
         <div class="informe-section-title">Nombre del archivo</div>
         <div style="display:flex;align-items:center;gap:8px">
-          <input id="informe-nombre" class="field" style="flex:1;padding:8px 11px;border:1px solid var(--border2);border-radius:var(--radius);font-family:'Plus Jakarta Sans',sans-serif;font-size:13px" placeholder="Ej: Informe_Mayo_2026">
+          <input id="informe-nombre" class="field" style="flex:1;padding:13px 17px;border:none;border-radius:var(--radius);background:var(--bg);color:var(--text);font-weight:500;box-shadow:var(--nm-in-sm);font-family:'Plus Jakarta Sans',sans-serif;font-size:13px" placeholder="Ej: Informe_Mayo_2026">
           <span style="font-size:13px;color:var(--text3);white-space:nowrap">.xlsx</span>
         </div>
       </div>
@@ -1164,8 +1625,8 @@ table.data-table {
       </div>
 
       <!-- Info de lo que se incluye -->
-      <div id="informe-preview-info" style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius);padding:10px 14px;font-size:12px;color:var(--text2)">
-        El archivo Excel tendrá <strong>2 hojas</strong>: <em>PEDIDOS</em> y <em>REEMPAQUE</em>, con toda la información de los pedidos seleccionados.
+      <div id="informe-preview-info" style="background:var(--bg);border:none;border-radius:var(--radius);box-shadow:var(--nm-in-xs);padding:14px 18px;font-size:12px;line-height:1.6;color:var(--text2)">
+        El archivo Excel tendrá <strong>4 hojas</strong>: <em>PEDIDOS</em>, <em>REEMPAQUE</em>, <em>MATERIAS PRIMAS</em> y <em>TRAZABILIDAD</em>, con toda la información de los pedidos seleccionados.
       </div>
 
     </div>
@@ -1191,6 +1652,72 @@ const SCOPES = 'https://www.googleapis.com/auth/spreadsheets https://www.googlea
 const API_KEY = ''; // no se usa con OAuth
 
 // -- Seguridad: escape HTML para prevenir XSS almacenado (#1 auditoria) --
+// Los productos comparten el prefijo "QUESO FRESCO VARIEDADES: ", que ocupa
+// tres lineas en las tablas sin aportar nada. Se muestra solo la variedad;
+// el nombre completo queda en el tooltip (atributo title).
+function nombreCorto(v) {
+  return String(v || '').split(' • ').map(parte => {
+    const s = parte.trim();
+    const i = s.indexOf(': ');
+    return (i > 0 && s.length - i > 8) ? s.slice(i + 2) : s;
+  }).join(' • ');
+}
+
+// Un color de fondo por tipo de presentacion
+const PRES_CLASE = {
+  'BLOQUE':                         'pres-bloque',
+  'BLOQUE QUESO CAMPESINO':         'pres-campesino',
+  'DEDO':                           'pres-dedo',
+  'MATRIMONIO QUESO CON BOCADILLO': 'pres-matrimonio',
+  'PORCIÓN':                        'pres-porcion',
+  'PORCIÓN (PERA)':                 'pres-porcion-pera',
+  'RUEDA QUESO PERA':               'pres-rueda',
+  'TAJADO':                         'pres-tajado',
+};
+function presClase(v) {
+  return 'badge ' + (PRES_CLASE[String(v || '').trim().toUpperCase()] || 'pres-otro');
+}
+
+// ── Rango de años válido: evita errores de digitación tipo 0206 ó 0226 ──
+const FECHA_MIN = '2025-01-01';
+const FECHA_MAX = '2027-12-31';
+
+function fechaFueraDeRango(v) {
+  const s = String(v || '').trim();
+  return s !== '' && (s < FECHA_MIN || s > FECHA_MAX);
+}
+
+// Devuelve las fechas fuera de rango dentro de un contenedor, con su etiqueta
+function validarRangoFechas(contenedor) {
+  const malas = [];
+  if (!contenedor) return malas;
+  contenedor.querySelectorAll('input[type="date"]').forEach(el => {
+    if (!fechaFueraDeRango(el.value)) return;
+    const lbl = el.closest('.field')?.querySelector('label')?.textContent.replace('*', '').trim()
+             || el.getAttribute('title') || 'Fecha';
+    malas.push({ el, lbl });
+  });
+  return malas;
+}
+
+function avisarFechasInvalidas(malas) {
+  const nombres = malas.map(m => m.lbl);
+  toast('El año debe estar entre 2025 y 2027. Revisa: '
+    + nombres.slice(0, 3).join(', ')
+    + (nombres.length > 3 ? ` y ${nombres.length - 3} más` : ''), 'error');
+  const primera = malas[0].el;
+  primera.closest('.card')?.classList.remove('collapsed');
+  primera.focus();
+}
+
+// Marca en rojo la fecha mientras se escribe, sin esperar a guardar
+document.addEventListener('input', e => {
+  const el = e.target;
+  if (el.tagName === 'INPUT' && el.type === 'date') {
+    el.classList.toggle('fecha-invalida', fechaFueraDeRango(el.value));
+  }
+});
+
 function esc(v) {
   return String(v ?? '')
     .replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;')
@@ -1208,14 +1735,39 @@ const COLS_PEDIDOS = ['id','fecha_corte','fecha_entrega','cliente','menu','opera
   'mp_libras_tajadas','mp_lote_vto','pt_tipo_producto','pt_presentacion','pt_peso',
   'pt_operacion','pt_sellado','pt_cantidad_obtenida','pt_libras_entregadas','pt_retal_lb',
   'pt_pct_retal','pt_diferencia','pt_pct_diferencia','pt_lote_vto','pt_codigo_trazabilidad',
-  'pt_color_cinta','estado','creado_por','fecha_creacion','ultima_edicion'];
+  'pt_color_cinta','estado','creado_por','fecha_creacion','ultima_edicion',
+  'pt_cantidad_sobrante'];
 // Hoja REEMPAQUE_V2 -> columnas A..G
 const COLS_REEMPAQUE = ['id_reempaque','id_pedido','cantidad_no_conformes','letra_codigo',
   'vto_real','retal_lb','fecha_reg'];
+// Detalle de materias primas: N filas por pedido
+const COLS_MATERIAS = ['id_materia','id_pedido','mp_tipo_producto','mp_peso',
+  'mp_cantidad_empleada','mp_libras_tajadas','mp_lote_vto','fecha_reg'];
+// Detalle de trazabilidad: N códigos por pedido
+const COLS_TRAZAS = ['id_traza','id_pedido','pt_lote_vto','pt_cantidad_obtenida',
+  'pt_codigo_trazabilidad','pt_color_cinta','fecha_reg'];
+
 const HOJA_PEDIDOS    = 'PEDIDOS_V2';
 const HOJA_REEMPAQUE  = 'REEMPAQUE_V2';
-const RANGO_PEDIDOS   = 'PEDIDOS_V2!A:AE';
-const RANGO_REEMPAQUE = 'REEMPAQUE_V2!A:G';
+const HOJA_MATERIAS   = 'MATERIAS_V2';
+const HOJA_TRAZAS     = 'TRAZABILIDAD_V2';
+
+// Letra de columna a partir del índice (0 -> A). Evita rangos escritos a mano
+// que se rompen al añadir columnas.
+function colLetra(i) {
+  let s = ''; i++;
+  while (i > 0) { const r = (i - 1) % 26; s = String.fromCharCode(65 + r) + s; i = Math.floor((i - 1) / 26); }
+  return s;
+}
+const COL_FIN_PEDIDOS   = colLetra(COLS_PEDIDOS.length - 1);
+const COL_FIN_REEMPAQUE = colLetra(COLS_REEMPAQUE.length - 1);
+const COL_FIN_MATERIAS  = colLetra(COLS_MATERIAS.length - 1);
+const COL_FIN_TRAZAS    = colLetra(COLS_TRAZAS.length - 1);
+
+const RANGO_PEDIDOS   = `${HOJA_PEDIDOS}!A:${COL_FIN_PEDIDOS}`;
+const RANGO_REEMPAQUE = `${HOJA_REEMPAQUE}!A:${COL_FIN_REEMPAQUE}`;
+const RANGO_MATERIAS  = `${HOJA_MATERIAS}!A:${COL_FIN_MATERIAS}`;
+const RANGO_TRAZAS    = `${HOJA_TRAZAS}!A:${COL_FIN_TRAZAS}`;
 // Tipos de materia prima que habilitan el registro de unidades no conformes
 const MP_TIPOS_REEMPAQUE = [
   'QUESO FRESCO VARIEDADES: SEMIGRASO SEMIBLANDO CAMPESINO',
@@ -1235,6 +1787,8 @@ let userInfo = null;
 let tokenExpiresAt = 0;
 let pedidos = [];
 let reempaques = [];
+let materias = [];   // detalle de materias primas por pedido
+let trazas = [];     // detalle de códigos de trazabilidad por pedido
 let reempaqueCount = 0;
 let editingId = null;
 let editReempaqueCount = 0;
@@ -1529,6 +2083,9 @@ function showApp() {
     if (el && !el.value) el.value = hoyISO;
   });
   reiniciarTemporizadorInactividad();
+  restaurarSidebar();
+  if (!contenedorMP('f').children.length) addMateriaRow('f');
+  if (!contenedorPT('f').children.length) addTrazaRow('f');
   loadData();
 }
 
@@ -1643,19 +2200,57 @@ async function sheetsFindRow(sheet, colIdx, value) {
 // ═══════════════════════════════════════════════════════════
 // LOAD DATA
 // ═══════════════════════════════════════════════════════════
+
+// Las hojas de detalle se crean solas la primera vez, con su fila de encabezado.
+let hojasVerificadas = false;
+async function asegurarHojas() {
+  if (hojasVerificadas) return;
+  const r = await apiFetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}?fields=sheets.properties`, {});
+  if (!r.ok) throw new Error('No se pudo leer la estructura del libro: ' + r.status);
+  const data = await r.json();
+  const titulos = (data.sheets || []).map(s => s.properties.title);
+  (data.sheets || []).forEach(sh => { sheetIds[sh.properties.title] = sh.properties.sheetId; });
+
+  const faltan = [];
+  if (!titulos.includes(HOJA_MATERIAS)) faltan.push({ titulo: HOJA_MATERIAS, cols: COLS_MATERIAS });
+  if (!titulos.includes(HOJA_TRAZAS))   faltan.push({ titulo: HOJA_TRAZAS,   cols: COLS_TRAZAS });
+
+  if (faltan.length) {
+    await sheetsBatchUpdate(faltan.map(f => ({ addSheet: { properties: { title: f.titulo } } })));
+    for (const f of faltan) {
+      await sheetsUpdate(`${f.titulo}!A1:${colLetra(f.cols.length - 1)}1`, [f.cols]);
+    }
+    sheetIds = {};   // los ids cambiaron: forzar relectura
+    toast('Se crearon las hojas de detalle: ' + faltan.map(f => f.titulo).join(' y '), 'info');
+  }
+  // El encabezado de PEDIDOS_V2 puede haber quedado corto al añadir columnas.
+  // Solo se reescribe si de verdad no coincide, para no escribir en cada carga.
+  try {
+    const cab = await sheetsGet(`${HOJA_PEDIDOS}!A1:${COL_FIN_PEDIDOS}1`);
+    const actual = (cab.values && cab.values[0]) || [];
+    const coincide = COLS_PEDIDOS.every((c, i) => String(actual[i] || '') === c);
+    if (!coincide) await sheetsUpdate(`${HOJA_PEDIDOS}!A1:${COL_FIN_PEDIDOS}1`, [COLS_PEDIDOS]);
+  } catch (e) { /* si falla, la app sigue: el encabezado es solo documentación */ }
+  hojasVerificadas = true;
+}
+
 async function loadData() {
   setSyncStatus('Sincronizando...');
   try {
-    const [pData, rData] = await Promise.all([
-      sheetsGet(`${HOJA_PEDIDOS}!A2:AE5000`),
-      sheetsGet(`${HOJA_REEMPAQUE}!A2:G5000`),
+    await asegurarHojas();
+    const [pData, rData, mData, tData] = await Promise.all([
+      sheetsGet(`${HOJA_PEDIDOS}!A2:${COL_FIN_PEDIDOS}5000`),
+      sheetsGet(`${HOJA_REEMPAQUE}!A2:${COL_FIN_REEMPAQUE}5000`),
+      sheetsGet(`${HOJA_MATERIAS}!A2:${COL_FIN_MATERIAS}20000`),
+      sheetsGet(`${HOJA_TRAZAS}!A2:${COL_FIN_TRAZAS}20000`),
     ]);
 
     pedidos = (pData.values || []).filter(r => r[0]).map(r => {
       const o = rowToObj(r, COLS_PEDIDOS);   // mapeo por NOMBRE, no por indice (#7)
-      ['mp_cantidad_oc','mp_peso','mp_cantidad_empleada','mp_libras_tajadas',
+      ['mp_cantidad_oc','mp_cantidad_empleada','mp_libras_tajadas',
        'pt_peso','pt_cantidad_obtenida','pt_libras_entregadas','pt_retal_lb',
-       'pt_pct_retal','pt_diferencia','pt_pct_diferencia']
+       'pt_pct_retal','pt_diferencia','pt_pct_diferencia','pt_cantidad_sobrante']
         .forEach(k => { o[k] = parseColNumber(o[k]); });
       o.estado = o.estado || 'ABIERTO';
       return o;
@@ -1665,6 +2260,18 @@ async function loadData() {
       const o = rowToObj(r, COLS_REEMPAQUE);
       o.cantidad_no_conformes = parseColNumber(o.cantidad_no_conformes);
       o.retal_lb = parseColNumber(o.retal_lb);
+      return o;
+    });
+
+    materias = (mData.values || []).filter(r => r[0]).map(r => {
+      const o = rowToObj(r, COLS_MATERIAS);
+      ['mp_peso','mp_cantidad_empleada','mp_libras_tajadas'].forEach(k => { o[k] = parseColNumber(o[k]); });
+      return o;
+    });
+
+    trazas = (tData.values || []).filter(r => r[0]).map(r => {
+      const o = rowToObj(r, COLS_TRAZAS);
+      o.pt_cantidad_obtenida = parseColNumber(o.pt_cantidad_obtenida);
       return o;
     });
 
@@ -1710,6 +2317,35 @@ function showView(v) {
 // ═══════════════════════════════════════════════════════════
 // SECCIONES COLAPSABLES
 // ═══════════════════════════════════════════════════════════
+const SIDEBAR_KEY = 'peniel_sidebar_contraida';
+
+function toggleSidebar(forzar) {
+  const app = document.getElementById('app-root');
+  const btn = document.getElementById('btn-sidebar');
+  const contraida = (forzar !== undefined) ? forzar : !app.classList.contains('sidebar-collapsed');
+  app.classList.toggle('sidebar-collapsed', contraida);
+  if (btn) {
+    btn.setAttribute('aria-expanded', String(!contraida));
+    btn.title = contraida ? 'Expandir el menú' : 'Contraer el menú';
+  }
+  // El tooltip solo aporta cuando no se ve el texto del item
+  document.querySelectorAll('.nav-item').forEach(item => {
+    if (contraida) item.title = item.querySelector('.nav-label')?.textContent.trim() || '';
+    else item.removeAttribute('title');
+  });
+  try { localStorage.setItem(SIDEBAR_KEY, contraida ? '1' : '0'); } catch (e) {}
+  // Las graficas del dashboard deben recalcular su ancho al terminar la animacion
+  setTimeout(() => {
+    Object.values(dashCharts).forEach(c => { try { c.resize(); } catch (e) {} });
+  }, 380);
+}
+
+function restaurarSidebar() {
+  let contraida = false;
+  try { contraida = localStorage.getItem(SIDEBAR_KEY) === '1'; } catch (e) {}
+  if (contraida) toggleSidebar(true);
+}
+
 function toggleSection(headerEl) {
   headerEl.closest('.card').classList.toggle('collapsed');
 }
@@ -1717,6 +2353,158 @@ function toggleSection(headerEl) {
 // ═══════════════════════════════════════════════════════════
 // FILAS DE REEMPAQUE (unidades no conformes)
 // ═══════════════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════
+// FILAS REPETIBLES: materias primas y trazabilidad
+// Prefijo 'f' = formulario de nuevo pedido, 'e' = modal de edición.
+// Los campos se identifican por CLASE dentro de la fila, no por id
+// numerado: así se pueden quitar filas del medio sin renumerar nada.
+// ═══════════════════════════════════════════════════════════
+const LB_POR_GRAMOS = 500;   // 500 g = 1 libra (convención de la planta)
+
+function contenedorMP(pref) { return document.getElementById(pref + '-mp-container'); }
+function contenedorPT(pref) { return document.getElementById(pref + '-pt-container'); }
+
+function renumerarFilas(cont) {
+  if (!cont) return;
+  cont.querySelectorAll('.cinta-num').forEach((el, i) => { el.textContent = i + 1; });
+}
+
+function quitarFilaDetalle(btn, pref) {
+  const fila = btn.closest('.cinta-item');
+  const cont = fila.parentElement;
+  fila.remove();
+  renumerarFilas(cont);
+  recalcularDetalle(pref);
+}
+
+function addMateriaRow(pref, data) {
+  const cont = contenedorMP(pref);
+  if (!cont) return;
+  const div = document.createElement('div');
+  div.className = 'cinta-item mp-item';
+  div.innerHTML = `
+    <div class="cinta-num"></div>
+    <div class="field">
+      <label>Tipo de producto *</label>
+      <select class="mp-tipo" title="Tipo de materia prima" onchange="recalcularDetalle('${pref}')">${optionsHTMLCorto(LISTA_MP_TIPOS, data?.mp_tipo_producto)}</select>
+    </div>
+    <div class="field">
+      <label>Peso (Gr) *</label>
+      <select class="mp-peso" onchange="recalcularDetalle('${pref}')">${optionsHTML(LISTA_MP_PESOS, data?.mp_peso)}</select>
+    </div>
+    <div class="field">
+      <label>Cantidad empleada *</label>
+      <input class="mp-cant" type="number" min="0" step="1" placeholder="0"
+             oninput="recalcularDetalle('${pref}')" value="${esc(data?.mp_cantidad_empleada ?? '')}">
+    </div>
+    <div class="field">
+      <label>Libras tajadas ind. <span class="lbl-auto">AUTO</span></label>
+      <input class="mp-libras campo-calc" readonly placeholder="Calculado">
+    </div>
+    <div class="field">
+      <label>Lote ó L / F. Vto. *</label>
+      <input class="mp-lote" type="date" ${RANGO_FECHA} value="${data?.mp_lote_vto || ''}">
+    </div>
+    <button class="btn btn-xs btn-danger" onclick="quitarFilaDetalle(this,'${pref}')" title="Quitar"
+            style="align-self:flex-end;margin-bottom:1px;font-size:15px;line-height:1;padding:4px 8px">✕</button>`;
+  cont.appendChild(div);
+  renumerarFilas(cont);
+  recalcularDetalle(pref);
+}
+
+function addTrazaRow(pref, data) {
+  const cont = contenedorPT(pref);
+  if (!cont) return;
+  const div = document.createElement('div');
+  div.className = 'cinta-item pt-item';
+  div.innerHTML = `
+    <div class="cinta-num"></div>
+    <div class="field">
+      <label>L / F. Vto. *</label>
+      <input class="pt-lote" type="date" ${RANGO_FECHA} value="${data?.pt_lote_vto || ''}">
+    </div>
+    <div class="field">
+      <label>Cantidad obtenida ind. *</label>
+      <input class="pt-cant" type="number" min="0" step="1" placeholder="0"
+             oninput="recalcularDetalle('${pref}')" value="${esc(data?.pt_cantidad_obtenida ?? '')}">
+    </div>
+    <div class="field">
+      <label>Código de trazabilidad *</label>
+      <input class="pt-codigo mono" value="${esc(data?.pt_codigo_trazabilidad || '')}">
+    </div>
+    <div class="field">
+      <label>Color de cinta *</label>
+      <input class="pt-color" value="${esc(data?.pt_color_cinta || 'NO APLICA')}" placeholder="NO APLICA">
+    </div>
+    <button class="btn btn-xs btn-danger" onclick="quitarFilaDetalle(this,'${pref}')" title="Quitar"
+            style="align-self:flex-end;margin-bottom:1px;font-size:15px;line-height:1;padding:4px 8px">✕</button>`;
+  cont.appendChild(div);
+  renumerarFilas(cont);
+  recalcularDetalle(pref);
+}
+
+// Recalcula y, de paso, decide si aplica la sub-sección de reempaque
+function recalcularDetalle(pref) {
+  calcularCamposGen(pref);
+  actualizarReempaqueVisible(pref);
+}
+
+const val = el => (el?.value ?? '').trim();
+
+function getMaterias(pref) {
+  return Array.from(contenedorMP(pref)?.querySelectorAll('.mp-item') || []).map(it => {
+    const peso = parseFloat(val(it.querySelector('.mp-peso'))) || 0;
+    const cant = parseFloat(val(it.querySelector('.mp-cant'))) || 0;
+    return {
+      mp_tipo_producto:     safeText(val(it.querySelector('.mp-tipo'))),
+      mp_peso:              val(it.querySelector('.mp-peso')),
+      mp_cantidad_empleada: val(it.querySelector('.mp-cant')),
+      mp_libras_tajadas:    +((peso / LB_POR_GRAMOS) * cant).toFixed(2),
+      mp_lote_vto:          val(it.querySelector('.mp-lote')),
+    };
+  }).filter(m => m.mp_tipo_producto || m.mp_peso || m.mp_cantidad_empleada || m.mp_lote_vto);
+}
+
+function getTrazas(pref) {
+  return Array.from(contenedorPT(pref)?.querySelectorAll('.pt-item') || []).map(it => ({
+    pt_lote_vto:            val(it.querySelector('.pt-lote')),
+    pt_cantidad_obtenida:   val(it.querySelector('.pt-cant')),
+    pt_codigo_trazabilidad: safeText(val(it.querySelector('.pt-codigo'))),
+    pt_color_cinta:         safeText(val(it.querySelector('.pt-color'))),
+  })).filter(t => t.pt_lote_vto || t.pt_cantidad_obtenida || t.pt_codigo_trazabilidad);
+}
+
+// Devuelve el texto del primer problema encontrado, o '' si todo está completo
+function validarDetalle(pref) {
+  const mats = getMaterias(pref);
+  if (!mats.length) return 'Agrega al menos una materia prima.';
+  for (let i = 0; i < mats.length; i++) {
+    const m = mats[i];
+    if (!m.mp_tipo_producto || !m.mp_peso || !m.mp_cantidad_empleada || !m.mp_lote_vto)
+      return `Materia prima ${i + 1}: faltan datos (tipo, peso, cantidad y lote son obligatorios).`;
+  }
+  const trz = getTrazas(pref);
+  if (!trz.length) return 'Agrega al menos un código de trazabilidad.';
+  for (let i = 0; i < trz.length; i++) {
+    const t = trz[i];
+    if (!t.pt_lote_vto || t.pt_cantidad_obtenida === '' || !t.pt_codigo_trazabilidad || !t.pt_color_cinta)
+      return `Trazabilidad ${i + 1}: faltan datos (L/F. Vto., cantidad, código y color son obligatorios).`;
+    if (!(parseFloat(t.pt_cantidad_obtenida) >= 0))
+      return `Trazabilidad ${i + 1}: la cantidad obtenida debe ser un número igual o mayor que 0.`;
+  }
+  return '';
+}
+
+// Resumen que se guarda en la fila del pedido (valores únicos unidos por •)
+function resumirCampo(lista, clave) {
+  const vistos = [];
+  lista.forEach(x => {
+    const v = String(x[clave] ?? '').trim();
+    if (v && !vistos.includes(v)) vistos.push(v);
+  });
+  return vistos.join(' • ');
+}
+
 function addReempaqueRow(data) {
   const container = document.getElementById('reempaque-container');
   const n = ++reempaqueCount;
@@ -1765,16 +2553,18 @@ function getReempaques() {
 }
 
 // Habilita la sub-sección de no conformes solo para CAMPESINO y PERA
-function onTipoMPChange() {
-  const tipo = document.getElementById('f-mp-tipo').value;
-  const wrap = document.getElementById('reempaque-wrap');
-  const aplica = MP_TIPOS_REEMPAQUE.includes(tipo);
+// La sub-sección de reempaque aplica si CUALQUIER materia prima es de un tipo
+// que lo requiere (antes solo había una materia prima por pedido).
+function actualizarReempaqueVisible(pref) {
+  const wrap = document.getElementById(pref === 'e' ? 'e-reempaque-wrap' : 'reempaque-wrap');
+  const cont = document.getElementById(pref === 'e' ? 'edit-reempaque-container' : 'reempaque-container');
+  if (!wrap) return;
+  const aplica = getMaterias(pref).some(m => MP_TIPOS_REEMPAQUE.includes(m.mp_tipo_producto));
   wrap.style.display = aplica ? '' : 'none';
-  if (!aplica) {
-    document.getElementById('reempaque-container').innerHTML = '';
-    reempaqueCount = 0;
+  if (!aplica && cont) {
+    cont.innerHTML = '';
+    if (pref === 'e') editReempaqueCount = 0; else reempaqueCount = 0;
   }
-  calcularCampos();
 }
 
 // ═══════════════════════════════════════════════════════════
@@ -1788,21 +2578,15 @@ const CAMPOS_OBLIGATORIOS = [
   ['f-operador',       'Operador'],
   ['f-responsable',    'Responsable del ingreso'],
   ['f-mp-cantidad-oc', 'Cantidad según orden de compra'],
-  ['f-mp-tipo',        'Tipo de producto (materia prima)'],
-  ['f-mp-peso',        'Peso del producto (materia prima)'],
-  ['f-mp-cant-emp',    'Cantidad de producto empleada'],
-  ['f-mp-lote',        'Lote / F. Vto. del producto cortado'],
   ['f-pt-tipo',        'Tipo de producto obtenido'],
   ['f-pt-pres',        'Presentación'],
   ['f-pt-peso',        'Peso (producto terminado)'],
   ['f-pt-operacion',   'Operación realizada'],
   ['f-pt-sellado',     'Tipo de sellado'],
-  ['f-pt-cant-obt',    'Cantidad obtenida'],
   ['f-pt-retal',       'Retal (libras)'],
-  ['f-pt-lote',        'L / F. Vto.'],
-  ['f-pt-codigo',      'Código de trazabilidad'],
-  ['f-pt-color-cinta', 'Color de cinta'],
 ];
+// Los demás campos de materia prima y trazabilidad ahora viven en filas
+// repetibles y los valida validarDetalle().
 
 async function guardarPedido() {
   const g = id => (document.getElementById(id)?.value ?? '').trim();
@@ -1816,6 +2600,12 @@ async function guardarPedido() {
     return;
   }
 
+  const problema = validarDetalle('f');
+  if (problema) { toast(problema, 'error'); return; }
+
+  const fechasMalas = validarRangoFechas(document.getElementById('view-nuevo'));
+  if (fechasMalas.length) { avisarFechasInvalidas(fechasMalas); return; }
+
   const btn = document.getElementById('btn-guardar');
   btn.disabled = true; btn.textContent = 'Guardando...';
 
@@ -1823,6 +2613,8 @@ async function guardarPedido() {
   try {
     const now = new Date().toISOString();
     const c = calcularCampos();   // recalcula y devuelve los valores derivados
+    const mats = getMaterias('f');
+    const trz  = getTrazas('f');
 
     const pedidoObj = {
       id,
@@ -1833,25 +2625,26 @@ async function guardarPedido() {
       operador:               safeText(g('f-operador')),
       responsable:            safeText(g('f-responsable')),
       mp_cantidad_oc:         g('f-mp-cantidad-oc'),
-      mp_tipo_producto:       safeText(g('f-mp-tipo')),
-      mp_peso:                g('f-mp-peso'),
-      mp_cantidad_empleada:   g('f-mp-cant-emp'),
+      mp_tipo_producto:       resumirCampo(mats, 'mp_tipo_producto'),
+      mp_peso:                resumirCampo(mats, 'mp_peso'),
+      mp_cantidad_empleada:   mats.reduce((a, m) => a + (parseFloat(m.mp_cantidad_empleada) || 0), 0),
       mp_libras_tajadas:      c.librasTajadas,
-      mp_lote_vto:            g('f-mp-lote'),
+      mp_lote_vto:            resumirCampo(mats, 'mp_lote_vto'),
       pt_tipo_producto:       safeText(g('f-pt-tipo')),
       pt_presentacion:        safeText(g('f-pt-pres')),
       pt_peso:                g('f-pt-peso'),
       pt_operacion:           safeText(g('f-pt-operacion')),
       pt_sellado:             safeText(g('f-pt-sellado')),
-      pt_cantidad_obtenida:   g('f-pt-cant-obt'),
+      pt_cantidad_obtenida:   c.cantObtenida,
       pt_libras_entregadas:   c.librasEntregadas,
       pt_retal_lb:            g('f-pt-retal'),
       pt_pct_retal:           c.pctRetal,
       pt_diferencia:          c.diferencia,
       pt_pct_diferencia:      c.pctDiferencia,
-      pt_lote_vto:            g('f-pt-lote'),
-      pt_codigo_trazabilidad: safeText(g('f-pt-codigo')),
-      pt_color_cinta:         safeText(g('f-pt-color-cinta')),
+      pt_cantidad_sobrante:   c.cantidadSobrante,
+      pt_lote_vto:            resumirCampo(trz, 'pt_lote_vto'),
+      pt_codigo_trazabilidad: resumirCampo(trz, 'pt_codigo_trazabilidad'),
+      pt_color_cinta:         resumirCampo(trz, 'pt_color_cinta'),
       estado: 'ABIERTO',
       creado_por: userInfo?.email || '',
       fecha_creacion: now,
@@ -1860,8 +2653,27 @@ async function guardarPedido() {
 
     await sheetsAppend(RANGO_PEDIDOS, [objToRow(pedidoObj, COLS_PEDIDOS)]);
 
-    // Detalle de no conformes: si el pedido ya se guardó, un fallo aquí NO debe
-    // llevar a recrearlo; se completa luego desde Editar (#5 auditoría).
+    // Detalle de materias primas y trazabilidad. Si algo falla aquí el pedido YA
+    // está guardado: hay que completarlo desde Editar, nunca crearlo de nuevo.
+    try {
+      if (mats.length) {
+        await sheetsAppend(RANGO_MATERIAS, mats.map((m, i) => objToRow({
+          ...m, id_materia: id + '_M' + (i + 1), id_pedido: id, fecha_reg: now,
+        }, COLS_MATERIAS)));
+      }
+      if (trz.length) {
+        await sheetsAppend(RANGO_TRAZAS, trz.map((t, i) => objToRow({
+          ...t, id_traza: id + '_T' + (i + 1), id_pedido: id, fecha_reg: now,
+        }, COLS_TRAZAS)));
+      }
+    } catch (eDet) {
+      toast('El pedido SÍ se guardó, pero falló el detalle de materias primas o trazabilidad. '
+          + 'Complétalo desde "Editar" — NO lo crees de nuevo.', 'error');
+      await loadData();
+      btn.disabled = false; btn.textContent = 'Guardar pedido';
+      return;
+    }
+
     try {
       const nuevos = getReempaques();
       if (nuevos.length > 0) {
@@ -1912,49 +2724,74 @@ async function guardarPedido() {
 // pref: 'f' = formulario nuevo · 'e' = modal de edición
 function calcularCamposGen(pref) {
   const num = id => parseFloat(document.getElementById(id)?.value) || 0;
-  const mpPeso  = num(`${pref}-mp-peso`);
-  const mpCant  = num(`${pref}-mp-cant-emp`);
-  const ptPeso  = num(`${pref}-pt-peso`);
-  const ptCant  = num(`${pref}-pt-cant-obt`);
-  const ptRetal = num(`${pref}-pt-retal`);
+  const fmt2 = v => v.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  const fmt0 = v => Math.round(v).toLocaleString('es-CO');
 
-  const librasTajadas    = (mpPeso / 500) * mpCant;
-  const librasEntregadas = (ptPeso * ptCant) / 500;
+  // ── Libras tajadas: cada fila aporta la suya y el total es la suma ──
+  let librasTajadas = 0;
+  (contenedorMP(pref)?.querySelectorAll('.mp-item') || []).forEach(it => {
+    const peso = parseFloat(it.querySelector('.mp-peso')?.value) || 0;
+    const cant = parseFloat(it.querySelector('.mp-cant')?.value) || 0;
+    const ind  = (peso / LB_POR_GRAMOS) * cant;
+    librasTajadas += ind;
+    const salida = it.querySelector('.mp-libras');
+    if (salida) salida.value = ind > 0 ? fmt2(ind) : '';
+  });
+
+  // ── Cantidad obtenida: suma de las individuales de trazabilidad ──
+  let cantObtenida = 0;
+  (contenedorPT(pref)?.querySelectorAll('.pt-item') || []).forEach(it => {
+    cantObtenida += parseFloat(it.querySelector('.pt-cant')?.value) || 0;
+  });
+
+  const ptPeso  = num(`${pref}-pt-peso`);
+  const ptRetal = num(`${pref}-pt-retal`);
+  const cantOC  = num(`${pref}-mp-cantidad-oc`);
+
+  const librasEntregadas = (ptPeso * cantObtenida) / LB_POR_GRAMOS;
   const pctRetal         = librasTajadas > 0 ? (ptRetal / librasTajadas) * 100 : 0;
   const diferencia       = librasTajadas > 0 ? librasTajadas - librasEntregadas - ptRetal : 0;
   const pctDiferencia    = librasTajadas > 0 ? (diferencia / librasTajadas) * 100 : 0;
+  const cantidadSobrante = cantObtenida - cantOC;
 
-  const fmt2 = v => v.toLocaleString('es-CO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-  const set = (id, val, mostrar, suf = '') => {
+  const set = (id, valor, mostrar, suf = '', entero = false) => {
     const el = document.getElementById(id);
-    if (el) el.value = mostrar ? fmt2(val) + suf : '';
+    if (el) el.value = mostrar ? (entero ? fmt0(valor) : fmt2(valor)) + suf : '';
   };
   set(`${pref}-mp-libras-taj`, librasTajadas,    librasTajadas > 0);
+  set(`${pref}-pt-cant-obt`,   cantObtenida,     cantObtenida > 0, '', true);
   set(`${pref}-pt-libras-ent`, librasEntregadas, librasEntregadas > 0);
   set(`${pref}-pt-pct-retal`,  pctRetal,         pctRetal !== 0, '%');
   set(`${pref}-pt-dif`,        diferencia,       librasTajadas > 0);
   set(`${pref}-pt-pct-dif`,    pctDiferencia,    pctDiferencia !== 0, '%');
+  set(`${pref}-pt-sobrante`,   cantidadSobrante, cantObtenida > 0 || cantOC > 0, '', true);
 
-  return { librasTajadas, librasEntregadas, pctRetal, diferencia, pctDiferencia };
+  return { librasTajadas, librasEntregadas, pctRetal, diferencia, pctDiferencia,
+           cantObtenida, cantidadSobrante };
 }
 
 function calcularCampos()     { return calcularCamposGen('f'); }
 function calcularCamposEdit() { return calcularCamposGen('e'); }
 
 function limpiarForm() {
-  ['f-fecha-corte','f-fecha-entrega','f-mp-cantidad-oc','f-mp-cant-emp','f-mp-libras-taj',
-   'f-mp-lote','f-pt-cant-obt','f-pt-libras-ent','f-pt-retal','f-pt-pct-retal','f-pt-dif',
-   'f-pt-pct-dif','f-pt-lote','f-pt-codigo',
-   'f-cliente','f-responsable','f-mp-tipo','f-mp-peso','f-pt-tipo','f-pt-pres',
+  ['f-fecha-corte','f-fecha-entrega','f-mp-cantidad-oc','f-mp-libras-taj',
+   'f-pt-cant-obt','f-pt-libras-ent','f-pt-retal','f-pt-pct-retal','f-pt-dif',
+   'f-pt-pct-dif','f-pt-sobrante',
+   'f-cliente','f-responsable','f-pt-tipo','f-pt-pres',
    'f-pt-peso','f-pt-operacion','f-pt-sellado'
   ].forEach(id => { const el = document.getElementById(id); if (el) el.value = ''; });
 
   const hoyISO = new Date().toISOString().split('T')[0];
   document.getElementById('f-fecha-corte').value   = hoyISO;
   document.getElementById('f-fecha-entrega').value = hoyISO;
-  document.getElementById('f-menu').value           = 'NO APLICA';
-  document.getElementById('f-operador').value       = 'NO APLICA';
-  document.getElementById('f-pt-color-cinta').value = 'NO APLICA';
+  document.getElementById('f-menu').value     = 'NO APLICA';
+  document.getElementById('f-operador').value = 'NO APLICA';
+
+  // Las listas vuelven a empezar con una fila vacía cada una
+  contenedorMP('f').innerHTML = '';
+  contenedorPT('f').innerHTML = '';
+  addMateriaRow('f');
+  addTrazaRow('f');
 
   document.getElementById('reempaque-container').innerHTML = '';
   document.getElementById('reempaque-wrap').style.display = 'none';
@@ -2040,6 +2877,16 @@ function renderHistorial() {
   applyHistFilters();
 }
 
+// Abre/cierra el desglose de códigos de una fila del historial
+function toggleTrazas(id, btn) {
+  const fila = document.getElementById('det-' + id);
+  if (!fila) return;
+  const abierta = fila.classList.toggle('abierta');
+  btn.setAttribute('aria-expanded', String(abierta));
+  const chev = btn.querySelector('.chev');
+  if (chev) chev.style.transform = abierta ? 'rotate(180deg)' : '';
+}
+
 function applyHistFilters() {
   const fil = pedidos.filter(p => {
     if (histFiltros.clientes.length       && !histFiltros.clientes.includes(p.cliente))              return false;
@@ -2082,23 +2929,25 @@ function applyHistFilters() {
       <div class="metric-sub">libras de retal</div>
     </div>`;
 
-  const pBadge = { BLOQUE:'badge-blue', TAJADO:'badge-green', DEDO:'badge-amber', 'PORCIÓN':'badge-red' };
-
   const tbody = document.getElementById('hist-body');
   if (!fil.length) {
     tbody.innerHTML = `<tr><td colspan="20" class="empty-state"><div class="empty-state-text">No hay registros con estos filtros</div></td></tr>`;
     return;
   }
 
+  // Códigos de trazabilidad agrupados por pedido, para el desglose
+  const trzPorPedido = {};
+  trazas.forEach(t => { (trzPorPedido[t.id_pedido] = trzPorPedido[t.id_pedido] || []).push(t); });
+
   tbody.innerHTML = fil.map(p => {
-    const bcls = pBadge[p.pt_presentacion] || 'badge-gray';
+    const bcls = presClase(p.pt_presentacion);
     const esAbierto = p.estado === 'ABIERTO';
     const esCerrado = p.estado === 'CERRADO';
     const estadoHtml = esAbierto
       ? `<span class="estado-badge estado-abierto"><span class="dot dot-abierto"></span>Abierto</span>`
       : esCerrado
         ? `<span class="estado-badge estado-cerrado"><span class="dot dot-cerrado"></span>Cerrado</span>`
-        : `<span class="estado-badge" style="background:var(--surface2);color:var(--text3);font-size:10px">Sin estado</span>`;
+        : `<span class="estado-badge estado-sin">Sin estado</span>`;
     const retal    = parseFloat(p.pt_retal_lb)||0;
     const lbEnt    = parseFloat(p.pt_libras_entregadas)||0;
     const kgEnt    = lbEnt * LB_TO_KG;
@@ -2108,12 +2957,65 @@ function applyHistFilters() {
     const pctDif   = parseFloat(p.pt_pct_diferencia)||0;
     const fNum = (v,d=2) => v ? fmtNum(v,d) : '—';
 
+    // ── Desglose por código de trazabilidad ──
+    const trz = trzPorPedido[p.id] || [];
+    let celdaCodigo, filaDetalle = '';
+    if (trz.length) {
+      const etiqueta = trz.length === 1
+        ? esc(trz[0].pt_codigo_trazabilidad || '—')
+        : `${trz.length} códigos`;
+      celdaCodigo = `<button class="toggle-cintas-btn mono" aria-expanded="false"
+          aria-controls="det-${p.id}" title="Ver el detalle de cada código"
+          onclick="toggleTrazas('${p.id}', this)">${etiqueta}<span class="chev">▾</span></button>`;
+      const totalTrz = trz.reduce((a, t) => a + (parseFloat(t.pt_cantidad_obtenida) || 0), 0);
+      filaDetalle = `
+      <tr class="row-detalle" id="det-${p.id}">
+        <td colspan="20">
+          <div class="detalle-sticky">
+          <div class="detalle-traza">
+            <div class="detalle-traza-inner">
+              <div class="detalle-traza-titulo">Códigos de trazabilidad · ${trz.length}</div>
+              <table class="mini-table">
+                <thead>
+                  <tr>
+                    <th>Código</th>
+                    <th>Color de cinta</th>
+                    <th>L / F. Vto.</th>
+                    <th class="num">Cantidad obtenida</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${trz.map(t => `
+                  <tr>
+                    <td class="mono"><strong>${esc(t.pt_codigo_trazabilidad || '—')}</strong></td>
+                    <td><span class="chip-cinta">${esc(t.pt_color_cinta || '—')}</span></td>
+                    <td style="color:var(--text2)">${fmtFecha(t.pt_lote_vto)}</td>
+                    <td class="num">${(parseFloat(t.pt_cantidad_obtenida)||0).toLocaleString('es-CO')}</td>
+                  </tr>`).join('')}
+                </tbody>
+                <tfoot>
+                  <tr>
+                    <td colspan="3" style="text-align:right;padding-right:26px">Total</td>
+                    <td class="num">${totalTrz.toLocaleString('es-CO')}</td>
+                  </tr>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+          </div>
+        </td>
+      </tr>`;
+    } else {
+      // Pedidos anteriores al desglose: solo tienen el código guardado en la fila
+      celdaCodigo = `<span class="mono" style="font-size:12px">${esc(p.pt_codigo_trazabilidad||'—')}</span>`;
+    }
+
     return `
       <tr class="row-pedido">
         <td style="color:var(--text2);font-size:12px">${fmtFecha(p.fecha_corte)}</td>
         <td><strong>${esc(p.cliente)}</strong></td>
-        <td style="font-size:12px">${esc(p.pt_tipo_producto||'—')}</td>
-        <td><span class="badge ${bcls}">${esc(p.pt_presentacion||'—')}</span></td>
+        <td style="font-size:12px" title="${esc(p.pt_tipo_producto||'')}">${esc(nombreCorto(p.pt_tipo_producto)||'—')}</td>
+        <td><span class="${bcls}">${esc(p.pt_presentacion||'—')}</span></td>
         <td style="color:var(--text2);font-size:12px">${fmtFecha(p.fecha_entrega)}</td>
         <td style="text-align:right">${(parseFloat(p.mp_cantidad_oc)||0).toLocaleString('es-CO')}</td>
         <td style="font-size:12px;color:var(--text2)">${esc(p.pt_operacion||'—')}</td>
@@ -2129,7 +3031,7 @@ function applyHistFilters() {
         <td style="text-align:right">${dif ? fmtNum(dif,2) : '—'}</td>
         <td style="text-align:right">${pctDif ? fmtNum(pctDif,2)+'%' : '—'}</td>
         <td>${estadoHtml}</td>
-        <td class="mono" style="font-size:12px">${esc(p.pt_codigo_trazabilidad||'—')}</td>
+        <td>${celdaCodigo}</td>
         <td style="font-size:12px;color:var(--text2)">${esc(p.responsable||'—')}</td>
         <td>
           <div style="display:flex;gap:4px">
@@ -2137,7 +3039,8 @@ function applyHistFilters() {
             ${esAbierto ? `<button class="btn btn-xs btn-danger" onclick="eliminarPedido('${p.id}')">Eliminar</button>` : ''}
           </div>
         </td>
-      </tr>`;
+      </tr>
+      ${filaDetalle}`;
   }).join('');
 }
 
@@ -2165,6 +3068,16 @@ const LISTA_OPERACIONES = ['CORTE Y EMPAQUE','EMPAQUE'];
 const LISTA_SELLADOS = ['SELLADO MANUAL','TERMOFORMADORA','EMPACADORA AL VACIO','FLOW PACK','SELLADORA DE PEDAL'];
 const RANGO_FECHA = 'min="2025-01-01" max="2027-12-31"';
 
+// Igual que optionsHTML pero mostrando el nombre corto. El value (lo que se
+// guarda) sigue siendo el nombre completo.
+function optionsHTMLCorto(lista, seleccionado) {
+  const sel = String(seleccionado ?? '');
+  return '<option value="">Seleccionar...</option>' + lista.map(v => {
+    const s = String(v);
+    return `<option value="${esc(s)}"${s === sel ? ' selected' : ''}>${esc(nombreCorto(s))}</option>`;
+  }).join('');
+}
+
 function optionsHTML(lista, seleccionado) {
   return ['<option value="">Seleccionar...</option>']
     .concat(lista.map(o => `<option${String(o) === String(seleccionado ?? '') ? ' selected' : ''}>${esc(o)}</option>`))
@@ -2188,7 +3101,7 @@ function abrirEditar(id) {
 
   const fmtCalc = v => (v && parseFloat(v) !== 0)
     ? parseFloat(v).toLocaleString('es-CO',{minimumFractionDigits:2,maximumFractionDigits:2}) : '';
-  const CALC = `readonly style="background:var(--surface2);color:var(--accent);font-weight:600;font-family:'DM Mono',monospace;font-size:13px" placeholder="Calculado"`;
+  const CALC = `readonly style="color:var(--accent);font-weight:600;font-family:'DM Mono',monospace;font-size:13px" placeholder="Calculado"`;
   const SUBT = 'font-size:11px;font-weight:600;color:var(--text3);text-transform:uppercase;letter-spacing:.06em;margin-bottom:10px';
 
   document.getElementById('modal-body').innerHTML = `
@@ -2206,15 +3119,16 @@ function abrirEditar(id) {
 
     <div class="divider" style="margin:14px 0 10px"></div>
     <div style="${SUBT}">Información de materias primas (cortadas y/o selladas)</div>
-    <div class="form-grid form-grid-3 section-gap">
-      <div class="field"><label>Cantidad según orden de compra *</label><input id="e-mp-cantidad-oc" type="number" min="0" step="1" value="${esc(p.mp_cantidad_oc ?? '')}"></div>
-      <div class="field"><label>Tipo de producto *</label><select id="e-mp-tipo" onchange="onTipoMPChangeEdit()">${optionsHTML(LISTA_MP_TIPOS, p.mp_tipo_producto)}</select></div>
-      <div class="field"><label>Peso del producto (Gr) *</label><select id="e-mp-peso" onchange="calcularCamposEdit()">${optionsHTML(LISTA_MP_PESOS, p.mp_peso)}</select></div>
+    <div class="form-grid form-grid-2 section-gap">
+      <div class="field"><label>Cantidad según orden de compra *</label><input id="e-mp-cantidad-oc" type="number" min="0" step="1" oninput="calcularCamposEdit()" value="${esc(p.mp_cantidad_oc ?? '')}"></div>
+      <div class="field"><label>Libras tajadas <span class="lbl-auto">AUTO</span></label><input id="e-mp-libras-taj" class="campo-calc" readonly value="${fmtCalc(p.mp_libras_tajadas)}"></div>
     </div>
-    <div class="form-grid form-grid-3 section-gap">
-      <div class="field"><label>Cantidad de producto empleada *</label><input id="e-mp-cant-emp" type="number" min="0" step="1" oninput="calcularCamposEdit()" value="${esc(p.mp_cantidad_empleada ?? '')}"></div>
-      <div class="field"><label>Libras tajadas (auto)</label><input id="e-mp-libras-taj" ${CALC} value="${fmtCalc(p.mp_libras_tajadas)}"></div>
-      <div class="field"><label>Lote ó L / F. Vto. producto cortado *</label><input id="e-mp-lote" type="date" ${RANGO_FECHA} value="${p.mp_lote_vto||''}"></div>
+    <div class="subsection section-gap">
+      <div class="subsection-title">Materias primas empleadas</div>
+      <div class="cintas-list" id="e-mp-container"></div>
+      <button class="add-cinta" onclick="addMateriaRow('e')" style="margin-top:12px">
+        <span style="font-size:16px;font-weight:300">+</span> Agregar materia prima
+      </button>
     </div>
     <div id="e-reempaque-wrap" style="display:none">
       <div class="subsection">
@@ -2236,25 +3150,44 @@ function abrirEditar(id) {
     <div class="form-grid form-grid-3 section-gap">
       <div class="field"><label>Operación realizada *</label><select id="e-pt-operacion">${optionsHTML(LISTA_OPERACIONES, p.pt_operacion)}</select></div>
       <div class="field"><label>Tipo de sellado *</label><select id="e-pt-sellado">${optionsHTML(LISTA_SELLADOS, p.pt_sellado)}</select></div>
-      <div class="field"><label>Cantidad obtenida *</label><input id="e-pt-cant-obt" type="number" min="0" step="1" oninput="calcularCamposEdit()" value="${esc(p.pt_cantidad_obtenida ?? '')}"></div>
+      <div class="field"><label>Cantidad obtenida <span class="lbl-auto">AUTO</span></label><input id="e-pt-cant-obt" class="campo-calc" readonly value="${esc(p.pt_cantidad_obtenida ?? '')}"></div>
     </div>
     <div class="form-grid form-grid-2 section-gap">
       <div class="field"><label>Retal (libras) *</label><input id="e-pt-retal" type="number" min="0" step="0.01" oninput="calcularCamposEdit()" value="${esc(p.pt_retal_lb ?? '')}"></div>
-      <div class="field"><label>Libras entregadas (auto)</label><input id="e-pt-libras-ent" ${CALC} value="${fmtCalc(p.pt_libras_entregadas)}"></div>
+      <div class="field"><label>Libras entregadas <span class="lbl-auto">AUTO</span></label><input id="e-pt-libras-ent" class="campo-calc" readonly value="${fmtCalc(p.pt_libras_entregadas)}"></div>
     </div>
-    <div class="form-grid form-grid-3 section-gap">
-      <div class="field"><label>% de retal (auto)</label><input id="e-pt-pct-retal" readonly style="background:var(--danger-light);color:var(--danger);font-weight:600;font-family:'DM Mono',monospace;font-size:13px" value="${fmtCalc(p.pt_pct_retal)}"></div>
-      <div class="field"><label>Diferencia (libras) (auto)</label><input id="e-pt-dif" readonly style="background:var(--surface2);color:var(--text2);font-weight:600;font-family:'DM Mono',monospace;font-size:13px" value="${fmtCalc(p.pt_diferencia)}"></div>
-      <div class="field"><label>% de diferencia (auto)</label><input id="e-pt-pct-dif" readonly style="background:var(--surface2);color:var(--text2);font-weight:600;font-family:'DM Mono',monospace;font-size:13px" value="${fmtCalc(p.pt_pct_diferencia)}"></div>
+    <div class="form-grid form-grid-4 section-gap">
+      <div class="field"><label>% de retal <span class="lbl-auto">AUTO</span></label><input id="e-pt-pct-retal" class="campo-calc calc-danger" readonly value="${fmtCalc(p.pt_pct_retal)}"></div>
+      <div class="field"><label>Diferencia (libras) <span class="lbl-auto">AUTO</span></label><input id="e-pt-dif" class="campo-calc calc-muted" readonly value="${fmtCalc(p.pt_diferencia)}"></div>
+      <div class="field"><label>% de diferencia <span class="lbl-auto">AUTO</span></label><input id="e-pt-pct-dif" class="campo-calc calc-muted" readonly value="${fmtCalc(p.pt_pct_diferencia)}"></div>
+      <div class="field"><label>Cantidad sobrante <span class="lbl-auto">AUTO</span></label><input id="e-pt-sobrante" class="campo-calc" readonly value="${esc(p.pt_cantidad_sobrante ?? '')}"></div>
     </div>
-    <div class="form-grid form-grid-3">
-      <div class="field"><label>L / F. Vto. *</label><input id="e-pt-lote" type="date" ${RANGO_FECHA} value="${p.pt_lote_vto||''}"></div>
-      <div class="field"><label>Código de trazabilidad *</label><input id="e-pt-codigo" class="mono" value="${esc(p.pt_codigo_trazabilidad||'')}"></div>
-      <div class="field"><label>Color de cinta *</label><input id="e-pt-color-cinta" value="${esc(p.pt_color_cinta||'NO APLICA')}"></div>
+    <div class="subsection section-gap">
+      <div class="subsection-title">Trazabilidad · lotes y códigos</div>
+      <div class="cintas-list" id="e-pt-container"></div>
+      <button class="add-cinta" onclick="addTrazaRow('e')" style="margin-top:12px">
+        <span style="font-size:16px;font-weight:300">+</span> Agregar código de trazabilidad
+      </button>
     </div>`;
 
+  // Cargar el detalle guardado. Los pedidos creados antes de este cambio no
+  // tienen filas hijas: se reconstruye una a partir del resumen del pedido.
+  const matsPedido = materias.filter(m => m.id_pedido === id);
+  if (matsPedido.length) matsPedido.forEach(m => addMateriaRow('e', m));
+  else addMateriaRow('e', {
+    mp_tipo_producto: p.mp_tipo_producto, mp_peso: p.mp_peso,
+    mp_cantidad_empleada: p.mp_cantidad_empleada, mp_lote_vto: p.mp_lote_vto,
+  });
+
+  const trzPedido = trazas.filter(t => t.id_pedido === id);
+  if (trzPedido.length) trzPedido.forEach(t => addTrazaRow('e', t));
+  else addTrazaRow('e', {
+    pt_lote_vto: p.pt_lote_vto, pt_cantidad_obtenida: p.pt_cantidad_obtenida,
+    pt_codigo_trazabilidad: p.pt_codigo_trazabilidad, pt_color_cinta: p.pt_color_cinta,
+  });
+
   reempaques.filter(r => r.id_pedido === id).forEach(r => addEditReempaque(r));
-  onTipoMPChangeEdit(true);
+  recalcularDetalle('e');
 
   document.getElementById('modal-editar').classList.add('open');
 
@@ -2278,21 +3211,9 @@ function abrirEditar(id) {
 }
 
 // Muestra la sub-sección de no conformes en el modal según el tipo de materia prima
-function onTipoMPChangeEdit(inicial) {
-  const tipo = document.getElementById('e-mp-tipo')?.value || '';
-  const wrap = document.getElementById('e-reempaque-wrap');
-  if (!wrap) return;
-  const aplica = MP_TIPOS_REEMPAQUE.includes(tipo);
-  wrap.style.display = aplica ? '' : 'none';
-  if (!aplica && !inicial) {
-    document.querySelectorAll('#edit-reempaque-container .cinta-item').forEach(item => {
-      const rid = item.dataset.reempaqueId;
-      if (rid) deletedReempaqueIds.push(rid);
-      item.remove();
-    });
-  }
-  if (!inicial) calcularCamposEdit();
-}
+// Sustituida por actualizarReempaqueVisible('e'), que mira TODAS las materias
+// primas de la lista. Se conserva el nombre por si quedara alguna llamada.
+function onTipoMPChangeEdit() { actualizarReempaqueVisible('e'); }
 
 function addEditReempaque(data) {
   editReempaqueCount++;
@@ -2353,20 +3274,23 @@ async function guardarEdicion() {
     ['e-fecha-corte','Fecha de corte'], ['e-fecha-entrega','Fecha de entrega'],
     ['e-cliente','Cliente'], ['e-menu','Menú'], ['e-operador','Operador'],
     ['e-responsable','Responsable'], ['e-mp-cantidad-oc','Cantidad según OC'],
-    ['e-mp-tipo','Tipo de producto (MP)'], ['e-mp-peso','Peso (MP)'],
-    ['e-mp-cant-emp','Cantidad empleada'], ['e-mp-lote','Lote / F. Vto. MP'],
     ['e-pt-tipo','Tipo de producto obtenido'], ['e-pt-pres','Presentación'],
     ['e-pt-peso','Peso (PT)'], ['e-pt-operacion','Operación'], ['e-pt-sellado','Sellado'],
-    ['e-pt-cant-obt','Cantidad obtenida'], ['e-pt-retal','Retal (libras)'],
-    ['e-pt-lote','L / F. Vto.'], ['e-pt-codigo','Código de trazabilidad'],
-    ['e-pt-color-cinta','Color de cinta'],
+    ['e-pt-retal','Retal (libras)'],
   ];
+  // Materias primas y trazabilidad viven en filas repetibles: las valida validarDetalle('e').
   const faltantes = obligatorios.filter(([cid]) => g(cid) === '').map(([, lbl]) => lbl);
   if (faltantes.length) {
     toast('Faltan campos obligatorios: ' + faltantes.slice(0,3).join(', ')
       + (faltantes.length > 3 ? ` y ${faltantes.length-3} más` : ''), 'error');
     return;
   }
+
+  const problema = validarDetalle('e');
+  if (problema) { toast(problema, 'error'); return; }
+
+  const fechasMalas = validarRangoFechas(document.getElementById('modal-editar'));
+  if (fechasMalas.length) { avisarFechasInvalidas(fechasMalas); return; }
 
   const btn = document.querySelector('.modal-footer .btn-primary');
   if (btn) { btn.disabled = true; btn.textContent = 'Guardando...'; }
@@ -2377,6 +3301,8 @@ async function guardarEdicion() {
 
     const now = new Date().toISOString();
     const c = calcularCamposEdit();
+    const mats = getMaterias('e');
+    const trz  = getTrazas('e');
 
     const pedidoObj = {
       id: editingId,
@@ -2387,32 +3313,39 @@ async function guardarEdicion() {
       operador:               safeText(g('e-operador')),
       responsable:            safeText(g('e-responsable')),
       mp_cantidad_oc:         g('e-mp-cantidad-oc'),
-      mp_tipo_producto:       safeText(g('e-mp-tipo')),
-      mp_peso:                g('e-mp-peso'),
-      mp_cantidad_empleada:   g('e-mp-cant-emp'),
+      mp_tipo_producto:       resumirCampo(mats, 'mp_tipo_producto'),
+      mp_peso:                resumirCampo(mats, 'mp_peso'),
+      mp_cantidad_empleada:   mats.reduce((a, m) => a + (parseFloat(m.mp_cantidad_empleada) || 0), 0),
       mp_libras_tajadas:      c.librasTajadas,
-      mp_lote_vto:            g('e-mp-lote'),
+      mp_lote_vto:            resumirCampo(mats, 'mp_lote_vto'),
       pt_tipo_producto:       safeText(g('e-pt-tipo')),
       pt_presentacion:        safeText(g('e-pt-pres')),
       pt_peso:                g('e-pt-peso'),
       pt_operacion:           safeText(g('e-pt-operacion')),
       pt_sellado:             safeText(g('e-pt-sellado')),
-      pt_cantidad_obtenida:   g('e-pt-cant-obt'),
+      pt_cantidad_obtenida:   c.cantObtenida,
       pt_libras_entregadas:   c.librasEntregadas,
       pt_retal_lb:            g('e-pt-retal'),
       pt_pct_retal:           c.pctRetal,
       pt_diferencia:          c.diferencia,
       pt_pct_diferencia:      c.pctDiferencia,
-      pt_lote_vto:            g('e-pt-lote'),
-      pt_codigo_trazabilidad: safeText(g('e-pt-codigo')),
-      pt_color_cinta:         safeText(g('e-pt-color-cinta')),
+      pt_cantidad_sobrante:   c.cantidadSobrante,
+      pt_lote_vto:            resumirCampo(trz, 'pt_lote_vto'),
+      pt_codigo_trazabilidad: resumirCampo(trz, 'pt_codigo_trazabilidad'),
+      pt_color_cinta:         resumirCampo(trz, 'pt_color_cinta'),
       estado: p.estado,
       creado_por: p.creado_por || '',
       fecha_creacion: p.fecha_creacion,
       ultima_edicion: now,
     };
 
-    await sheetsUpdate(`${HOJA_PEDIDOS}!A${rowNum}:AE${rowNum}`, [objToRow(pedidoObj, COLS_PEDIDOS)]);
+    await sheetsUpdate(`${HOJA_PEDIDOS}!A${rowNum}:${COL_FIN_PEDIDOS}${rowNum}`, [objToRow(pedidoObj, COLS_PEDIDOS)]);
+
+    // ── Detalle de materias primas y trazabilidad: se reescribe completo ──
+    await reemplazarDetalle(HOJA_MATERIAS, COLS_MATERIAS, editingId,
+      mats.map((m, i) => ({ ...m, id_materia: editingId + '_M' + (i + 1), id_pedido: editingId, fecha_reg: now })), now);
+    await reemplazarDetalle(HOJA_TRAZAS, COLS_TRAZAS, editingId,
+      trz.map((t, i) => ({ ...t, id_traza: editingId + '_T' + (i + 1), id_pedido: editingId, fecha_reg: now })), now);
 
     // ── Reempaque: actualizar existentes, agregar nuevos y eliminar quitados ──
     const items = document.querySelectorAll('#edit-reempaque-container .cinta-item');
@@ -2489,8 +3422,8 @@ async function cambiarEstado() {
     const rowNum = await sheetsFindRow(HOJA_PEDIDOS, 0, editingId);
     if (rowNum < 0) return;
     // Columna AB = estado · columna AE = ultima_edicion
-    await sheetsUpdate(`${HOJA_PEDIDOS}!AB${rowNum}`, [[nuevoEstado]]);
-    await sheetsUpdate(`${HOJA_PEDIDOS}!AE${rowNum}`, [[new Date().toISOString()]]);
+    await sheetsUpdate(`${HOJA_PEDIDOS}!${colLetra(COLS_PEDIDOS.indexOf('estado'))}${rowNum}`, [[nuevoEstado]]);
+    await sheetsUpdate(`${HOJA_PEDIDOS}!${colLetra(COLS_PEDIDOS.indexOf('ultima_edicion'))}${rowNum}`, [[new Date().toISOString()]]);
     toast(`Pedido marcado como ${nuevoEstado}`, 'success');
     closeModal();
     await loadData();
@@ -2504,6 +3437,26 @@ async function cambiarEstado() {
 // ═══════════════════════════════════════════════════════════
 // SHEET METADATA + ELIMINACIÓN DE FILAS
 // ═══════════════════════════════════════════════════════════
+// Para las hojas de detalle no se hace edición fila a fila: se borran todas las
+// del pedido y se vuelven a escribir. Es más simple y no deja filas huérfanas.
+async function reemplazarDetalle(hoja, cols, idPedido, filas, now) {
+  const data = await sheetsGet(`${hoja}!B:B`);   // columna B = id_pedido
+  const rows = data.values || [];
+  const nums = [];
+  for (let i = 1; i < rows.length; i++) {
+    if (String(rows[i][0] || '').trim() === idPedido) nums.push(i + 1);
+  }
+  if (nums.length) {
+    const sid = await obtenerSheetId(hoja);
+    await sheetsBatchUpdate(nums.sort((a, b) => b - a).map(row => ({
+      deleteDimension: { range: { sheetId: sid, dimension: 'ROWS', startIndex: row - 1, endIndex: row } }
+    })));
+  }
+  if (filas.length) {
+    await sheetsAppend(`${hoja}!A:${colLetra(cols.length - 1)}`, filas.map(f => objToRow(f, cols)));
+  }
+}
+
 async function obtenerSheetId(sheetName) {
   if (sheetIds[sheetName] !== undefined) return sheetIds[sheetName];
   const r = await apiFetch(
@@ -2513,6 +3466,10 @@ async function obtenerSheetId(sheetName) {
   (data.sheets || []).forEach(sh => { sheetIds[sh.properties.title] = sh.properties.sheetId; });
   return sheetIds[sheetName];
 }
+
+// Alias con nombre honesto: este endpoint sirve para cualquier operación
+// estructural, no solo para borrar filas.
+async function sheetsBatchUpdate(requests) { return eliminarFilasBatch(requests); }
 
 async function eliminarFilasBatch(requests) {
   const r = await apiFetch(
@@ -2531,15 +3488,23 @@ async function eliminarPedido(id) {
     return;
   }
   const nReemp = reempaques.filter(r => r.id_pedido === id).length;
+  const nMat   = materias.filter(m => m.id_pedido === id).length;
+  const nTrz   = trazas.filter(t => t.id_pedido === id).length;
+  const detalle = [];
+  if (nMat)   detalle.push(nMat + ' materia(s) prima(s)');
+  if (nTrz)   detalle.push(nTrz + ' código(s) de trazabilidad');
+  if (nReemp) detalle.push(nReemp + ' registro(s) de unidades no conformes');
   const msg = '¿Eliminar el pedido de ' + p.cliente + ' — ' + (p.pt_tipo_producto || '') + '?'
-    + (nReemp > 0 ? '\nSe eliminarán también ' + nReemp + ' registro(s) de unidades no conformes.' : '')
+    + (detalle.length ? '\nSe eliminarán también ' + detalle.join(', ') + '.' : '')
     + '\n\nEsta acción no se puede deshacer.';
   if (!confirm(msg)) return;
 
   try {
-    const [pedData, reempData] = await Promise.all([
+    const [pedData, reempData, matData, trzData] = await Promise.all([
       sheetsGet(`${HOJA_PEDIDOS}!A:A`),
       sheetsGet(`${HOJA_REEMPAQUE}!B:B`),
+      sheetsGet(`${HOJA_MATERIAS}!B:B`),
+      sheetsGet(`${HOJA_TRAZAS}!B:B`),
     ]);
 
     const pedRows = pedData.values || [];
@@ -2555,13 +3520,30 @@ async function eliminarPedido(id) {
       if ((reempRows[i][0] || '').trim() === id) reempNums.push(i + 1);
     }
 
+    const filasDe = data => {
+      const rows = data.values || [];
+      const nums = [];
+      for (let i = 1; i < rows.length; i++) {
+        if (String(rows[i][0] || '').trim() === id) nums.push(i + 1);
+      }
+      return nums;
+    };
+    const matNums = filasDe(matData);
+    const trzNums = filasDe(trzData);
+
     const pedSheetId   = await obtenerSheetId(HOJA_PEDIDOS);
     const reempSheetId = await obtenerSheetId(HOJA_REEMPAQUE);
+    const matSheetId   = await obtenerSheetId(HOJA_MATERIAS);
+    const trzSheetId   = await obtenerSheetId(HOJA_TRAZAS);
+
+    const borrar = (sheetId, filas) => filas.sort((a, b) => b - a).map(row => ({
+      deleteDimension: { range: { sheetId, dimension: 'ROWS', startIndex: row - 1, endIndex: row } }
+    }));
 
     const requests = [
-      ...reempNums.sort((a, b) => b - a).map(row => ({
-        deleteDimension: { range: { sheetId: reempSheetId, dimension: 'ROWS', startIndex: row - 1, endIndex: row } }
-      })),
+      ...borrar(reempSheetId, reempNums),
+      ...borrar(matSheetId, matNums),
+      ...borrar(trzSheetId, trzNums),
       { deleteDimension: { range: { sheetId: pedSheetId, dimension: 'ROWS', startIndex: pedRow - 1, endIndex: pedRow } } }
     ];
 
@@ -2787,7 +3769,7 @@ function applyResumenFilters() {
     mapa[k].librasEnt += parseFloat(p.pt_libras_entregadas) || 0;
   });
   const rows = Object.values(mapa).sort((a, b) => b.cantObt - a.cantObt);
-  const pBadge = { BLOQUE:'badge-blue', TAJADO:'badge-green', DEDO:'badge-amber', 'PORCIÓN':'badge-red' };
+
 
   const dataDiv = document.getElementById('resumen-data');
   if (!dataDiv) return;
@@ -2819,18 +3801,18 @@ function applyResumenFilters() {
               ${r.listaPedidos.sort((a,b)=>(b.fecha_corte||'').localeCompare(a.fecha_corte||'')).map(p => {
                 const esAb = p.estado === 'ABIERTO'; const esCe = p.estado === 'CERRADO';
                 const retal = parseFloat(p.pt_retal_lb)||0;
-                const bcls = pBadge[p.pt_presentacion] || 'badge-gray';
+                const bcls = presClase(p.pt_presentacion);
                 return `<tr>
                   <td style="color:var(--text2)">${fmtFecha(p.fecha_corte)}</td>
-                  <td><strong>${esc(p.pt_tipo_producto||'—')}</strong></td>
-                  <td>${p.pt_presentacion?`<span class="badge ${bcls}">${esc(p.pt_presentacion)}</span>`:'—'}</td>
+                  <td title="${esc(p.pt_tipo_producto||'')}"><strong>${esc(nombreCorto(p.pt_tipo_producto)||'—')}</strong></td>
+                  <td>${p.pt_presentacion?`<span class="${bcls}">${esc(p.pt_presentacion)}</span>`:'—'}</td>
                   <td style="color:var(--text2)">${fmtFecha(p.fecha_entrega)}</td>
                   <td style="text-align:right">${(parseFloat(p.mp_cantidad_oc)||0).toLocaleString('es-CO')}</td>
                   <td style="text-align:right">${(parseFloat(p.pt_cantidad_obtenida)||0).toLocaleString('es-CO')}</td>
                   <td style="text-align:right;${retal>0?'color:var(--danger);font-weight:600':''}">${retal>0?fmtNum(retal,2):'—'}</td>
                   <td>${esAb?'<span class="estado-badge estado-abierto"><span class="dot dot-abierto"></span>Abierto</span>'
                       :esCe?'<span class="estado-badge estado-cerrado"><span class="dot dot-cerrado"></span>Cerrado</span>'
-                      :'<span class="estado-badge" style="background:var(--surface2);color:var(--text3);font-size:10px">Sin estado</span>'}</td>
+                      :'<span class="estado-badge estado-sin">Sin estado</span>'}</td>
                   <td><button class="btn btn-xs" onclick="abrirEditar('${p.id}')">Ver</button></td>
                 </tr>`;
               }).join('')}
@@ -3158,7 +4140,7 @@ function renderDashboard() {
   // Charts
   const colorEnt   = '#2d5a7b';
   const colorRetal = '#9B2335';
-  const colorKilos = '#7DA4C6';
+  const colorKilos = '#8FB3D0';
 
   destruirChart('ch-retal-prod');
   dashCharts['ch-retal-prod'] = new Chart(document.getElementById('ch-retal-prod'), {
@@ -3229,7 +4211,7 @@ function renderDashboard() {
 
     const mesLabels = [...new Set(Object.values(porMesProd).map(r => r.mes))].sort();
     const prodLabels = [...new Set(Object.values(porMesProd).map(r => r.prod))].sort();
-    const palette = ['#2dd4bf','#a78bfa','#f59e0b','#ef4444','#60a5fa','#34d399'];
+    const palette = ['#1b354a','#4d7ea6','#8FB3D0','#9B2335','#7D4F00','#2f7d5c'];
 
     const dsUnidades = prodLabels.map((prod, i) => ({
       label: prod + ' · Unidades',
@@ -3282,8 +4264,8 @@ function renderDashboard() {
           }
         },
         scales: {
-          x: { ticks: { font: { family: 'Plus Jakarta Sans', size: 11 } }, grid: { color: 'rgba(0,0,0,.05)' } },
-          y:  { position: 'left',  ticks: { font: { family: 'Plus Jakarta Sans', size: 11 } }, grid: { color: 'rgba(0,0,0,.05)' }, title: { display: true, text: 'Unidades / Kilos', font: { size: 10 } } },
+          x: { ticks: { font: { family: 'Plus Jakarta Sans', size: 11 } }, grid: { color: 'rgba(182,193,210,.45)' } },
+          y:  { position: 'left',  ticks: { font: { family: 'Plus Jakarta Sans', size: 11 } }, grid: { color: 'rgba(182,193,210,.45)' }, title: { display: true, text: 'Unidades / Kilos', font: { size: 10 } } },
           y2: { position: 'right', ticks: { font: { family: 'Plus Jakarta Sans', size: 11 }, callback: v => v + '%' }, grid: { drawOnChartArea: false }, title: { display: true, text: '% Retal', font: { size: 10 } } }
         }
       }
@@ -3355,15 +4337,25 @@ function renderDashboard() {
               <td style="${tdN};color:var(--danger);font-weight:600">${fmtNum(kgs,2)}</td>
             </tr>`;
           }).join('')}
-          <tr style="background:var(--accent-light)">
-            <td colspan="4" style="padding:7px 12px;font-weight:700;font-size:11px;color:var(--accent);border-top:2px solid var(--border)">TOTAL</td>
-            <td style="${tdN};font-weight:700;color:var(--accent);border-top:2px solid var(--border)">${fmtNum(pedConRetal.reduce((a,p)=>a+(parseFloat(p.pt_retal_lb)||0),0),2)}</td>
-            <td style="${tdN};font-weight:700;color:var(--accent);border-top:2px solid var(--border)">${fmtNum(pedConRetal.reduce((a,p)=>a+(parseFloat(p.pt_retal_lb)||0)*0.5,0),2)}</td>
+          <tr style="background:rgba(182,193,210,.28)">
+            <td colspan="4" style="padding:7px 12px;font-weight:700;font-size:11px;color:var(--accent);border-top:2px solid var(--nm-dark-soft)">TOTAL</td>
+            <td style="${tdN};font-weight:700;color:var(--accent);border-top:2px solid var(--nm-dark-soft)">${fmtNum(pedConRetal.reduce((a,p)=>a+(parseFloat(p.pt_retal_lb)||0),0),2)}</td>
+            <td style="${tdN};font-weight:700;color:var(--accent);border-top:2px solid var(--nm-dark-soft)">${fmtNum(pedConRetal.reduce((a,p)=>a+(parseFloat(p.pt_retal_lb)||0)*0.5,0),2)}</td>
           </tr>
         </tbody>
       </table>`;
     }
   }
+}
+
+// Acorta etiquetas de eje: quita el prefijo comun ("QUESO FRESCO VARIEDADES: ")
+// para que se distinga la variedad, y recorta lo que siga sobrando.
+function recortarEtiqueta(value) {
+  let l = this.getLabelForValue(value);
+  if (typeof l !== 'string') return l;
+  const i = l.indexOf(': ');
+  if (i > 0 && l.length - i > 6) l = l.slice(i + 2);
+  return l.length > 30 ? l.slice(0, 28) + '...' : l;
 }
 
 function chartBaseOptions(opts) {
@@ -3374,7 +4366,7 @@ function chartBaseOptions(opts) {
     responsive: true,
     maintainAspectRatio: false,
     plugins: {
-      legend: { position: 'bottom', labels: { font: { family: 'Plus Jakarta Sans', size: 11 } } },
+      legend: { position: 'bottom', labels: { font: { family: 'Plus Jakarta Sans', size: 11 }, color: '#5b6f84', usePointStyle: true, pointStyleWidth: 10, boxHeight: 7, padding: 16 } },
       tooltip: {
         callbacks: {
           label: (ctx) => `${ctx.dataset.label}: ${Number(ctx.parsed[horizontal?'x':'y']).toLocaleString('es-CO',{maximumFractionDigits:2})}${suffix}`
@@ -3382,8 +4374,8 @@ function chartBaseOptions(opts) {
       }
     },
     scales: {
-      x: { ticks: { font: { family: 'Plus Jakarta Sans', size: 11 } }, grid: { color: 'rgba(0,0,0,.05)' } },
-      y: { ticks: { font: { family: 'Plus Jakarta Sans', size: 11 } }, grid: { color: 'rgba(0,0,0,.05)' } }
+      x: { ticks: { font: { family: 'Plus Jakarta Sans', size: 11 }, color: '#5b6f84', callback: recortarEtiqueta }, grid: { color: 'rgba(182,193,210,.45)' } },
+      y: { ticks: { font: { family: 'Plus Jakarta Sans', size: 11 }, color: '#5b6f84', callback: recortarEtiqueta }, grid: { color: 'rgba(182,193,210,.45)' } }
     }
   };
 }
@@ -3426,25 +4418,43 @@ function renderCintas() {
   const tbody = document.getElementById('cintas-body');
   const countEl = document.getElementById('c-count');
 
-  let lista = pedidos.slice();
+  // Un renglón por CÓDIGO, no por pedido: un pedido puede tener varios.
+  // Los pedidos anteriores a este cambio no tienen filas de trazabilidad,
+  // así que se usa el código guardado en el propio pedido.
+  const porPedido = {};
+  trazas.forEach(t => { (porPedido[t.id_pedido] = porPedido[t.id_pedido] || []).push(t); });
+
+  let lista = [];
+  pedidos.forEach(p => {
+    const suyas = porPedido[p.id];
+    if (suyas && suyas.length) suyas.forEach(t => lista.push({ p, t }));
+    else lista.push({ p, t: {
+      pt_codigo_trazabilidad: p.pt_codigo_trazabilidad,
+      pt_color_cinta: p.pt_color_cinta,
+      pt_cantidad_obtenida: p.pt_cantidad_obtenida,
+      pt_lote_vto: p.pt_lote_vto,
+    }});
+  });
+  const total = lista.length;
 
   if (buscar) {
-    lista = lista.filter(p => [
-      p.pt_codigo_trazabilidad, p.pt_color_cinta, p.fecha_corte, p.mp_tipo_producto,
-      p.cliente, p.pt_tipo_producto, p.id, p.pt_cantidad_obtenida
+    lista = lista.filter(({ p, t }) => [
+      t.pt_codigo_trazabilidad, t.pt_color_cinta, t.pt_lote_vto, p.fecha_corte,
+      p.mp_tipo_producto, p.cliente, p.pt_tipo_producto, p.id, t.pt_cantidad_obtenida
     ].join(' ').toLowerCase().includes(buscar));
   }
 
   lista.sort((a, b) => {
-    if (orden === 'codigo') return (a.pt_codigo_trazabilidad || '').localeCompare(b.pt_codigo_trazabilidad || '');
-    const da = a.fecha_corte || '';
-    const db = b.fecha_corte || '';
+    if (orden === 'codigo')
+      return (a.t.pt_codigo_trazabilidad || '').localeCompare(b.t.pt_codigo_trazabilidad || '');
+    const da = a.p.fecha_corte || '';
+    const db = b.p.fecha_corte || '';
     if (orden === 'antiguos') return da.localeCompare(db);
     return db.localeCompare(da);
   });
 
   if (countEl) {
-    countEl.textContent = buscar ? `${lista.length} de ${pedidos.length} códigos` : `${pedidos.length} códigos en total`;
+    countEl.textContent = buscar ? `${lista.length} de ${total} códigos` : `${total} códigos en total`;
   }
 
   if (!lista.length) {
@@ -3454,14 +4464,14 @@ function renderCintas() {
     return;
   }
 
-  tbody.innerHTML = lista.map(p => `<tr>
-      <td class="mono" style="font-size:12px"><strong>${esc(p.pt_codigo_trazabilidad || '—')}</strong></td>
-      <td>${esc(p.pt_color_cinta || '—')}</td>
-      <td style="text-align:right">${(parseFloat(p.pt_cantidad_obtenida)||0).toLocaleString('es-CO')}</td>
+  tbody.innerHTML = lista.map(({ p, t }) => `<tr>
+      <td class="mono" style="font-size:12px"><strong>${esc(t.pt_codigo_trazabilidad || '—')}</strong></td>
+      <td>${esc(t.pt_color_cinta || '—')}</td>
+      <td style="text-align:right">${(parseFloat(t.pt_cantidad_obtenida)||0).toLocaleString('es-CO')}</td>
       <td>${esc(p.cliente || '—')}</td>
-      <td style="font-size:12px">${esc(p.pt_tipo_producto || '—')}</td>
+      <td style="font-size:12px" title="${esc(p.pt_tipo_producto||'')}">${esc(nombreCorto(p.pt_tipo_producto)||'—')}</td>
       <td style="color:var(--text2);font-size:12px">${fmtFecha(p.fecha_corte)}</td>
-      <td style="color:var(--text2);font-size:12px">${esc(p.mp_tipo_producto || '—')}</td>
+      <td style="color:var(--text2);font-size:12px" title="${esc(p.mp_tipo_producto||'')}">${esc(nombreCorto(p.mp_tipo_producto)||'—')}</td>
       <td style="color:var(--text2);font-size:12px">${fmtFecha(p.fecha_entrega)}</td>
       <td><button class="btn btn-xs" onclick="abrirEditar('${p.id}')">Ver pedido</button></td>
     </tr>`).join('');
@@ -3609,16 +4619,16 @@ function generarXLSX(pedidosFiltrados) {
     'N°','ID Pedido','Estado','Fecha de corte','Fecha de entrega','Cliente','Menú','Operador','Responsable',
     'Cant. según OC','Tipo de producto (MP)','Peso MP (Gr)','Cant. empleada','Libras tajadas','Lote / F.Vto. MP',
     'Tipo de producto obtenido','Presentación','Peso PT (Gr)','Operación','Sellado','Cantidad obtenida',
-    'Libras entregadas','Retal (lb)','% Retal','Diferencia (lb)','% Diferencia',
+    'Libras entregadas','Retal (lb)','% Retal','Diferencia (lb)','% Diferencia','Cantidad sobrante',
     'L / F. Vto.','Código de trazabilidad','Color de cinta','Creado por','Fecha creación','Última edición'
   ];
   const pedidosRows = pedidosFiltrados.map((p, i) => [
     i + 1, p.id, p.estado, p.fecha_corte, p.fecha_entrega, p.cliente, p.menu, p.operador, p.responsable,
-    num(p.mp_cantidad_oc), p.mp_tipo_producto, num(p.mp_peso), num(p.mp_cantidad_empleada),
+    num(p.mp_cantidad_oc), p.mp_tipo_producto, p.mp_peso, num(p.mp_cantidad_empleada),
     num(p.mp_libras_tajadas), p.mp_lote_vto,
     p.pt_tipo_producto, p.pt_presentacion, num(p.pt_peso), p.pt_operacion, p.pt_sellado,
     num(p.pt_cantidad_obtenida), num(p.pt_libras_entregadas), num(p.pt_retal_lb), num(p.pt_pct_retal),
-    num(p.pt_diferencia), num(p.pt_pct_diferencia),
+    num(p.pt_diferencia), num(p.pt_pct_diferencia), num(p.pt_cantidad_sobrante),
     p.pt_lote_vto, p.pt_codigo_trazabilidad, p.pt_color_cinta,
     p.creado_por || '', p.fecha_creacion || '', p.ultima_edicion || ''
   ]);
@@ -3639,6 +4649,34 @@ function generarXLSX(pedidosFiltrados) {
   const wsReemp = XLSX.utils.aoa_to_sheet([reempHeader, ...reempRows]);
   wsReemp['!cols'] = reempHeader.map(h => ({ wch: Math.min(Math.max(h.length + 2, 10), 32) }));
   XLSX.utils.book_append_sheet(wb, wsReemp, 'REEMPAQUE');
+
+  // ── HOJA 3: MATERIAS PRIMAS (una fila por materia prima empleada) ──
+  const matFil = materias.filter(m => ids.has(m.id_pedido));
+  const matHeader = ['N°','ID Materia','ID Pedido','Cliente','Fecha de corte',
+    'Tipo de producto (MP)','Peso MP (Gr)','Cantidad empleada','Libras tajadas ind.','Lote / F.Vto.'];
+  const matRows = matFil.map((m, i) => {
+    const p = pedidosFiltrados.find(x => x.id === m.id_pedido) || {};
+    return [i+1, m.id_materia, m.id_pedido, p.cliente || '', p.fecha_corte || '',
+      m.mp_tipo_producto || '', num(m.mp_peso), num(m.mp_cantidad_empleada),
+      num(m.mp_libras_tajadas), m.mp_lote_vto || ''];
+  });
+  const wsMat = XLSX.utils.aoa_to_sheet([matHeader, ...matRows]);
+  wsMat['!cols'] = matHeader.map(h => ({ wch: Math.min(Math.max(h.length + 2, 10), 40) }));
+  XLSX.utils.book_append_sheet(wb, wsMat, 'MATERIAS PRIMAS');
+
+  // ── HOJA 4: TRAZABILIDAD (una fila por código) ──
+  const trzFil = trazas.filter(t => ids.has(t.id_pedido));
+  const trzHeader = ['N°','ID Traza','ID Pedido','Cliente','Fecha de corte','Producto terminado',
+    'Presentación','L / F. Vto.','Cantidad obtenida ind.','Código de trazabilidad','Color de cinta'];
+  const trzRows = trzFil.map((t, i) => {
+    const p = pedidosFiltrados.find(x => x.id === t.id_pedido) || {};
+    return [i+1, t.id_traza, t.id_pedido, p.cliente || '', p.fecha_corte || '',
+      p.pt_tipo_producto || '', p.pt_presentacion || '', t.pt_lote_vto || '',
+      num(t.pt_cantidad_obtenida), t.pt_codigo_trazabilidad || '', t.pt_color_cinta || ''];
+  });
+  const wsTrz = XLSX.utils.aoa_to_sheet([trzHeader, ...trzRows]);
+  wsTrz['!cols'] = trzHeader.map(h => ({ wch: Math.min(Math.max(h.length + 2, 10), 40) }));
+  XLSX.utils.book_append_sheet(wb, wsTrz, 'TRAZABILIDAD');
 
   return XLSX.write(wb, { bookType: 'xlsx', type: 'base64' });
 }
@@ -3665,9 +4703,11 @@ async function enviarEmailGmail(destinos, asunto, nombreArchivo, xlsxBase64, tot
     '  - Fecha de generacion: ' + fechaStr,
     '  - Generado por      : ' + (userInfo?.name || userInfo?.email || 'Sistema'),
     '',
-    'El archivo contiene 2 hojas:',
-    '  1. PEDIDOS   - Datos principales de cada pedido',
-    '  2. REEMPAQUE - Unidades no conformes a reempacar',
+    'El archivo contiene 4 hojas:',
+    '  1. PEDIDOS         - Datos principales de cada pedido',
+    '  2. REEMPAQUE       - Unidades no conformes a reempacar',
+    '  3. MATERIAS PRIMAS - Detalle de cada materia prima empleada',
+    '  4. TRAZABILIDAD    - Detalle de cada codigo de trazabilidad',
     '',
     '---',
     'Seguimiento de Produccion | Inversiones Peniel | Planta Mosquera',
