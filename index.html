@@ -479,7 +479,7 @@ table.data-table {
 
 /* ── Métricas ── */
 .metrics-grid {
-  display: grid; grid-template-columns: repeat(4, 1fr);
+  display: grid; grid-template-columns: repeat(5, 1fr);
   gap: 18px; margin-bottom: 24px;
 }
 .metric-card {
@@ -824,7 +824,8 @@ table.data-table {
   .metric-value { font-size: 22px; }
 }
 @media (max-width: 1200px) {
-  .dash-metrics, .metrics-grid { grid-template-columns: repeat(2, 1fr); }
+  .dash-metrics { grid-template-columns: repeat(2, 1fr); }
+  .metrics-grid { grid-template-columns: repeat(3, 1fr); }
   .dash-grid { grid-template-columns: 1fr; }
   .form-grid-4 { grid-template-columns: 1fr 1fr; }
 }
@@ -867,8 +868,10 @@ table.data-table {
    "INVERSIONES PENIEL" del logo es ilegible y solo ensucia. */
 .brand-mark img {
   width: 100%; height: 100%; object-fit: contain; display: block;
-  transform: translateY(14%) scale(1.62);
 }
+/* Solo el logo completo necesita recorte: el archivo sin letras ya viene
+   encuadrado. La clase la pone cargarMarca() según cuál se haya cargado. */
+.brand-mark img.recortar { transform: translateY(14%) scale(1.62); }
 .brand-text { flex: 1; min-width: 0; overflow: hidden; }
 
 .sidebar-toggle {
@@ -1096,11 +1099,13 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
 }
 
 /* ── Barra de filtros del historial: dos filas ── */
-#hist-filter-bar { flex-direction: column; align-items: stretch; gap: 14px; }
+#hist-filter-bar, #dash-filter-bar, #resumen-filter-bar {
+  flex-direction: column; align-items: stretch; gap: 14px;
+}
 .filter-row {
   display: flex; gap: 12px; flex-wrap: wrap; align-items: center; inline-size: 100%;
 }
-#h-buscar { flex: 1 1 320px; max-inline-size: 460px; }
+#h-buscar, #dash-buscar, #r-buscar { flex: 1 1 320px; max-inline-size: 460px; }
 
 /* ── Encabezados ordenables ── */
 .th-ordenable { cursor: pointer; user-select: none; transition: color .15s ease; }
@@ -1163,7 +1168,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
   <!-- Sidebar -->
   <div class="sidebar">
     <div class="sidebar-logo">
-      <span class="brand-mark"><img src="logo.png" alt="Inversiones Peniel"></span>
+      <span class="brand-mark"><img id="brand-img" alt="Inversiones Peniel"></span>
       <div class="brand-text">
         <div class="sidebar-logo-title">Seguimiento Producción</div>
         <div class="sidebar-logo-sub">Planta Mosquera · 2026</div>
@@ -1232,6 +1237,10 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
         <div class="topbar-date" id="topbar-date"></div>
       </div>
       <div class="topbar-right">
+        <button id="btn-abrir-informe" class="btn btn-primary btn-sm" onclick="abrirModalInforme()"
+                style="gap:7px;display:none">
+          <span style="font-size:14px">✉</span> Enviar informe por correo
+        </button>
         <div id="sync-status" class="text-muted" style="font-size:11px"></div>
         <button class="btn btn-sm" onclick="loadData()">Actualizar</button>
       </div>
@@ -1492,7 +1501,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
                 <th data-orden="pt_libras_entregadas" style="text-align:right">Lb. Entregadas</th>
                 <th data-orden="pt_libras_entregadas" style="text-align:right">Kg. Entregados</th>
                 <th data-orden="mp_libras_tajadas" style="text-align:right">Lb. Tajadas</th>
-                <th data-orden="pt_retal_lb" style="text-align:right">Retal (lb)</th>
+                <th data-orden="pt_retal_lb" style="text-align:right">Retal (kg)</th>
                 <th data-orden="pt_pct_retal" style="text-align:right">% Retal</th>
                 <th data-orden="pt_diferencia" style="text-align:right">Diferencia</th>
                 <th data-orden="pt_pct_diferencia" style="text-align:right">% Dif.</th>
@@ -1519,11 +1528,6 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
 
     <!-- ═══ VIEW: DASHBOARD ═══ -->
     <div class="view" id="view-dashboard">
-      <div style="display:flex;justify-content:flex-end;margin-bottom:16px">
-        <button id="btn-abrir-informe" class="btn btn-primary" onclick="abrirModalInforme()" style="gap:8px">
-          <span style="font-size:15px">✉</span> Enviar informe por correo
-        </button>
-      </div>
       <div id="dashboard-content">
         <div class="empty-state"><div class="empty-state-text">Cargando dashboard...</div></div>
       </div>
@@ -1765,6 +1769,67 @@ document.addEventListener('input', e => {
   }
 });
 
+// Nombres cortos de cliente para que quepan en el eje de las gráficas.
+// En las tablas se sigue mostrando el nombre completo.
+const CLIENTE_CORTO = {
+  'BIMBO DE COLOMBIA S.A.':              'BIMBO',
+  'COMERCIALIZADORA NUTRIMOS S.A.':      'NUTRIMOS',
+  'D1 SAS':                              'D1',
+  'DON MAIZ S.A.S.':                     'DON MAIZ',
+  'INVERJENOS S.A.S.':                   'INVERJENOS',
+  'SECRETARIA DE EDUCACIÓN DEL DISTRITO': 'SED',
+};
+function clienteCorto(v) {
+  const s = String(v || '').trim();
+  return CLIENTE_CORTO[s.toUpperCase()] || s || '—';
+}
+
+// En las gráficas se quita además "SEMIGRASO SEMIBLANDO/SEMIDURO" para que
+// la etiqueta quepa: lo que distingue al producto es lo que va después.
+function productoGrafica(v) {
+  const corto = nombreCorto(v);
+  const sin = corto.replace(/^SEMIGRASO\s+SEMI(BLANDO|DURO)\s+/i, '').trim();
+  return sin || corto;
+}
+
+// Dibuja fuera de la torta el valor y el porcentaje, con su línea guía.
+// Chart.js no trae etiquetas de datos y no queremos cargar otra librería.
+const etiquetasTorta = {
+  id: 'etiquetasTorta',
+  afterDatasetsDraw(chart) {
+    const meta = chart.getDatasetMeta(0);
+    const datos = chart.data.datasets[0].data;
+    const total = datos.reduce((a, b) => a + (b || 0), 0);
+    if (!total) return;
+    const ctx = chart.ctx;
+    ctx.save();
+    ctx.font = '600 11px "Plus Jakarta Sans", sans-serif';
+    ctx.fillStyle = '#5b6f84';
+    ctx.strokeStyle = 'rgba(120,134,155,.6)';
+    ctx.lineWidth = 1;
+    meta.data.forEach((arco, i) => {
+      const v = datos[i] || 0;
+      const pct = v / total * 100;
+      if (!v || pct < 2) return;          // porciones demasiado finas
+      const ang = (arco.startAngle + arco.endAngle) / 2;
+      const r = arco.outerRadius;
+      const x0 = arco.x + Math.cos(ang) * r * 0.96;
+      const y0 = arco.y + Math.sin(ang) * r * 0.96;
+      const x1 = arco.x + Math.cos(ang) * (r + 15);
+      const y1 = arco.y + Math.sin(ang) * (r + 15);
+      const derecha = Math.cos(ang) >= 0;
+      const x2 = x1 + (derecha ? 13 : -13);
+      ctx.beginPath();
+      ctx.moveTo(x0, y0); ctx.lineTo(x1, y1); ctx.lineTo(x2, y1);
+      ctx.stroke();
+      ctx.textAlign = derecha ? 'left' : 'right';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(`${v.toLocaleString('es-CO')} (${fmtNum(pct, 2)}%)`, x2 + (derecha ? 4 : -4), y1);
+    });
+    ctx.restore();
+  }
+};
+
 function esc(v) {
   return String(v ?? '')
     .replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;')
@@ -1964,6 +2029,23 @@ function initTokenClient() {
   });
 }
 
+// El logo sin letras se subió al repositorio; como no sabemos con qué nombre
+// exacto quedó, se prueban las variantes más probables y se cae al logo
+// completo (recortado por CSS) si ninguna existe.
+// logosl.png es el logo sin letras. Si algún día cambia de nombre, basta con
+// ponerlo aquí; logo.png queda como respaldo (se recorta por CSS).
+const ARCHIVOS_MARCA = ['logosl.png','logo.png'];
+document.addEventListener('DOMContentLoaded', () => cargarMarca(0));
+function cargarMarca(i) {
+  const img = document.getElementById('brand-img');
+  if (!img || i >= ARCHIVOS_MARCA.length) return;
+  const archivo = ARCHIVOS_MARCA[i];
+  img.onerror = () => cargarMarca(i + 1);
+  img.onload = () => { img.onerror = null; };
+  img.classList.toggle('recortar', archivo === 'logo.png');
+  img.src = encodeURI(archivo);
+}
+
 function actualizarUIUsuario(info) {
   const name = info.name || info.email || 'Usuario';
   document.getElementById('user-name').textContent = name.split(' ')[0];
@@ -1975,8 +2057,7 @@ function actualizarUIUsuario(info) {
     else roleEl.textContent = '';
   }
   // El botón de informe solo lo ven los ADMIN
-  const btnInforme = document.getElementById('btn-abrir-informe');
-  if (btnInforme) btnInforme.style.display = isAdmin() ? '' : 'none';
+  actualizarBotonInforme();
 }
 
 function guardarSesion() {
@@ -2342,6 +2423,14 @@ function setSyncStatus(msg) {
 // ═══════════════════════════════════════════════════════════
 // NAVIGATION
 // ═══════════════════════════════════════════════════════════
+// El botón de informe vive en la barra superior: solo aplica al dashboard
+function actualizarBotonInforme() {
+  const btn = document.getElementById('btn-abrir-informe');
+  if (!btn) return;
+  const enDashboard = document.getElementById('view-dashboard')?.classList.contains('active');
+  btn.style.display = (enDashboard && isAdmin()) ? '' : 'none';
+}
+
 function showView(v) {
   document.querySelectorAll('.view').forEach(el => el.classList.remove('active'));
   document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
@@ -2349,6 +2438,7 @@ function showView(v) {
   const navEl = document.getElementById('nav-' + v);
   if (viewEl) viewEl.classList.add('active');
   if (navEl) navEl.classList.add('active');
+  actualizarBotonInforme();
   const titles = {
     nuevo: 'Nuevo pedido', historial: 'Historial diario',
     resumen: 'Resumen por cliente', cintas: 'Búsqueda de códigos',
@@ -3025,6 +3115,9 @@ function applyHistFilters() {
   const totRetal     = fil.reduce((a,p) => a + (parseFloat(p.pt_retal_lb)||0), 0);
   const abiertos     = fil.filter(p => p.estado === 'ABIERTO').length;
 
+  const totLibrasTaj = fil.reduce((a,p) => a + (parseFloat(p.mp_libras_tajadas)||0), 0);
+  const pctRetalProm = totLibrasTaj > 0 ? (totRetal / totLibrasTaj) * 100 : 0;
+
   document.getElementById('metrics-grid').innerHTML = `
     <div class="metric-card">
       <div class="metric-label">Pedidos</div>
@@ -3037,14 +3130,19 @@ function applyHistFilters() {
       <div class="metric-sub">unidades</div>
     </div>
     <div class="metric-card">
-      <div class="metric-label">Libras entregadas</div>
-      <div class="metric-value">${fmtNum(totLibrasEnt,1)}</div>
-      <div class="metric-sub">${fmtNum(totLibrasEnt*LB_TO_KG,1)} kg</div>
+      <div class="metric-label">Kilos entregados</div>
+      <div class="metric-value">${fmtNum(totLibrasEnt * LB_TO_KG, 1)}</div>
+      <div class="metric-sub">${fmtNum(totLibrasEnt, 1)} lb</div>
     </div>
     <div class="metric-card">
-      <div class="metric-label">Retal total</div>
-      <div class="metric-value" style="${totRetal>0?'color:var(--danger)':''}">${fmtNum(totRetal,1)} lb</div>
-      <div class="metric-sub">libras de retal</div>
+      <div class="metric-label">Retal total (kg)</div>
+      <div class="metric-value" style="color:var(--danger)">${fmtNum(totRetal * LB_TO_KG, 1)}</div>
+      <div class="metric-sub">${fmtNum(totRetal, 1)} lb</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">% Promedio de retal</div>
+      <div class="metric-value" style="color:${pctRetalProm > 5 ? 'var(--danger)' : 'var(--accent)'}">${fmtNum(pctRetalProm, 2)}%</div>
+      <div class="metric-sub">sobre kilos tajados</div>
     </div>`;
 
   prepararOrden('#view-historial .data-table', 'hist', applyHistFilters);
@@ -3785,7 +3883,7 @@ function buildMultiSelect(placeholder, options, selected, onChange) {
 // ═══════════════════════════════════════════════════════════
 // RESUMEN
 // ═══════════════════════════════════════════════════════════
-let resumenFiltros = { clientes: [], productos: [], presentaciones: [], fechaDesde: '', fechaHasta: '', fechaCorteDesde: '', fechaCorteHasta: '' };
+let resumenFiltros = { clientes: [], productos: [], presentaciones: [], sellados: [], estados: [], responsables: [], buscar: '', fechaDesde: '', fechaHasta: '', fechaCorteDesde: '', fechaCorteHasta: '' };
 
 function renderResumen() {
   const cont = document.getElementById('resumen-content');
@@ -3797,17 +3895,36 @@ function renderResumen() {
   const prods    = [...new Set(pedidos.map(p => p.pt_tipo_producto).filter(Boolean))].sort();
   const pres     = [...new Set(pedidos.map(p => p.pt_presentacion).filter(Boolean))].sort();
 
+  const sellados     = [...new Set(pedidos.map(p => p.pt_sellado).filter(Boolean))].sort();
+  const responsables = [...new Set(pedidos.map(p => p.responsable).filter(Boolean))].sort();
+  const estados      = ['ABIERTO', 'CERRADO'];
+
   const fb = document.getElementById('resumen-filter-bar');
   if (!fb._built) {
     fb._built = true;
     fb.innerHTML = '';
+    fb.id = 'resumen-filter-bar';
 
-    fb._msCliente      = buildMultiSelect('Cliente',       clientes, resumenFiltros.clientes,       applyResumenFilters);
-    fb._msProducto     = buildMultiSelect('Producto',      prods,    resumenFiltros.productos,      applyResumenFilters);
-    fb._msPresentacion = buildMultiSelect('Presentación',  pres,     resumenFiltros.presentaciones, applyResumenFilters);
-    fb.appendChild(fb._msCliente);
-    fb.appendChild(fb._msProducto);
-    fb.appendChild(fb._msPresentacion);
+    const fila1 = document.createElement('div');
+    const fila2 = document.createElement('div');
+    fila1.className = fila2.className = 'filter-row';
+    fb.appendChild(fila1); fb.appendChild(fila2);
+
+    const buscar = document.createElement('input');
+    buscar.id = 'r-buscar';
+    buscar.type = 'text';
+    buscar.placeholder = 'Buscar código, cliente, producto…';
+    buscar.value = resumenFiltros.buscar;
+    buscar.addEventListener('input', () => { resumenFiltros.buscar = buscar.value; applyResumenFilters(); });
+    fila1.appendChild(buscar);
+
+    fb._msCliente      = buildMultiSelect('Cliente',      clientes,     resumenFiltros.clientes,       applyResumenFilters);
+    fb._msProducto     = buildMultiSelect('Producto',     prods,        resumenFiltros.productos,      applyResumenFilters);
+    fb._msPresentacion = buildMultiSelect('Presentación', pres,         resumenFiltros.presentaciones, applyResumenFilters);
+    fb._msSellado      = buildMultiSelect('Sellado',      sellados,     resumenFiltros.sellados,       applyResumenFilters);
+    fb._msEstado       = buildMultiSelect('Estado',       estados,      resumenFiltros.estados,        applyResumenFilters);
+    [fb._msCliente, fb._msProducto, fb._msPresentacion, fb._msSellado, fb._msEstado]
+      .forEach(el => fila1.appendChild(el));
 
     const corteWrap = document.createElement('div');
     corteWrap.className = 'date-range-wrap';
@@ -3818,7 +3935,7 @@ function renderResumen() {
       <input type="date" id="r-corte-hasta" value="${resumenFiltros.fechaCorteHasta}">`;
     corteWrap.querySelector('#r-corte-desde').addEventListener('change', e => { resumenFiltros.fechaCorteDesde = e.target.value; applyResumenFilters(); });
     corteWrap.querySelector('#r-corte-hasta').addEventListener('change', e => { resumenFiltros.fechaCorteHasta = e.target.value; applyResumenFilters(); });
-    fb.appendChild(corteWrap);
+    fila2.appendChild(corteWrap);
 
     const dateWrap = document.createElement('div');
     dateWrap.className = 'date-range-wrap';
@@ -3829,23 +3946,26 @@ function renderResumen() {
       <input type="date" id="r-fecha-hasta" value="${resumenFiltros.fechaHasta}">`;
     dateWrap.querySelector('#r-fecha-desde').addEventListener('change', e => { resumenFiltros.fechaDesde = e.target.value; applyResumenFilters(); });
     dateWrap.querySelector('#r-fecha-hasta').addEventListener('change', e => { resumenFiltros.fechaHasta = e.target.value; applyResumenFilters(); });
-    fb.appendChild(dateWrap);
+    fila2.appendChild(dateWrap);
+
+    fb._msResponsable = buildMultiSelect('Responsable', responsables, resumenFiltros.responsables, applyResumenFilters);
+    fila2.appendChild(fb._msResponsable);
 
     const btnLimpiar = document.createElement('button');
     btnLimpiar.className = 'btn btn-sm';
     btnLimpiar.textContent = 'Limpiar';
+    btnLimpiar.style.marginLeft = 'auto';
     btnLimpiar.addEventListener('click', () => {
-      resumenFiltros.clientes = []; resumenFiltros.productos = [];
-      resumenFiltros.presentaciones = []; resumenFiltros.fechaDesde = ''; resumenFiltros.fechaHasta = '';
+      resumenFiltros.clientes = []; resumenFiltros.productos = []; resumenFiltros.presentaciones = [];
+      resumenFiltros.sellados = []; resumenFiltros.estados = []; resumenFiltros.responsables = [];
+      resumenFiltros.buscar = '';
+      resumenFiltros.fechaDesde = ''; resumenFiltros.fechaHasta = '';
       resumenFiltros.fechaCorteDesde = ''; resumenFiltros.fechaCorteHasta = '';
-      document.getElementById('r-fecha-desde').value = '';
-      document.getElementById('r-fecha-hasta').value = '';
-      document.getElementById('r-corte-desde').value = '';
-      document.getElementById('r-corte-hasta').value = '';
+      limpiarOrdenColumna('resumen');
       fb._built = false;
       renderResumen();
     });
-    fb.appendChild(btnLimpiar);
+    fila2.appendChild(btnLimpiar)
 
     const infoSpan = document.createElement('span');
     infoSpan.id = 'resumen-info';
@@ -3856,6 +3976,8 @@ function renderResumen() {
     fb._msCliente?.updateOptions(clientes);
     fb._msProducto?.updateOptions(prods);
     fb._msPresentacion?.updateOptions(pres);
+    fb._msSellado?.updateOptions(sellados);
+    fb._msResponsable?.updateOptions(responsables);
   }
 
   applyResumenFilters();
@@ -3882,6 +4004,11 @@ function applyResumenFilters() {
     if (resumenFiltros.clientes.length       && !resumenFiltros.clientes.includes(p.cliente))              return false;
     if (resumenFiltros.productos.length      && !resumenFiltros.productos.includes(p.pt_tipo_producto))     return false;
     if (resumenFiltros.presentaciones.length && !resumenFiltros.presentaciones.includes(p.pt_presentacion)) return false;
+    if (resumenFiltros.sellados.length     && !resumenFiltros.sellados.includes(p.pt_sellado))       return false;
+    if (resumenFiltros.estados.length      && !resumenFiltros.estados.includes(p.estado))            return false;
+    if (resumenFiltros.responsables.length && !resumenFiltros.responsables.includes(p.responsable))  return false;
+    if (resumenFiltros.buscar && !`${p.cliente} ${p.pt_tipo_producto} ${p.pt_codigo_trazabilidad} ${p.id}`
+        .toLowerCase().includes(resumenFiltros.buscar.toLowerCase())) return false;
     if (resumenFiltros.fechaDesde && (p.fecha_entrega||'') < resumenFiltros.fechaDesde) return false;
     if (resumenFiltros.fechaHasta && (p.fecha_entrega||'') > resumenFiltros.fechaHasta) return false;
     if (resumenFiltros.fechaCorteDesde && (p.fecha_corte||'') < resumenFiltros.fechaCorteDesde) return false;
@@ -3917,8 +4044,8 @@ function applyResumenFilters() {
           </div>
           <div style="display:flex;gap:20px;font-size:12px;color:var(--text2);align-items:center">
             <span><strong style="color:var(--text)">${r.cantObt.toLocaleString('es-CO')}</strong> unidades</span>
-            <span><strong style="color:var(--text)">${fmtNum(r.librasEnt,1)}</strong> lb entregadas</span>
-            <span><strong style="color:${r.retal>0?'var(--danger)':'var(--text)'}">${fmtNum(r.retal,1)}</strong> lb retal</span>
+            <span><strong style="color:var(--text)">${fmtNum(r.librasEnt * LB_TO_KG,1)}</strong> kg entregados</span>
+            <span><strong style="color:${r.retal>0?'var(--danger)':'var(--text)'}">${fmtNum(r.retal * LB_TO_KG,1)}</strong> kg retal</span>
           </div>
         </div>
         <div class="table-wrap">
@@ -3930,7 +4057,7 @@ function applyResumenFilters() {
               <th data-orden="fecha_entrega">F. Entrega</th>
               <th data-orden="mp_cantidad_oc" style="text-align:right">Cant. OC</th>
               <th data-orden="pt_cantidad_obtenida" style="text-align:right">Cant. obtenida</th>
-              <th data-orden="pt_retal_lb" style="text-align:right">Retal (lb)</th>
+              <th data-orden="pt_retal_lb" style="text-align:right">Retal (kg)</th>
               <th data-orden="estado">Estado</th><th></th>
             </tr></thead>
             <tbody>
@@ -3945,7 +4072,7 @@ function applyResumenFilters() {
                   <td style="color:var(--text2)">${fmtFecha(p.fecha_entrega)}</td>
                   <td style="text-align:right">${(parseFloat(p.mp_cantidad_oc)||0).toLocaleString('es-CO')}</td>
                   <td style="text-align:right">${(parseFloat(p.pt_cantidad_obtenida)||0).toLocaleString('es-CO')}</td>
-                  <td style="text-align:right;${retal>0?'color:var(--danger);font-weight:600':''}">${retal>0?fmtNum(retal,2):'—'}</td>
+                  <td style="text-align:right;${retal>0?'color:var(--danger);font-weight:600':''}">${retal>0?fmtNum(retal * LB_TO_KG,2):'—'}</td>
                   <td>${esAb?'<span class="estado-badge estado-abierto"><span class="dot dot-abierto"></span>Abierto</span>'
                       :esCe?'<span class="estado-badge estado-cerrado"><span class="dot dot-cerrado"></span>Cerrado</span>'
                       :'<span class="estado-badge estado-sin">Sin estado</span>'}</td>
@@ -3964,7 +4091,7 @@ function applyResumenFilters() {
 // DASHBOARD
 // ═══════════════════════════════════════════════════════════
 const dashCharts = {};
-let dashFiltros = { clientes: [], productos: [], presentaciones: [], sellados: [], anios: [], meses: [], fechaDesde: '', fechaHasta: '', fechaCorteDesde: '', fechaCorteHasta: '' };
+let dashFiltros = { anios: [], meses: [], clientes: [], productos: [], presentaciones: [], sellados: [], estados: [], responsables: [], buscar: '', fechaDesde: '', fechaHasta: '', fechaCorteDesde: '', fechaCorteHasta: '' };
 let histFiltros  = { clientes: [], productos: [], presentaciones: [], sellados: [], estados: [], responsables: [], fechaDesde: '', fechaHasta: '', buscar: '', fechaCorteDesde: '', fechaCorteHasta: '' };
 
 const LB_TO_KG = 0.5;
@@ -4011,118 +4138,140 @@ function fmtNum(n, dec = 2) {
 
 function renderDashboard() {
   const cont = document.getElementById('dashboard-content');
-  if (!pedidos.length) {
-    cont.innerHTML = `<div class="empty-state"><div class="empty-state-text">Aún no hay pedidos para mostrar en el dashboard</div></div>`;
-    return;
-  }
 
-  if (!document.getElementById('dash-mounted')) {
+  // ── Estructura (se construye una sola vez) ──
+  if (!cont._built) {
+    cont._built = true;
     cont.innerHTML = `
-      <div id="dash-mounted">
-        <div class="dash-filter-bar" id="dash-filter-bar"></div>
-        <div class="dash-metrics" id="dash-metrics"></div>
-        <div class="dash-grid">
-          <div class="dash-card">
-            <div class="dash-card-header">
-              <span class="dash-card-title">Retal por producto</span>
-              <span class="dash-card-sub">libras y kilos</span>
-            </div>
-            <div class="dash-card-body"><div class="chart-wrap"><canvas id="ch-retal-prod"></canvas></div></div>
-          </div>
-          <div class="dash-card">
-            <div class="dash-card-header">
-              <span class="dash-card-title">Entregas por cliente</span>
-              <span class="dash-card-sub">libras y kilos entregados</span>
-            </div>
-            <div class="dash-card-body"><div class="chart-wrap"><canvas id="ch-entregas-cli"></canvas></div></div>
-          </div>
-        </div>
-        <div class="dash-grid">
-          <div class="dash-card">
-            <div class="dash-card-header">
-              <span class="dash-card-title">Evolución mensual</span>
-              <span class="dash-card-sub">libras entregadas vs libras de retal</span>
-            </div>
-            <div class="dash-card-body"><div class="chart-wrap"><canvas id="ch-evolucion"></canvas></div></div>
-          </div>
-          <div class="dash-card">
-            <div class="dash-card-header">
-              <span class="dash-card-title">% Retal promedio por producto</span>
-              <span class="dash-card-sub">eficiencia: menor es mejor</span>
-            </div>
-            <div class="dash-card-body"><div class="chart-wrap"><canvas id="ch-pct-prod"></canvas></div></div>
-          </div>
-        </div>
-        <div class="dash-grid">
-          <div class="dash-card">
-            <div class="dash-card-header">
-              <span class="dash-card-title">Detalle por producto</span>
-              <span class="dash-card-sub">unidades, retal y participación</span>
-            </div>
-            <div class="dash-card-body" style="overflow:auto">
-              <table class="dash-table" id="tbl-prod"></table>
-            </div>
-          </div>
-          <div class="dash-card">
-            <div class="dash-card-header">
-              <span class="dash-card-title">Detalle por cliente</span>
-              <span class="dash-card-sub">pedidos, libras y kilos entregados</span>
-            </div>
-            <div class="dash-card-body" style="overflow:auto">
-              <table class="dash-table" id="tbl-cli"></table>
-            </div>
-          </div>
-        </div>
+      <div id="dash-filter-bar" class="filter-bar"></div>
+      <div class="dash-metrics" id="dash-metrics"></div>
 
-        <div class="dash-grid" style="grid-template-columns:1fr;">
-          <div class="dash-card">
-            <div class="dash-card-header">
-              <span class="dash-card-title">Producción mensual por producto</span>
-              <span class="dash-card-sub">unidades obtenidas · kilos entregados · % retal</span>
-            </div>
-            <div class="dash-card-body"><div class="chart-wrap" style="min-height:320px"><canvas id="ch-prod-mes"></canvas></div></div>
+      <div class="dash-grid">
+        <div class="dash-card">
+          <div class="dash-card-header">
+            <span class="dash-card-title">Cantidad obtenida por tipo de sellado</span>
+            <span class="dash-card-sub">unidades y participación</span>
+          </div>
+          <div class="dash-card-body"><div class="chart-wrap"><canvas id="ch-sellado"></canvas></div></div>
+        </div>
+        <div class="dash-card">
+          <div class="dash-card-header">
+            <span class="dash-card-title">Cantidad obtenida por operación</span>
+            <span class="dash-card-sub">unidades y participación</span>
+          </div>
+          <div class="dash-card-body"><div class="chart-wrap"><canvas id="ch-operacion"></canvas></div></div>
+        </div>
+      </div>
+
+      <div class="dash-grid">
+        <div class="dash-card">
+          <div class="dash-card-header">
+            <span class="dash-card-title">Retal por producto</span>
+            <span class="dash-card-sub">kilos</span>
+          </div>
+          <div class="dash-card-body"><div class="chart-wrap"><canvas id="ch-retal-prod"></canvas></div></div>
+        </div>
+        <div class="dash-card">
+          <div class="dash-card-header">
+            <span class="dash-card-title">Kilos entregados por cliente</span>
+            <span class="dash-card-sub">producto terminado</span>
+          </div>
+          <div class="dash-card-body"><div class="chart-wrap"><canvas id="ch-entregas-cli"></canvas></div></div>
+        </div>
+      </div>
+
+      <div class="dash-grid">
+        <div class="dash-card">
+          <div class="dash-card-header">
+            <span class="dash-card-title">Evolución por quincena</span>
+            <span class="dash-card-sub">Q1: días 1-15 · Q2: día 16 al fin de mes</span>
+          </div>
+          <div class="dash-card-body"><div class="chart-wrap"><canvas id="ch-evolucion"></canvas></div></div>
+        </div>
+        <div class="dash-card">
+          <div class="dash-card-header">
+            <span class="dash-card-title">% Retal promedio por producto</span>
+            <span class="dash-card-sub">eficiencia: menor es mejor</span>
+          </div>
+          <div class="dash-card-body"><div class="chart-wrap"><canvas id="ch-pct-prod"></canvas></div></div>
+        </div>
+      </div>
+
+      <div class="dash-grid">
+        <div class="dash-card">
+          <div class="dash-card-header">
+            <span class="dash-card-title">Detalle por producto</span>
+            <span class="dash-card-sub">unidades, retal y participación</span>
+          </div>
+          <div class="dash-card-body" style="overflow:auto">
+            <table class="dash-table" id="tbl-prod"></table>
           </div>
         </div>
+        <div class="dash-card">
+          <div class="dash-card-header">
+            <span class="dash-card-title">Detalle por cliente</span>
+            <span class="dash-card-sub">pedidos y kilos entregados</span>
+          </div>
+          <div class="dash-card-body" style="overflow:auto">
+            <table class="dash-table" id="tbl-cli"></table>
+          </div>
+        </div>
+      </div>
 
-        <div class="dash-grid" style="grid-template-columns:1fr;">
-          <div class="dash-card">
-            <div class="dash-card-header">
-              <span class="dash-card-title">Retal por producto · desglose por lote</span>
-              <span class="dash-card-sub" id="retal-lote-sub">fecha de entrega · lotes de bloques empleados · libras y kilos</span>
-            </div>
-            <div class="dash-card-body" style="overflow:auto;padding:0" id="retal-lote-body">
-            </div>
+      <div class="dash-grid" style="grid-template-columns:1fr">
+        <div class="dash-card">
+          <div class="dash-card-header">
+            <span class="dash-card-title">Resumen por mes, producto, sellado y presentación</span>
+            <span class="dash-card-sub">cantidad obtenida, kilos entregados y % de retal del grupo</span>
+          </div>
+          <div class="dash-card-body" style="overflow:auto">
+            <table class="dash-table" id="tbl-resumen"></table>
           </div>
         </div>
       </div>`;
-
   }
 
-  // ── Barra de filtros persistente ──
-  const clientes  = [...new Set(pedidos.map(p => p.cliente).filter(Boolean))].sort();
-  const prods     = [...new Set(pedidos.map(p => p.pt_tipo_producto).filter(Boolean))].sort();
-  const pres      = [...new Set(pedidos.map(p => p.pt_presentacion).filter(Boolean))].sort();
-  const sellados  = [...new Set(pedidos.map(p => p.pt_sellado).filter(Boolean))].sort();
-  const anios     = [...new Set(pedidos.map(p => p.fecha_entrega?.slice(0,4)).filter(Boolean))].sort().reverse();
-  const meses     = [...new Set(pedidos.map(p => p.fecha_entrega?.slice(0,7)).filter(Boolean))].sort().reverse();
+  // ── Filtros: los mismos de Historial diario ──
+  const clientes     = [...new Set(pedidos.map(p => p.cliente).filter(Boolean))].sort();
+  const prods        = [...new Set(pedidos.map(p => p.pt_tipo_producto).filter(Boolean))].sort();
+  const pres         = [...new Set(pedidos.map(p => p.pt_presentacion).filter(Boolean))].sort();
+  const sellados     = [...new Set(pedidos.map(p => p.pt_sellado).filter(Boolean))].sort();
+  const responsables = [...new Set(pedidos.map(p => p.responsable).filter(Boolean))].sort();
+  const estados      = ['ABIERTO', 'CERRADO'];
+  const anios        = [...new Set(pedidos.map(p => p.fecha_entrega?.slice(0,4)).filter(Boolean))].sort().reverse();
+  const meses        = [...new Set(pedidos.map(p => p.fecha_entrega?.slice(0,7)).filter(Boolean))].sort().reverse();
 
   const dfb = document.getElementById('dash-filter-bar');
   if (!dfb._built) {
     dfb._built = true;
     dfb.innerHTML = '';
+    dfb.id = 'dash-filter-bar';
 
-    dfb._msAnio         = buildMultiSelect('Año',          anios,    dashFiltros.anios,          applyDashFilters);
-    dfb._msMes          = buildMultiSelect('Mes',          meses,    dashFiltros.meses,          applyDashFilters);
+    const fila1 = document.createElement('div');
+    const fila2 = document.createElement('div');
+    fila1.className = fila2.className = 'filter-row';
+    dfb.appendChild(fila1); dfb.appendChild(fila2);
+
+    const buscar = document.createElement('input');
+    buscar.id = 'dash-buscar';
+    buscar.type = 'text';
+    buscar.placeholder = 'Buscar código, cliente, producto…';
+    buscar.value = dashFiltros.buscar;
+    buscar.addEventListener('input', () => { dashFiltros.buscar = buscar.value; applyDashFilters(); });
+    fila1.appendChild(buscar);
+
     dfb._msCliente      = buildMultiSelect('Cliente',      clientes, dashFiltros.clientes,       applyDashFilters);
     dfb._msProducto     = buildMultiSelect('Producto',     prods,    dashFiltros.productos,      applyDashFilters);
     dfb._msPresentacion = buildMultiSelect('Presentación', pres,     dashFiltros.presentaciones, applyDashFilters);
     dfb._msSellado      = buildMultiSelect('Sellado',      sellados, dashFiltros.sellados,       applyDashFilters);
-    dfb.appendChild(dfb._msAnio);
-    dfb.appendChild(dfb._msMes);
-    dfb.appendChild(dfb._msCliente);
-    dfb.appendChild(dfb._msProducto);
-    dfb.appendChild(dfb._msPresentacion);
-    dfb.appendChild(dfb._msSellado);
+    dfb._msEstado       = buildMultiSelect('Estado',       estados,  dashFiltros.estados,        applyDashFilters);
+    [dfb._msCliente, dfb._msProducto, dfb._msPresentacion, dfb._msSellado, dfb._msEstado]
+      .forEach(el => fila1.appendChild(el));
+
+    dfb._msAnio = buildMultiSelect('Año', anios, dashFiltros.anios, applyDashFilters);
+    dfb._msMes  = buildMultiSelect('Mes',  meses, dashFiltros.meses, applyDashFilters);
+    fila2.appendChild(dfb._msAnio);
+    fila2.appendChild(dfb._msMes);
 
     const corteWrap = document.createElement('div');
     corteWrap.className = 'date-range-wrap';
@@ -4133,30 +4282,33 @@ function renderDashboard() {
       <input type="date" id="dash-corte-hasta" value="${dashFiltros.fechaCorteHasta}">`;
     corteWrap.querySelector('#dash-corte-desde').addEventListener('change', e => { dashFiltros.fechaCorteDesde = e.target.value; applyDashFilters(); });
     corteWrap.querySelector('#dash-corte-hasta').addEventListener('change', e => { dashFiltros.fechaCorteHasta = e.target.value; applyDashFilters(); });
-    dfb.appendChild(corteWrap);
+    fila2.appendChild(corteWrap);
 
-    const dateWrap = document.createElement('div');
-    dateWrap.className = 'date-range-wrap';
-    dateWrap.innerHTML = `
+    const entWrap = document.createElement('div');
+    entWrap.className = 'date-range-wrap';
+    entWrap.innerHTML = `
       <span class="date-range-label">Entrega</span>
       <input type="date" id="dash-fecha-desde" value="${dashFiltros.fechaDesde}">
       <span class="date-range-label">—</span>
       <input type="date" id="dash-fecha-hasta" value="${dashFiltros.fechaHasta}">`;
-    dateWrap.querySelector('#dash-fecha-desde').addEventListener('change', e => { dashFiltros.fechaDesde = e.target.value; applyDashFilters(); });
-    dateWrap.querySelector('#dash-fecha-hasta').addEventListener('change', e => { dashFiltros.fechaHasta = e.target.value; applyDashFilters(); });
-    dfb.appendChild(dateWrap);
+    entWrap.querySelector('#dash-fecha-desde').addEventListener('change', e => { dashFiltros.fechaDesde = e.target.value; applyDashFilters(); });
+    entWrap.querySelector('#dash-fecha-hasta').addEventListener('change', e => { dashFiltros.fechaHasta = e.target.value; applyDashFilters(); });
+    fila2.appendChild(entWrap);
+
+    dfb._msResponsable = buildMultiSelect('Responsable', responsables, dashFiltros.responsables, applyDashFilters);
+    fila2.appendChild(dfb._msResponsable);
 
     const btnLimpiar = document.createElement('button');
     btnLimpiar.className = 'btn btn-sm';
     btnLimpiar.textContent = 'Limpiar';
     btnLimpiar.addEventListener('click', limpiarFiltrosDash);
-    dfb.appendChild(btnLimpiar);
+    fila2.appendChild(btnLimpiar);
 
-    const infoSpan = document.createElement('span');
-    infoSpan.id = 'dash-info';
-    infoSpan.className = 'text-muted';
-    infoSpan.style.cssText = 'font-size:12px;margin-left:auto';
-    dfb.appendChild(infoSpan);
+    const info = document.createElement('span');
+    info.id = 'dash-info';
+    info.className = 'text-muted';
+    info.style.cssText = 'font-size:12px;margin-left:auto';
+    fila2.appendChild(info);
   } else {
     dfb._msAnio?.updateOptions(anios);
     dfb._msMes?.updateOptions(meses);
@@ -4164,37 +4316,40 @@ function renderDashboard() {
     dfb._msProducto?.updateOptions(prods);
     dfb._msPresentacion?.updateOptions(pres);
     dfb._msSellado?.updateOptions(sellados);
+    dfb._msResponsable?.updateOptions(responsables);
   }
 
-  // Filtrar pedidos
+  // ── Filtrado ──
   const fil = pedidos.filter(p => {
-    if (dashFiltros.anios.length && !dashFiltros.anios.some(a => p.fecha_entrega?.startsWith(a))) return false;
-    if (dashFiltros.meses.length && !dashFiltros.meses.some(m => p.fecha_entrega?.startsWith(m))) return false;
-    if (dashFiltros.clientes.length       && !dashFiltros.clientes.includes(p.cliente))           return false;
-    if (dashFiltros.productos.length      && !dashFiltros.productos.includes(p.pt_tipo_producto))          return false;
+    if (dashFiltros.anios.length  && !dashFiltros.anios.some(a => (p.fecha_entrega||'').startsWith(a)))  return false;
+    if (dashFiltros.meses.length  && !dashFiltros.meses.some(m => (p.fecha_entrega||'').startsWith(m)))  return false;
+    if (dashFiltros.clientes.length       && !dashFiltros.clientes.includes(p.cliente))              return false;
+    if (dashFiltros.productos.length      && !dashFiltros.productos.includes(p.pt_tipo_producto))     return false;
     if (dashFiltros.presentaciones.length && !dashFiltros.presentaciones.includes(p.pt_presentacion)) return false;
     if (dashFiltros.sellados.length       && !dashFiltros.sellados.includes(p.pt_sellado))            return false;
+    if (dashFiltros.estados.length        && !dashFiltros.estados.includes(p.estado))                 return false;
+    if (dashFiltros.responsables.length   && !dashFiltros.responsables.includes(p.responsable))       return false;
     if (dashFiltros.fechaDesde && (p.fecha_entrega||'') < dashFiltros.fechaDesde) return false;
     if (dashFiltros.fechaHasta && (p.fecha_entrega||'') > dashFiltros.fechaHasta) return false;
     if (dashFiltros.fechaCorteDesde && (p.fecha_corte||'') < dashFiltros.fechaCorteDesde) return false;
     if (dashFiltros.fechaCorteHasta && (p.fecha_corte||'') > dashFiltros.fechaCorteHasta) return false;
+    if (dashFiltros.buscar && !`${p.cliente} ${p.pt_tipo_producto} ${p.pt_codigo_trazabilidad} ${p.id}`
+        .toLowerCase().includes(dashFiltros.buscar.toLowerCase())) return false;
     return true;
   });
 
-  const dashInfoEl = document.getElementById('dash-info');
-  if (dashInfoEl) dashInfoEl.textContent = `${fil.length} pedido${fil.length===1?'':'s'} considerados`;
+  const infoEl = document.getElementById('dash-info');
+  if (infoEl) infoEl.textContent = `${fil.length} pedido${fil.length===1?'':'s'} considerados`;
 
-  // KPIs
-  const totLibrasEnt = fil.reduce((a,p) => a + (parseFloat(p.pt_libras_entregadas)||0), 0);
-  const totLibrasRetal = fil.reduce((a,p) => a + (parseFloat(p.pt_retal_lb)||0), 0);
-  const totKilosEnt = totLibrasEnt * LB_TO_KG;
-  const totKilosRetal = totLibrasRetal * LB_TO_KG;
-  const totLibrasTaj = fil.reduce((a,p) => a + (parseFloat(p.mp_libras_tajadas)||0), 0);
-  const totUnidades = fil.reduce((a,p) => a + (parseFloat(p.pt_cantidad_obtenida)||0), 0);
-  const pctRetalProm = totLibrasTaj > 0 ? (totLibrasRetal / totLibrasTaj) * 100 : 0;
-  const clientesActivos = new Set(fil.map(p => p.cliente).filter(Boolean)).size;
-  const productosActivos = new Set(fil.map(p => p.pt_tipo_producto).filter(Boolean)).size;
-  const abiertos = fil.filter(p => p.estado === 'ABIERTO').length;
+  // ── Totales ──
+  const unidades   = fil.reduce((a,p) => a + num(p.pt_cantidad_obtenida), 0);
+  const librasEnt  = fil.reduce((a,p) => a + num(p.pt_libras_entregadas), 0);
+  const librasRet  = fil.reduce((a,p) => a + num(p.pt_retal_lb), 0);
+  const librasTaj  = fil.reduce((a,p) => a + num(p.mp_libras_tajadas), 0);
+  const sobrante   = fil.reduce((a,p) => a + num(p.pt_cantidad_sobrante), 0);
+  const abiertos   = fil.filter(p => p.estado === 'ABIERTO').length;
+  const nClientes  = new Set(fil.map(p => p.cliente).filter(Boolean)).size;
+  const pctRetal   = librasTaj > 0 ? (librasRet / librasTaj) * 100 : 0;
 
   document.getElementById('dash-metrics').innerHTML = `
     <div class="metric-card">
@@ -4203,289 +4358,228 @@ function renderDashboard() {
       <div class="metric-sub">${abiertos} abiertos</div>
     </div>
     <div class="metric-card">
-      <div class="metric-label">Libras entregadas</div>
-      <div class="metric-value">${fmtNum(totLibrasEnt, 1)}</div>
-      <div class="metric-sub">${fmtNum(totKilosEnt, 1)} kg</div>
+      <div class="metric-label">Cantidad obtenida</div>
+      <div class="metric-value">${unidades.toLocaleString('es-CO')}</div>
+      <div class="metric-sub">unidades</div>
     </div>
     <div class="metric-card">
-      <div class="metric-label">Retal total</div>
-      <div class="metric-value" style="${totLibrasRetal>0?'color:var(--danger)':''}">${fmtNum(totLibrasRetal, 1)} lb</div>
-      <div class="metric-sub">${fmtNum(totKilosRetal, 1)} kg</div>
+      <div class="metric-label">Kilos empacados</div>
+      <div class="metric-value">${fmtNum(librasEnt * LB_TO_KG, 1)}</div>
+      <div class="metric-sub">${fmtNum(librasEnt, 1)} lb</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Retal total (kg)</div>
+      <div class="metric-value" style="color:var(--danger)">${fmtNum(librasRet * LB_TO_KG, 1)}</div>
+      <div class="metric-sub">${fmtNum(librasRet, 1)} lb</div>
     </div>
     <div class="metric-card">
       <div class="metric-label">% Retal promedio</div>
-      <div class="metric-value" style="${pctRetalProm>5?'color:var(--danger)':'color:var(--accent-mid)'}">${fmtNum(pctRetalProm, 2)}%</div>
-      <div class="metric-sub">sobre libras tajadas</div>
+      <div class="metric-value" style="color:${pctRetal > 5 ? 'var(--danger)' : 'var(--accent)'}">${fmtNum(pctRetal, 2)}%</div>
+      <div class="metric-sub">sobre kilos tajados</div>
     </div>
     <div class="metric-card">
-      <div class="metric-label">Unidades obtenidas</div>
-      <div class="metric-value">${totUnidades.toLocaleString('es-CO')}</div>
-      <div class="metric-sub">en total</div>
+      <div class="metric-label">Kilos tajados</div>
+      <div class="metric-value">${fmtNum(librasTaj * LB_TO_KG, 1)}</div>
+      <div class="metric-sub">${fmtNum(librasTaj, 1)} lb</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-label">Cantidad sobrante</div>
+      <div class="metric-value">${sobrante.toLocaleString('es-CO')}</div>
+      <div class="metric-sub">obtenida − orden de compra</div>
     </div>
     <div class="metric-card">
       <div class="metric-label">Clientes activos</div>
-      <div class="metric-value">${clientesActivos}</div>
+      <div class="metric-value">${nClientes}</div>
       <div class="metric-sub">en el período</div>
-    </div>
-    <div class="metric-card">
-      <div class="metric-label">Productos</div>
-      <div class="metric-value">${productosActivos}</div>
-      <div class="metric-sub">distintos</div>
-    </div>
-    <div class="metric-card">
-      <div class="metric-label">Libras tajadas</div>
-      <div class="metric-value">${fmtNum(totLibrasTaj, 1)}</div>
-      <div class="metric-sub">materia procesada</div>
     </div>`;
 
-  // Agrupar por producto
-  const porProd = {};
-  fil.forEach(p => {
-    const k = p.pt_tipo_producto || '(SIN PRODUCTO)';
-    if (!porProd[k]) porProd[k] = { producto: k, pedidos: 0, unidades: 0, librasEnt: 0, librasRetal: 0, librasTaj: 0 };
-    porProd[k].pedidos++;
-    porProd[k].unidades    += parseFloat(p.pt_cantidad_obtenida)||0;
-    porProd[k].librasEnt   += parseFloat(p.pt_libras_entregadas)||0;
-    porProd[k].librasRetal += parseFloat(p.pt_retal_lb)||0;
-    porProd[k].librasTaj   += parseFloat(p.mp_libras_tajadas)||0;
+  // ── Agrupaciones ──
+  const agrupar = (clave, extra) => {
+    const m = {};
+    fil.forEach(p => {
+      const k = clave(p) || '(SIN DATO)';
+      if (!m[k]) m[k] = { k, pedidos: 0, unidades: 0, librasEnt: 0, librasRetal: 0, librasTaj: 0 };
+      m[k].pedidos++;
+      m[k].unidades   += num(p.pt_cantidad_obtenida);
+      m[k].librasEnt  += num(p.pt_libras_entregadas);
+      m[k].librasRetal+= num(p.pt_retal_lb);
+      m[k].librasTaj  += num(p.mp_libras_tajadas);
+      if (extra) extra(m[k], p);
+    });
+    return Object.values(m);
+  };
+
+  const porSellado   = agrupar(p => p.pt_sellado).sort((a,b) => b.unidades - a.unidades);
+  const porOperacion = agrupar(p => p.pt_operacion).sort((a,b) => b.unidades - a.unidades);
+  const porProducto  = agrupar(p => p.pt_tipo_producto).sort((a,b) => b.librasRetal - a.librasRetal);
+  const porCliente   = agrupar(p => p.cliente).sort((a,b) => b.librasEnt - a.librasEnt);
+
+  const paleta = ['#1b354a','#4d7ea6','#8FB3D0','#9B2335','#7D4F00','#2f7d5c','#5a4b8a','#b06c2e'];
+
+  // ── Tortas ──
+  const opcionesTorta = () => ({
+    responsive: true, maintainAspectRatio: false,
+    layout: { padding: { left: 112, right: 34, top: 20, bottom: 20 } },
+    plugins: {
+      legend: {
+        position: 'right',
+        labels: { font: { family: 'Plus Jakarta Sans', size: 11 }, color: '#5b6f84',
+                  usePointStyle: true, pointStyleWidth: 10, boxHeight: 7, padding: 12 }
+      },
+      tooltip: { callbacks: { label: ctx => {
+        const t = ctx.dataset.data.reduce((a,b) => a+b, 0) || 1;
+        return `${ctx.label}: ${ctx.parsed.toLocaleString('es-CO')} (${fmtNum(ctx.parsed/t*100,2)}%)`;
+      } } }
+    }
   });
-  Object.values(porProd).forEach(r => { r.kilosEnt = r.librasEnt * LB_TO_KG; r.kilosRetal = r.librasRetal * LB_TO_KG; });
-  const prodArr = Object.values(porProd).sort((a,b) => b.librasRetal - a.librasRetal);
 
-  // Agrupar por cliente
-  const porCli = {};
-  fil.forEach(p => {
-    const k = p.cliente || '(SIN CLIENTE)';
-    if (!porCli[k]) porCli[k] = { cliente: k, pedidos: 0, unidades: 0, librasEnt: 0, librasRetal: 0 };
-    porCli[k].pedidos++;
-    porCli[k].unidades    += parseFloat(p.pt_cantidad_obtenida)||0;
-    porCli[k].librasEnt   += parseFloat(p.pt_libras_entregadas)||0;
-    porCli[k].librasRetal += parseFloat(p.pt_retal_lb)||0;
-  });
-  Object.values(porCli).forEach(r => { r.kilosEnt = r.librasEnt * LB_TO_KG; r.kilosRetal = r.librasRetal * LB_TO_KG; });
-  const cliArr = Object.values(porCli).sort((a,b) => b.librasEnt - a.librasEnt);
+  const pintarTorta = (id, filas) => {
+    destruirChart(id);
+    const canvas = document.getElementById(id);
+    if (!canvas) return;
+    dashCharts[id] = new Chart(canvas, {
+      type: 'pie',
+      data: {
+        labels: filas.map(r => r.k),
+        datasets: [{ data: filas.map(r => Math.round(r.unidades)),
+                     backgroundColor: filas.map((_, i) => paleta[i % paleta.length]),
+                     borderColor: '#e4e9f0', borderWidth: 2 }]
+      },
+      options: opcionesTorta(),
+      plugins: [etiquetasTorta]
+    });
+  };
+  pintarTorta('ch-sellado', porSellado);
+  pintarTorta('ch-operacion', porOperacion);
 
-  // Agrupar por mes
-  const porMes = {};
-  fil.forEach(p => {
-    const k = (p.fecha_entrega || '').slice(0,7) || '(SIN FECHA)';
-    if (!porMes[k]) porMes[k] = { mes: k, librasEnt: 0, librasRetal: 0 };
-    porMes[k].librasEnt   += parseFloat(p.pt_libras_entregadas)||0;
-    porMes[k].librasRetal += parseFloat(p.pt_retal_lb)||0;
-  });
-  const mesArr = Object.values(porMes).filter(m => m.mes !== '(SIN FECHA)').sort((a,b) => a.mes.localeCompare(b.mes));
-
-  // Charts
-  const colorEnt   = '#2d5a7b';
-  const colorRetal = '#9B2335';
-  const colorKilos = '#8FB3D0';
-
+  // ── Retal por producto (solo kilos) ──
   destruirChart('ch-retal-prod');
   dashCharts['ch-retal-prod'] = new Chart(document.getElementById('ch-retal-prod'), {
     type: 'bar',
     data: {
-      labels: prodArr.map(r => r.producto),
-      datasets: [
-        { label: 'Libras', data: prodArr.map(r => +r.librasRetal.toFixed(2)), backgroundColor: colorRetal },
-        { label: 'Kilos',  data: prodArr.map(r => +r.kilosRetal.toFixed(2)),  backgroundColor: colorKilos }
-      ]
+      labels: porProducto.map(r => productoGrafica(r.k)),
+      datasets: [{ label: 'Kilos de retal', data: porProducto.map(r => +(r.librasRetal * LB_TO_KG).toFixed(2)),
+                   backgroundColor: '#9B2335', borderRadius: 4 }]
     },
-    options: chartBaseOptions({ horizontal: true })
+    options: chartBaseOptions({ horizontal: true, suffix: ' kg' })
   });
 
+  // ── Kilos entregados por cliente (barras verticales) ──
   destruirChart('ch-entregas-cli');
   dashCharts['ch-entregas-cli'] = new Chart(document.getElementById('ch-entregas-cli'), {
     type: 'bar',
     data: {
-      labels: cliArr.map(r => r.cliente),
-      datasets: [
-        { label: 'Libras entregadas', data: cliArr.map(r => +r.librasEnt.toFixed(2)), backgroundColor: colorEnt },
-        { label: 'Kilos entregados',  data: cliArr.map(r => +r.kilosEnt.toFixed(2)),  backgroundColor: colorKilos }
-      ]
+      labels: porCliente.map(r => clienteCorto(r.k)),
+      datasets: [{ label: 'Kilos entregados', data: porCliente.map(r => +(r.librasEnt * LB_TO_KG).toFixed(2)),
+                   backgroundColor: '#2d5a7b', borderRadius: 4 }]
     },
-    options: chartBaseOptions({ horizontal: true })
+    options: chartBaseOptions({ suffix: ' kg' })
   });
+
+  // ── Evolución por quincena ──
+  const porQuincena = {};
+  fil.forEach(p => {
+    const f = p.fecha_entrega || '';
+    if (f.length < 10) return;
+    const dia = parseInt(f.slice(8, 10), 10);
+    const k = `${f.slice(0,7)} ${dia <= 15 ? 'Q1' : 'Q2'}`;
+    if (!porQuincena[k]) porQuincena[k] = { k, kilosEnt: 0, kilosRetal: 0 };
+    porQuincena[k].kilosEnt   += num(p.pt_libras_entregadas) * LB_TO_KG;
+    porQuincena[k].kilosRetal += num(p.pt_retal_lb) * LB_TO_KG;
+  });
+  const quincenas = Object.values(porQuincena).sort((a,b) => a.k.localeCompare(b.k));
 
   destruirChart('ch-evolucion');
   dashCharts['ch-evolucion'] = new Chart(document.getElementById('ch-evolucion'), {
     type: 'line',
     data: {
-      labels: mesArr.map(m => m.mes),
+      labels: quincenas.map(q => q.k),
       datasets: [
-        { label: 'Libras entregadas', data: mesArr.map(m => +m.librasEnt.toFixed(2)),   borderColor: colorEnt,   backgroundColor: colorEnt+'33',   tension: .3, fill: true },
-        { label: 'Libras de retal',   data: mesArr.map(m => +m.librasRetal.toFixed(2)), borderColor: colorRetal, backgroundColor: colorRetal+'33', tension: .3, fill: true }
+        { label: 'Kilos entregados', data: quincenas.map(q => +q.kilosEnt.toFixed(2)),
+          borderColor: '#2d5a7b', backgroundColor: '#2d5a7b33', tension: .3, fill: true },
+        { label: 'Kilos de retal', data: quincenas.map(q => +q.kilosRetal.toFixed(2)),
+          borderColor: '#9B2335', backgroundColor: '#9B233533', tension: .3, fill: true },
       ]
     },
-    options: chartBaseOptions({})
+    options: chartBaseOptions({ suffix: ' kg' })
   });
 
-  const prodPct = prodArr.map(r => ({ producto: r.producto, pct: r.librasTaj > 0 ? (r.librasRetal / r.librasTaj) * 100 : 0 })).sort((a,b) => b.pct - a.pct);
+  // ── % Retal promedio por producto ──
+  const pctProd = porProducto
+    .map(r => ({ k: r.k, pct: r.librasTaj > 0 ? (r.librasRetal / r.librasTaj) * 100 : 0 }))
+    .sort((a,b) => b.pct - a.pct);
   destruirChart('ch-pct-prod');
   dashCharts['ch-pct-prod'] = new Chart(document.getElementById('ch-pct-prod'), {
     type: 'bar',
     data: {
-      labels: prodPct.map(r => r.producto),
-      datasets: [{ label: '% Retal', data: prodPct.map(r => +r.pct.toFixed(2)), backgroundColor: prodPct.map(r => r.pct > 5 ? colorRetal : '#7D4F00') }]
+      labels: pctProd.map(r => productoGrafica(r.k)),
+      datasets: [{ label: '% Retal', data: pctProd.map(r => +r.pct.toFixed(2)),
+                   backgroundColor: pctProd.map(r => r.pct > 5 ? '#9B2335' : '#7D4F00'), borderRadius: 4 }]
     },
     options: chartBaseOptions({ horizontal: true, suffix: '%' })
   });
 
-  // ── Gráfico Producción mensual por producto ──
-  destruirChart('ch-prod-mes');
-  {
-    // Agrupar por mes y producto
-    const porMesProd = {};
-    fil.forEach(p => {
-      if (!p.fecha_entrega) return;
-      const mes = p.fecha_entrega.slice(0, 7);
-      const prod = p.pt_tipo_producto || '(SIN PROD)';
-      const k = mes + '||' + prod;
-      if (!porMesProd[k]) porMesProd[k] = { mes, prod, unidades: 0, kilos: 0, librasTaj: 0, librasRetal: 0 };
-      porMesProd[k].unidades   += parseFloat(p.pt_cantidad_obtenida)||0;
-      porMesProd[k].kilos      += (parseFloat(p.pt_libras_entregadas)||0) * LB_TO_KG;
-      porMesProd[k].librasTaj  += parseFloat(p.mp_libras_tajadas)||0;
-      porMesProd[k].librasRetal += parseFloat(p.pt_retal_lb)||0;
-    });
-
-    const mesLabels = [...new Set(Object.values(porMesProd).map(r => r.mes))].sort();
-    const prodLabels = [...new Set(Object.values(porMesProd).map(r => r.prod))].sort();
-    const palette = ['#1b354a','#4d7ea6','#8FB3D0','#9B2335','#7D4F00','#2f7d5c'];
-
-    const dsUnidades = prodLabels.map((prod, i) => ({
-      label: prod + ' · Unidades',
-      data: mesLabels.map(m => { const r = porMesProd[m + '||' + prod]; return r ? +r.unidades.toFixed(0) : 0; }),
-      backgroundColor: palette[i % palette.length] + 'cc',
-      borderRadius: 3,
-      stack: 'unidades',
-      yAxisID: 'y',
-    }));
-    const dsKilos = prodLabels.map((prod, i) => ({
-      label: prod + ' · Kilos ent.',
-      data: mesLabels.map(m => { const r = porMesProd[m + '||' + prod]; return r ? +r.kilos.toFixed(2) : 0; }),
-      backgroundColor: palette[i % palette.length] + '66',
-      borderRadius: 3,
-      stack: 'kilos',
-      yAxisID: 'y',
-    }));
-    const dsRetal = prodLabels.map((prod, i) => ({
-      type: 'line',
-      label: prod + ' · % Retal',
-      data: mesLabels.map(m => {
-        const r = porMesProd[m + '||' + prod];
-        return (r && r.librasTaj > 0) ? +(r.librasRetal / r.librasTaj * 100).toFixed(2) : null;
-      }),
-      borderColor: palette[i % palette.length],
-      backgroundColor: palette[i % palette.length] + '33',
-      borderWidth: 2,
-      pointRadius: 4,
-      tension: 0.3,
-      yAxisID: 'y2',
-      stack: undefined,
-    }));
-
-    dashCharts['ch-prod-mes'] = new Chart(document.getElementById('ch-prod-mes'), {
-      type: 'bar',
-      data: { labels: mesLabels, datasets: [...dsUnidades, ...dsKilos, ...dsRetal] },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { position: 'bottom', labels: { font: { family: 'Plus Jakarta Sans', size: 11 }, boxWidth: 12 } },
-          tooltip: {
-            callbacks: {
-              label: ctx => {
-                const v = ctx.parsed.y;
-                if (ctx.dataset.yAxisID === 'y2') return `${ctx.dataset.label}: ${Number(v).toLocaleString('es-CO',{maximumFractionDigits:2})}%`;
-                return `${ctx.dataset.label}: ${Number(v).toLocaleString('es-CO',{maximumFractionDigits:0})}`;
-              }
-            }
-          }
-        },
-        scales: {
-          x: { ticks: { font: { family: 'Plus Jakarta Sans', size: 11 } }, grid: { color: 'rgba(182,193,210,.45)' } },
-          y:  { position: 'left',  ticks: { font: { family: 'Plus Jakarta Sans', size: 11 } }, grid: { color: 'rgba(182,193,210,.45)' }, title: { display: true, text: 'Unidades / Kilos', font: { size: 10 } } },
-          y2: { position: 'right', ticks: { font: { family: 'Plus Jakarta Sans', size: 11 }, callback: v => v + '%' }, grid: { drawOnChartArea: false }, title: { display: true, text: '% Retal', font: { size: 10 } } }
-        }
-      }
-    });
-  }
-
+  // ── Tabla: detalle por producto ──
   document.getElementById('tbl-prod').innerHTML = `
     <thead><tr>
       <th>Producto</th><th class="num">Pedidos</th><th class="num">Unidades</th>
-      <th class="num">Retal (lb)</th><th class="num">Retal (kg)</th><th class="num">% Retal</th>
+      <th class="num">Retal (kg)</th><th class="num">% Retal</th>
     </tr></thead>
-    <tbody>${prodArr.map(r => `<tr>
-      <td><strong>${esc(r.producto)}</strong></td>
+    <tbody>${porProducto.map(r => `<tr>
+      <td title="${esc(r.k)}"><strong>${esc(nombreCorto(r.k))}</strong></td>
       <td class="num">${r.pedidos}</td>
       <td class="num">${r.unidades.toLocaleString('es-CO')}</td>
-      <td class="num" style="${r.librasRetal>0?'color:var(--danger)':''}">${fmtNum(r.librasRetal,2)}</td>
-      <td class="num" style="${r.librasRetal>0?'color:var(--danger)':''}">${fmtNum(r.kilosRetal,2)}</td>
+      <td class="num" style="${r.librasRetal>0?'color:var(--danger)':''}">${fmtNum(r.librasRetal * LB_TO_KG, 2)}</td>
       <td class="num">${r.librasTaj>0?fmtNum((r.librasRetal/r.librasTaj)*100,2)+'%':'—'}</td>
     </tr>`).join('')}</tbody>`;
 
+  // ── Tabla: detalle por cliente (nombre completo) ──
   document.getElementById('tbl-cli').innerHTML = `
     <thead><tr>
       <th>Cliente</th><th class="num">Pedidos</th>
-      <th class="num">Libras ent.</th><th class="num">Kilos ent.</th><th class="num">Retal (lb)</th>
+      <th class="num">Unidades</th><th class="num">Kilos ent.</th><th class="num">Retal (kg)</th>
     </tr></thead>
-    <tbody>${cliArr.map(r => `<tr>
-      <td><strong>${esc(r.cliente)}</strong></td>
+    <tbody>${porCliente.map(r => `<tr>
+      <td><strong>${esc(r.k)}</strong></td>
       <td class="num">${r.pedidos}</td>
-      <td class="num">${fmtNum(r.librasEnt,2)}</td>
-      <td class="num">${fmtNum(r.kilosEnt,2)}</td>
-      <td class="num" style="${r.librasRetal>0?'color:var(--danger)':''}">${fmtNum(r.librasRetal,2)}</td>
+      <td class="num">${r.unidades.toLocaleString('es-CO')}</td>
+      <td class="num">${fmtNum(r.librasEnt * LB_TO_KG, 2)}</td>
+      <td class="num" style="${r.librasRetal>0?'color:var(--danger)':''}">${fmtNum(r.librasRetal * LB_TO_KG, 2)}</td>
     </tr>`).join('')}</tbody>`;
 
-  // ── Tabla retal por lote (tabla única) ──
-  const retalLoteBody = document.getElementById('retal-lote-body');
-  if (retalLoteBody) {
-    const pedConRetal = fil.filter(p => (parseFloat(p.pt_retal_lb)||0) > 0)
-      .sort((a,b) => (a.producto||'').localeCompare(b.producto||'') || (a.fecha_entrega||'').localeCompare(b.fecha_entrega||''));
+  // ── Tabla: mes · producto · sellado · presentación ──
+  const resumen = {};
+  fil.forEach(p => {
+    const mes = (p.fecha_entrega || '').slice(0, 7) || '(SIN FECHA)';
+    const k = [mes, p.pt_tipo_producto, p.pt_sellado, p.pt_presentacion].join('||');
+    if (!resumen[k]) resumen[k] = {
+      mes, producto: p.pt_tipo_producto || '—', sellado: p.pt_sellado || '—',
+      presentacion: p.pt_presentacion || '—',
+      unidades: 0, librasEnt: 0, librasRetal: 0, librasTaj: 0
+    };
+    resumen[k].unidades    += num(p.pt_cantidad_obtenida);
+    resumen[k].librasEnt   += num(p.pt_libras_entregadas);
+    resumen[k].librasRetal += num(p.pt_retal_lb);
+    resumen[k].librasTaj   += num(p.mp_libras_tajadas);
+  });
+  const resArr = Object.values(resumen).sort((a,b) =>
+    b.mes.localeCompare(a.mes) || a.producto.localeCompare(b.producto) || a.sellado.localeCompare(b.sellado));
 
-    if (!pedConRetal.length) {
-      retalLoteBody.innerHTML = '<div class="empty-state" style="padding:24px"><div class="empty-state-text">Sin datos de retal en el período seleccionado</div></div>';
-    } else {
-      const thS = 'padding:8px 12px;text-align:left;font-size:10px;font-weight:600;color:var(--text2);text-transform:uppercase;letter-spacing:.07em;border-bottom:1px solid var(--border);white-space:nowrap';
-      const thN = thS + ';text-align:right';
-      const tdS = 'padding:7px 12px;border-bottom:1px solid var(--border);color:var(--text2);font-size:12px';
-      const tdN = 'padding:7px 12px;border-bottom:1px solid var(--border);text-align:right;font-family:"DM Mono",monospace;font-size:12px';
-
-      retalLoteBody.innerHTML = `<table style="border-collapse:collapse;font-size:12px;width:100%">
-        <thead><tr>
-          <th style="${thS}">Producto</th>
-          <th style="${thS}">Fecha corte</th>
-          <th style="${thS}">Fecha entrega</th>
-          <th style="${thS}">Lote bloque empleado</th>
-          <th style="${thN}">Lbs retal</th>
-          <th style="${thN}">Kgs retal</th>
-        </tr></thead>
-        <tbody>
-          ${pedConRetal.map((p,i) => {
-            const retal = parseFloat(p.pt_retal_lb)||0;
-            const kgs = retal * 0.5;
-            const bg = i%2===1 ? 'background:var(--bg)' : '';
-            const lotesStr = p.mp_lote_vto ? fmtFecha(p.mp_lote_vto) : '—';
-            return `<tr style="${bg}">
-              <td style="${tdS}"><strong>${esc(p.pt_tipo_producto||'—')}</strong></td>
-              <td style="${tdS}">${fmtFecha(p.fecha_corte)}</td>
-              <td style="${tdS}">${fmtFecha(p.fecha_entrega)}</td>
-              <td style="${tdS}">${lotesStr}</td>
-              <td style="${tdN};color:var(--danger);font-weight:600">${fmtNum(retal,2)}</td>
-              <td style="${tdN};color:var(--danger);font-weight:600">${fmtNum(kgs,2)}</td>
-            </tr>`;
-          }).join('')}
-          <tr style="background:rgba(182,193,210,.28)">
-            <td colspan="4" style="padding:7px 12px;font-weight:700;font-size:11px;color:var(--accent);border-top:2px solid var(--nm-dark-soft)">TOTAL</td>
-            <td style="${tdN};font-weight:700;color:var(--accent);border-top:2px solid var(--nm-dark-soft)">${fmtNum(pedConRetal.reduce((a,p)=>a+(parseFloat(p.pt_retal_lb)||0),0),2)}</td>
-            <td style="${tdN};font-weight:700;color:var(--accent);border-top:2px solid var(--nm-dark-soft)">${fmtNum(pedConRetal.reduce((a,p)=>a+(parseFloat(p.pt_retal_lb)||0)*0.5,0),2)}</td>
-          </tr>
-        </tbody>
-      </table>`;
-    }
-  }
+  document.getElementById('tbl-resumen').innerHTML = `
+    <thead><tr>
+      <th>Mes</th><th>Producto</th><th>Tipo de sellado</th><th>Presentación</th>
+      <th class="num">Cantidad obtenida</th><th class="num">Kilos entregados</th><th class="num">% Retal</th>
+    </tr></thead>
+    <tbody>${resArr.length ? resArr.map(r => `<tr>
+      <td class="mono">${esc(r.mes)}</td>
+      <td title="${esc(r.producto)}">${esc(nombreCorto(r.producto))}</td>
+      <td>${esc(r.sellado)}</td>
+      <td><span class="${presClase(r.presentacion)}">${esc(r.presentacion)}</span></td>
+      <td class="num">${r.unidades.toLocaleString('es-CO')}</td>
+      <td class="num">${fmtNum(r.librasEnt * LB_TO_KG, 2)}</td>
+      <td class="num" style="${r.librasRetal>0?'color:var(--danger)':''}">${r.librasTaj>0?fmtNum(r.librasRetal/r.librasTaj*100,2)+'%':'—'}</td>
+    </tr>`).join('') : '<tr><td colspan="7" class="empty-state"><div class="empty-state-text">Sin datos con estos filtros</div></td></tr>'}</tbody>`;
 }
-
 // Acorta etiquetas de eje: quita el prefijo comun ("QUESO FRESCO VARIEDADES: ")
 // para que se distinga la variedad, y recorta lo que siga sobrando.
 function recortarEtiqueta(value) {
@@ -4523,22 +4617,14 @@ function destruirChart(id) {
 }
 
 function limpiarFiltrosDash() {
+  dashFiltros.anios = []; dashFiltros.meses = [];
   dashFiltros.clientes = []; dashFiltros.productos = []; dashFiltros.presentaciones = [];
-  dashFiltros.sellados = []; dashFiltros.anios = []; dashFiltros.meses = [];
+  dashFiltros.sellados = []; dashFiltros.estados = []; dashFiltros.responsables = [];
+  dashFiltros.buscar = '';
   dashFiltros.fechaDesde = ''; dashFiltros.fechaHasta = '';
   dashFiltros.fechaCorteDesde = ''; dashFiltros.fechaCorteHasta = '';
   const dfb = document.getElementById('dash-filter-bar');
-  if (dfb) {
-    const desde = document.getElementById('dash-fecha-desde');
-    const hasta = document.getElementById('dash-fecha-hasta');
-    if (desde) desde.value = '';
-    if (hasta) hasta.value = '';
-    const cDesde = document.getElementById('dash-corte-desde');
-    const cHasta = document.getElementById('dash-corte-hasta');
-    if (cDesde) cDesde.value = '';
-    if (cHasta) cHasta.value = '';
-    dfb._built = false; // force filter bar rebuild to reset checkboxes
-  }
+  if (dfb) dfb._built = false;
   renderDashboard();
 }
 
