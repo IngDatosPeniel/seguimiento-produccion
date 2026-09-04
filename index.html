@@ -1118,6 +1118,13 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
 .th-ordenable:hover .sort-arrow { opacity: .6; }
 .th-ordenable.ordenada .sort-arrow { opacity: 1; }
 
+/* Campo temporal para escribir un cliente o responsable nuevo */
+.field input.nuevo-valor {
+  box-shadow: var(--nm-in-sm), 0 0 0 2px var(--accent-soft);
+  text-transform: uppercase;
+}
+.field input.nuevo-valor::placeholder { text-transform: none; }
+
 /* Fecha con año fuera de 2025-2027: se marca en rojo al escribirla */
 
 .fecha-invalida,
@@ -1270,16 +1277,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
             </div>
             <div class="field">
               <label>Cliente *</label>
-              <select id="f-cliente">
-                <option value="">Seleccionar cliente...</option>
-                <option>BIMBO DE COLOMBIA S.A.</option>
-                <option>COMERCIALIZADORA NUTRIMOS S.A.</option>
-                <option>D1 SAS</option>
-                <option>DON MAIZ S.A.S.</option>
-                <option>INVERJENOS S.A.S.</option>
-                <option>PUNTO DE VENTA INTERNO</option>
-                <option>SECRETARIA DE EDUCACIÓN DEL DISTRITO</option>
-              </select>
+              <select id="f-cliente" onchange="revisarValorNuevo(this,'Cliente')"></select>
             </div>
           </div>
           <div class="form-grid form-grid-3">
@@ -1293,13 +1291,7 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
             </div>
             <div class="field">
               <label>Responsable del ingreso de la información *</label>
-              <select id="f-responsable">
-                <option value="">Seleccionar responsable...</option>
-                <option>WILLIAM BERMUDEZ</option>
-                <option>HECTOR CASALLAS</option>
-                <option>ANDRES CENDALES</option>
-                <option>HERSSON SUAREZ F</option>
-              </select>
+              <select id="f-responsable" onchange="revisarValorNuevo(this,'Responsable')"></select>
             </div>
           </div>
         </div>
@@ -1354,71 +1346,25 @@ input[type=number]::-webkit-inner-spin-button { -webkit-appearance: none; margin
           <div class="form-grid form-grid-3 section-gap">
             <div class="field">
               <label>Tipo de producto obtenido</label>
-              <select id="f-pt-tipo">
-                <option value="">Seleccionar...</option>
-                <option>QUESO FRESCO VARIEDADES: SEMIGRASO SEMIBLANDO DOBLE CREMA</option>
-                <option>QUESO FRESCO VARIEDADES: SEMIGRASO SEMIBLANDO CAMPESINO</option>
-                <option>QUESO FRESCO VARIEDADES: SEMIGRASO SEMIDURO MOZARELLA</option>
-                <option>QUESO FRESCO VARIEDADES: SEMIGRASO SEMIDURO PERA</option>
-                <option>QUESO FRESCO VARIEDADES: SEMIGRASO SEMIBLANDO DOBLE CREMA CON BOCADILLO</option>
-              </select>
+              <select id="f-pt-tipo"></select>
             </div>
             <div class="field">
               <label>Presentación</label>
-              <select id="f-pt-pres">
-                <option value="">Seleccionar...</option>
-                <option>BLOQUE</option>
-                <option>BLOQUE QUESO CAMPESINO</option>
-                <option>DEDO</option>
-                <option>MATRIMONIO QUESO CON BOCADILLO</option>
-                <option>PORCIÓN</option>
-                <option>PORCIÓN (PERA)</option>
-                <option>RUEDA QUESO PERA</option>
-                <option>TAJADO</option>
-              </select>
+              <select id="f-pt-pres"></select>
             </div>
             <div class="field">
               <label>Peso (Gr)</label>
-              <select id="f-pt-peso" onchange="calcularCampos()">
-                <option value="">Seleccionar...</option>
-                <option>10</option>
-                <option>20</option>
-                <option>30</option>
-                <option>35</option>
-                <option>40</option>
-                <option>45</option>
-                <option>50</option>
-                <option>60</option>
-                <option>80</option>
-                <option>90</option>
-                <option>125</option>
-                <option>250</option>
-                <option>300</option>
-                <option>350</option>
-                <option>500</option>
-                <option>2500</option>
-              </select>
+              <select id="f-pt-peso" onchange="calcularCampos()"></select>
             </div>
           </div>
           <div class="form-grid form-grid-3 section-gap">
             <div class="field">
               <label>Operación realizada</label>
-              <select id="f-pt-operacion">
-                <option value="">Seleccionar...</option>
-                <option>CORTE Y EMPAQUE</option>
-                <option>EMPAQUE</option>
-              </select>
+              <select id="f-pt-operacion"></select>
             </div>
             <div class="field">
               <label>Tipo de sellado</label>
-              <select id="f-pt-sellado">
-                <option value="">Seleccionar...</option>
-                <option>SELLADO MANUAL</option>
-                <option>TERMOFORMADORA</option>
-                <option>EMPACADORA AL VACIO</option>
-                <option>FLOW PACK</option>
-                <option>SELLADORA DE PEDAL</option>
-              </select>
+              <select id="f-pt-sellado"></select>
             </div>
             <div class="field">
               <label>Cantidad obtenida <span class="lbl-auto">AUTO</span> <span class="lbl-nota">suma de las individuales</span></label>
@@ -2212,6 +2158,7 @@ function showApp() {
   });
   reiniciarTemporizadorInactividad();
   restaurarSidebar();
+  poblarSelectoresAmpliables();
   if (!contenedorMP('f').children.length) addMateriaRow('f');
   if (!contenedorPT('f').children.length) addTrazaRow('f');
   loadData();
@@ -2403,6 +2350,7 @@ async function loadData() {
       return o;
     });
 
+    poblarSelectoresAmpliables();
     setSyncStatus('Actualizado ' + new Date().toLocaleTimeString('es-CO', {hour:'2-digit',minute:'2-digit'}));
 
     if (document.getElementById('view-historial').classList.contains('active')) renderHistorial();
@@ -3266,7 +3214,8 @@ function applyHistFilters() {
 // EDITAR PEDIDO (modal)
 // ═══════════════════════════════════════════════════════════
 const LISTA_CLIENTES = ['BIMBO DE COLOMBIA S.A.','COMERCIALIZADORA NUTRIMOS S.A.','D1 SAS',
-  'DON MAIZ S.A.S.','INVERJENOS S.A.S.','PUNTO DE VENTA INTERNO','SECRETARIA DE EDUCACIÓN DEL DISTRITO'];
+  'DON MAIZ S.A.S.','INVERJENOS S.A.S.','PUNTO DE VENTA INTERNO','SECRETARIA DE EDUCACIÓN DEL DISTRITO',
+  'THEARION SAS'];
 const LISTA_RESPONSABLES = ['WILLIAM BERMUDEZ','HECTOR CASALLAS','ANDRES CENDALES','HERSSON SUAREZ F'];
 const LISTA_MP_TIPOS = ['QUESO FRESCO VARIEDADES: SEMIGRASO SEMIBLANDO DOBLE CREMA',
   'QUESO FRESCO VARIEDADES: SEMIGRASO SEMIBLANDO CAMPESINO',
@@ -3281,7 +3230,7 @@ const LISTA_PT_TIPOS = ['QUESO FRESCO VARIEDADES: SEMIGRASO SEMIBLANDO DOBLE CRE
 const LISTA_PRESENTACIONES = ['BLOQUE','BLOQUE QUESO CAMPESINO','DEDO',
   'MATRIMONIO QUESO CON BOCADILLO','PORCIÓN','PORCIÓN (PERA)','RUEDA QUESO PERA','TAJADO'];
 const LISTA_MP_PESOS = [10,20,30,45,300,350,1800,2000,2100,2200,2400,2500];
-const LISTA_PT_PESOS = [10,20,30,35,40,45,50,60,80,90,125,250,300,350,500,2500];
+const LISTA_PT_PESOS = [10,20,25,30,35,40,45,50,60,80,90,125,250,300,350,500,2500];
 const LISTA_OPERACIONES = ['CORTE Y EMPAQUE','EMPAQUE'];
 const LISTA_SELLADOS = ['SELLADO MANUAL','TERMOFORMADORA','EMPACADORA AL VACIO','FLOW PACK','SELLADORA DE PEDAL'];
 const RANGO_FECHA = 'min="2025-01-01" max="2027-12-31"';
@@ -3294,6 +3243,89 @@ function optionsHTMLCorto(lista, seleccionado) {
     const s = String(v);
     return `<option value="${esc(s)}"${s === sel ? ' selected' : ''}>${esc(nombreCorto(s))}</option>`;
   }).join('');
+}
+
+// ── Selectores que admiten valores nuevos (cliente y responsable) ──
+// La lista base son las constantes MÁS lo que ya exista en los pedidos
+// guardados: así un cliente añadido en un PC aparece en todos los demás en
+// cuanto se guarda el primer pedido, sin tener que tocar el código.
+const VALOR_NUEVO = '__NUEVO__';
+
+function listaCon(base, campo) {
+  const vistos = base.slice();
+  pedidos.forEach(p => {
+    const v = String(p[campo] ?? '').trim();
+    if (v && !vistos.includes(v)) vistos.push(v);
+  });
+  return vistos.sort((a, b) => a.localeCompare(b, 'es'));
+}
+
+function opcionesAmpliables(base, campo, seleccionado) {
+  return optionsHTML(listaCon(base, campo), seleccionado)
+       + `<option value="${VALOR_NUEVO}">+ Añadir nuevo…</option>`;
+}
+
+// Al elegir "+ Añadir nuevo…" el selector se cambia por un campo de texto.
+// Enter confirma, Escape cancela.
+function revisarValorNuevo(select, etiqueta) {
+  if (!select || select.value !== VALOR_NUEVO) return;
+  const campo = select.closest('.field') || select.parentElement;
+  const input = document.createElement('input');
+  input.type = 'text';
+  input.className = 'nuevo-valor';
+  input.placeholder = `Escribe el ${etiqueta.toLowerCase()} y pulsa Enter`;
+  input.setAttribute('aria-label', 'Nuevo ' + etiqueta.toLowerCase());
+  select.hidden = true;
+  campo.appendChild(input);
+  input.focus();
+
+  let cerrado = false;
+  const restaurar = valor => {
+    if (cerrado) return;
+    cerrado = true;
+    input.remove();
+    select.hidden = false;
+    if (valor) {
+      if (![...select.options].some(o => o.value === valor)) {
+        const opt = document.createElement('option');
+        opt.value = valor; opt.textContent = valor;
+        select.insertBefore(opt, select.options[select.options.length - 1]);
+      }
+      select.value = valor;
+    } else {
+      select.value = '';
+    }
+    select.focus();
+  };
+
+  input.addEventListener('keydown', e => {
+    if (e.key === 'Enter')  { e.preventDefault(); restaurar(input.value.trim().toUpperCase()); }
+    if (e.key === 'Escape') { e.preventDefault(); restaurar(''); }
+  });
+  input.addEventListener('blur', () => restaurar(input.value.trim().toUpperCase()));
+}
+
+// Repuebla los selectores del formulario conservando lo ya elegido.
+// Los de producto terminado salen de las constantes para que no vuelvan a
+// desincronizarse: son la única fuente de la verdad.
+const SELECTORES_FIJOS = [
+  ['f-pt-tipo',      () => LISTA_PT_TIPOS],
+  ['f-pt-pres',      () => LISTA_PRESENTACIONES],
+  ['f-pt-peso',      () => LISTA_PT_PESOS],
+  ['f-pt-operacion', () => LISTA_OPERACIONES],
+  ['f-pt-sellado',   () => LISTA_SELLADOS],
+];
+
+function poblarSelectoresAmpliables() {
+  const cli = document.getElementById('f-cliente');
+  if (cli && !cli.hidden) cli.innerHTML = opcionesAmpliables(LISTA_CLIENTES, 'cliente', cli.value);
+  const res = document.getElementById('f-responsable');
+  if (res && !res.hidden) res.innerHTML = opcionesAmpliables(LISTA_RESPONSABLES, 'responsable', res.value);
+
+  SELECTORES_FIJOS.forEach(([id, lista]) => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = optionsHTML(lista(), el.value);
+  });
 }
 
 function optionsHTML(lista, seleccionado) {
@@ -3327,12 +3359,12 @@ function abrirEditar(id) {
     <div class="form-grid form-grid-3 section-gap">
       <div class="field"><label>Fecha de corte y/o empaque *</label><input id="e-fecha-corte" type="date" ${RANGO_FECHA} value="${p.fecha_corte||''}"></div>
       <div class="field"><label>Fecha de entrega *</label><input id="e-fecha-entrega" type="date" ${RANGO_FECHA} value="${p.fecha_entrega||''}"></div>
-      <div class="field"><label>Cliente *</label><select id="e-cliente">${optionsHTML(LISTA_CLIENTES, p.cliente)}</select></div>
+      <div class="field"><label>Cliente *</label><select id="e-cliente" onchange="revisarValorNuevo(this,'Cliente')">${opcionesAmpliables(LISTA_CLIENTES, 'cliente', p.cliente)}</select></div>
     </div>
     <div class="form-grid form-grid-3 section-gap">
       <div class="field"><label>Menú *</label><input id="e-menu" value="${esc(p.menu||'NO APLICA')}"></div>
       <div class="field"><label>Operador *</label><input id="e-operador" value="${esc(p.operador||'NO APLICA')}"></div>
-      <div class="field"><label>Responsable del ingreso *</label><select id="e-responsable">${optionsHTML(LISTA_RESPONSABLES, p.responsable)}</select></div>
+      <div class="field"><label>Responsable del ingreso *</label><select id="e-responsable" onchange="revisarValorNuevo(this,'Responsable')">${opcionesAmpliables(LISTA_RESPONSABLES, 'responsable', p.responsable)}</select></div>
     </div>
 
     <div class="divider" style="margin:14px 0 10px"></div>
